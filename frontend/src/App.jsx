@@ -1,98 +1,231 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './App.css';
-import { Home, Settings, Grid, PieChart } from 'lucide-react';
-import axios from 'axios';
+import { FileText, X, ChefHat, Receipt, Package, DollarSign } from 'lucide-react';
 
 function App() {
-  const [menuItems, setMenuItems] = useState([]);
-  const [cart, setCart] = useState([]);
+  // This state tracks which table is currently selected on the screen
+  const [activeOrder, setActiveOrder] = useState('Table 1');
+  
+  // This complex state holds the individual orders and statuses for every single table
+  const [orders, setOrders] = useState({
+    'Table 1': { type: 'Dine-In', items: [], status: 'Draft' },
+    'Table 2': { type: 'Dine-In', items: [{ id: 1, name: 'Burger', price: 8.50, qty: 1 }], status: 'Running' },
+    'Table 3': { type: 'Dine-In', items: [{ id: 2, name: 'Fries', price: 3.00, qty: 2 }], status: 'Running' },
+    'Table 4': { type: 'Dine-In', items: [], status: 'Draft' },
+    'Takeaway 1': { type: 'Takeaway', items: [], status: 'Draft' },
+    'Takeaway 2': { type: 'Takeaway', items: [], status: 'Draft' },
+  });
 
-  // Fetch from Django API
-  useEffect(() => {
-    // In production, use your actual Django URL (e.g., http://localhost:8000/api/menu-items/)
-    // For now, this is mock data representing what Django will send
-    setMenuItems([
-      { id: 1, name: 'Smashed Avo', price: 15.20, image: '🥑' },
-      { id: 2, name: 'Yin & Yang', price: 12.50, image: '🍲' },
-      { id: 3, name: 'Pancakes', price: 10.00, image: '🥞' },
-    ]);
-  }, []);
+  const menuItems = [
+    { id: 1, name: 'Burger', price: 8.50, icon: '🍔' },
+    { id: 2, name: 'Fries', price: 3.00, icon: '🍟' },
+    { id: 3, name: 'Noodles', price: 12.00, icon: '🍜' },
+    { id: 4, name: 'Pizza', price: 15.00, icon: '🍕' },
+    { id: 5, name: 'Coffee', price: 4.50, icon: '☕' },
+    { id: 6, name: 'Soup', price: 6.00, icon: '🥣' },
+  ];
 
-  const addToCart = (item) => {
-    setCart([...cart, item]);
+  // Function to add a clicked item to the currently active table
+  const handleAddItem = (item) => {
+    setOrders(prev => {
+      const currentOrder = prev[activeOrder];
+      const existingItem = currentOrder.items.find(i => i.id === item.id);
+      let newItems;
+      
+      // If the item is already in the cart, just increase the quantity
+      if (existingItem) {
+        newItems = currentOrder.items.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i);
+      } else {
+        newItems = [...currentOrder.items, { ...item, qty: 1 }];
+      }
+      return { ...prev, [activeOrder]: { ...currentOrder, items: newItems } };
+    });
   };
+
+  // Function for the Cancel (X) button
+  const handleRemoveItem = (itemId) => {
+    setOrders(prev => {
+      const currentOrder = prev[activeOrder];
+      const newItems = currentOrder.items.filter(i => i.id !== itemId);
+      return { ...prev, [activeOrder]: { ...currentOrder, items: newItems } };
+    });
+  };
+
+  // Function for Send to Kitchen button
+  const handleSendToKitchen = () => {
+    setOrders(prev => ({
+      ...prev,
+      [activeOrder]: { ...prev[activeOrder], status: 'Running' }
+    }));
+  };
+
+  // Mathematical Calculations for the current table
+  const currentOrderData = orders[activeOrder];
+  const subtotal = currentOrderData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const tax = subtotal * 0.05; // 5% tax
+  const total = subtotal + tax;
+
+  // Find all orders that are currently "Running" in the kitchen
+  const runningOrders = Object.entries(orders).filter(([id, data]) => data.status === 'Running').map(([id]) => id);
 
   return (
     <div className="app-container">
       
-      {/* 1. Sidebar Nav */}
-      <div className="sidebar-nav">
-        <div className="logo">🍔</div>
-        <Home size={28} color="#aaa" />
-        <Grid size={28} color="#FF6B6B" /> {/* Active color from image */}
-        <PieChart size={28} color="#aaa" />
-        <Settings size={28} color="#aaa" />
-      </div>
-
-      {/* 2. Categories */}
-      <div className="categories-column">
-        <h2>Menu</h2>
-        <div className="category-btn active">Breakfast</div>
-        <div className="category-btn">Soups</div>
-        <div className="category-btn">Pasta</div>
-        <div className="category-btn">Sushi</div>
-        <div className="category-btn">Main course</div>
-        <div className="category-btn">Desserts</div>
-        <div className="category-btn">Drinks</div>
-      </div>
-
-      {/* 3. Main Menu Area */}
-      <div className="menu-area">
-        <div className="search-header">
-          <input type="text" placeholder="Search menu..." style={{padding: '10px', width: '300px', borderRadius: '8px', border: '1px solid #ddd'}} />
+      {/* 1. Left Sidebar - Table Management */}
+      <div className="left-sidebar">
+        <div style={{ padding: '20px', borderBottom: '1px solid #eee', fontWeight: 'bold', fontSize: '22px', color: '#ff6b6b' }}>
+          Nashta POS
         </div>
         
-        <div className="menu-grid">
-          {menuItems.map(item => (
-            <div className="menu-card" key={item.id} onClick={() => addToCart(item)}>
-              <div style={{fontSize: '50px'}}>{item.image}</div>
-              <h4 style={{marginTop: '10px'}}>{item.name}</h4>
-              <p style={{color: '#FF6B6B', fontWeight: 'bold'}}>${parseFloat(item.price).toFixed(2)}</p>
-            </div>
+        <div className="nav-section">
+          <h3>Dine-In</h3>
+          {['Table 1', 'Table 2', 'Table 3', 'Table 4'].map(table => (
+            <button 
+              key={table} 
+              className={`nav-btn ${activeOrder === table ? 'active' : ''}`}
+              onClick={() => setActiveOrder(table)}
+            >
+              {table} {orders[table].status === 'Running' ? '🔥' : ''}
+            </button>
           ))}
+        </div>
+
+        <div className="nav-section">
+          <h3>Takeaway</h3>
+          {['Takeaway 1', 'Takeaway 2'].map(ta => (
+            <button 
+              key={ta} 
+              className={`nav-btn ${activeOrder === ta ? 'active' : ''}`}
+              onClick={() => setActiveOrder(ta)}
+            >
+              {ta} {orders[ta].status === 'Running' ? '🔥' : ''}
+            </button>
+          ))}
+        </div>
+
+        <div className="admin-nav">
+          <button className="nav-btn" style={{display: 'flex', alignItems: 'center', gap: '10px'}}><Package size={18}/> Inventory</button>
+          <button className="nav-btn" style={{display: 'flex', alignItems: 'center', gap: '10px'}}><DollarSign size={18}/> Expenses</button>
+          <button className="nav-btn" style={{display: 'flex', alignItems: 'center', gap: '10px'}}><FileText size={18}/> Reports</button>
         </div>
       </div>
 
-      {/* 4. Order Cart */}
-      <div className="cart-column">
-        <div style={{padding: '20px', borderBottom: '1px solid #eee'}}>
-          <h3>Table 4 <span style={{fontSize: '12px', color: '#888'}}>#00109</span></h3>
-          <div style={{display: 'flex', gap: '10px', marginTop: '15px'}}>
-             <button style={{flex: 1, padding: '8px', background: '#FF6B6B', color: 'white', borderRadius: '5px', border: 'none'}}>Dine in</button>
-             <button style={{flex: 1, padding: '8px', background: '#f0f0f0', borderRadius: '5px', border: 'none'}}>To go</button>
-             <button style={{flex: 1, padding: '8px', background: '#f0f0f0', borderRadius: '5px', border: 'none'}}>Delivery</button>
+      {/* 2. Middle Section - Order Entry & Menus */}
+      <div className="middle-section">
+        <div className="middle-content">
+          
+          {/* Current Order List & Kitchen Button */}
+          <div className="current-order-area">
+            <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#333' }}>
+              Current Order: {activeOrder}
+              <span style={{ fontSize: '14px', padding: '5px 12px', background: currentOrderData.status === 'Running' ? '#ffe0e0' : '#e0e7ff', borderRadius: '20px', color: currentOrderData.status === 'Running' ? '#ff6b6b' : '#4f46e5' }}>
+                Status: {currentOrderData.status}
+              </span>
+            </h2>
+
+            <div className="order-item-list">
+              {currentOrderData.items.length === 0 ? (
+                <p style={{color: '#888', fontStyle: 'italic', padding: '10px 0'}}>No items added yet. Click menu items below.</p>
+              ) : (
+                currentOrderData.items.map(item => (
+                  <div className="order-item-row" key={item.id}>
+                    <div style={{fontSize: '16px'}}>
+                      <strong style={{marginRight: '10px'}}>{item.name}</strong> 
+                      <span style={{color: '#888'}}>x {item.qty}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                      <span style={{fontWeight: 'bold', fontSize: '16px'}}>${(item.price * item.qty).toFixed(2)}</span>
+                      {/* Cancel/Delete Item Button */}
+                      <button className="cancel-btn" onClick={() => handleRemoveItem(item.id)} title="Cancel Item">
+                        <X size={16} strokeWidth={3} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Send to Kitchen Button */}
+            {currentOrderData.items.length > 0 && currentOrderData.status !== 'Running' && (
+              <button 
+                style={{ width: '100%', padding: '15px', background: '#ff6b6b', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                onClick={handleSendToKitchen}
+              >
+                <ChefHat size={20} /> Send to Kitchen (KOT)
+              </button>
+            )}
           </div>
+
+          {/* Menu Grid - Clicking these adds to the list above */}
+          <div className="menu-grid-area">
+            <h3 style={{marginBottom: '15px', color: '#555'}}>Menu Items</h3>
+            <div className="menu-grid">
+              {menuItems.map(item => (
+                <div className="menu-card" key={item.id} onClick={() => handleAddItem(item)}>
+                  <div style={{fontSize: '45px', marginBottom: '10px'}}>{item.icon}</div>
+                  <div style={{fontWeight: 'bold', color: '#333'}}>{item.name}</div>
+                  <div style={{color: '#ff6b6b', fontWeight: 'bold', marginTop: '5px'}}>${item.price.toFixed(2)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
 
-        <div style={{flex: 1, padding: '20px', overflowY: 'auto'}}>
-          {cart.map((item, index) => (
-            <div key={index} style={{display: 'flex', justifyContent: 'space-between', marginBottom: '15px'}}>
-              <div>
-                <strong>{item.name}</strong>
-                <div style={{fontSize: '12px', color: '#888'}}>x 1</div>
-              </div>
-              <strong>${item.price.toFixed(2)}</strong>
+        {/* Horizontal Running Orders Footer */}
+        <div className="running-orders-bar">
+          <div style={{fontWeight: 'bold', color: '#555', marginRight: '10px'}}>Running Tables:</div>
+          {runningOrders.length === 0 ? <span style={{color: '#888', fontSize: '14px'}}>None</span> : null}
+          
+          {runningOrders.map(ro => (
+            <div key={ro} className="running-badge" onClick={() => setActiveOrder(ro)}>
+              {ro}
             </div>
           ))}
-        </div>
-
-        <div style={{padding: '20px', borderTop: '1px solid #eee'}}>
-          <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '10px'}}>
-            <span>Subtotal</span>
-            <span>${cart.reduce((sum, item) => sum + parseFloat(item.price), 0).toFixed(2)}</span>
+          
+          <div style={{marginLeft: 'auto', fontWeight: 'bold', color: '#10b981', fontSize: '16px'}}>
+            Today's Income: $145.50
           </div>
-          <button style={{width: '100%', padding: '15px', background: '#FF6B6B', color: 'white', border: 'none', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer'}}>
-            Charge ${cart.reduce((sum, item) => sum + parseFloat(item.price), 0).toFixed(2)}
+        </div>
+      </div>
+
+      {/* 3. Right Sidebar - Static Bill / Receipt Form */}
+      <div className="right-sidebar">
+        <h2 style={{marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', color: '#333'}}><Receipt size={24}/> Bill View</h2>
+        
+        <div className="bill-receipt">
+          <div className="bill-header">
+            <h2>Nashta Restaurant</h2>
+            <p style={{fontSize: '12px', color: '#888'}}>123 Food Street, City</p>
+            <p style={{fontSize: '14px', fontWeight: 'bold', color: '#333', marginTop: '10px'}}>Order: {activeOrder}</p>
+          </div>
+
+          <div className="bill-items">
+            {currentOrderData.items.map(item => (
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '12px' }}>
+                <span>{item.qty}x {item.name}</span>
+                <span style={{fontWeight: '500'}}>${(item.price * item.qty).toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="bill-totals">
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '8px' }}>
+              <span>Subtotal</span>
+              <span>${subtotal.toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '8px', color: '#888' }}>
+              <span>Tax (5%)</span>
+              <span>${tax.toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '20px', fontWeight: 'bold', marginTop: '15px', paddingTop: '15px', borderTop: '2px solid #333' }}>
+              <span>Total</span>
+              <span>${total.toFixed(2)}</span>
+            </div>
+          </div>
+          
+          <button style={{marginTop: '20px', padding: '15px', background: '#22c55e', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', transition: '0.2s'}}>
+            Finalize & Print Bill
           </button>
         </div>
       </div>
