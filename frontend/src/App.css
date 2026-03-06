@@ -148,3 +148,50 @@
 .bill-header { text-align: center; border-bottom: 1px dashed #ccc; padding-bottom: 15px; margin-bottom: 15px; }
 .bill-items { flex: 1; overflow-y: auto; }
 .bill-totals { border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 15px; }
+
+
+
+
+/* --- NEW STYLES FOR DYNAMIC SIDEBAR --- */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.add-btn {
+  background: #e0e7ff;
+  color: #4f46e5;
+  border: none;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.add-btn:hover {
+  background: #c7d2fe;
+}
+
+/* Makes the lists scrollable if you add too many tables */
+.scrollable-list {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 250px; /* Adjust this height if needed */
+  padding-right: 5px;
+}
+
+/* Custom scrollbar to look nice */
+.scrollable-list::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollable-list::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
