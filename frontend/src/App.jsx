@@ -1,25 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { FileText, X, ChefHat, Receipt, Package, Plus } from 'lucide-react'; // Added Plus icon
+import { FileText, X, ChefHat, Receipt, Package, Plus } from 'lucide-react';
 import axios from 'axios';
 import { usePDF } from 'react-to-pdf';
 
 function App() {
   const [activeOrder, setActiveOrder] = useState('Table 1');
   const [menuItems, setMenuItems] = useState([]);
-  
-  // New State for Dynamic Income
   const [dailyIncome, setDailyIncome] = useState(0);
   
   const { toPDF, targetRef } = usePDF({ filename: `${activeOrder}_Receipt.pdf` });
 
   const [orders, setOrders] = useState({
     'Table 1': { type: 'Dine-In', items: [], status: 'Draft' },
-    'Table 2': { type: 'Dine-In', items: [], status: 'Draft' },
-    'Table 3': { type: 'Dine-In', items: [], status: 'Draft' },
-    'Table 4': { type: 'Dine-In', items: [], status: 'Draft' },
-    'Takeaway 1': { type: 'Takeaway', items: [], status: 'Draft' },
-    'Takeaway 2': { type: 'Takeaway', items: [], status: 'Draft' },
   });
 
   useEffect(() => {
@@ -36,70 +29,141 @@ function App() {
       .catch(error => console.error("Backend Error:", error));
   }, []);
 
-  // --- NEW FUNCTIONS FOR DYNAMIC TABLES ---
+  // --- AGGRESSIVE CLEANUP: Tab Switching ---
+  const handleTabClick = (tabName) => {
+    if (tabName === activeOrder) return;
+    
+    setOrders(prev => {
+      const newOrders = { ...prev };
+      // Delete ALL empty tables from memory instantly (except the one we are moving to)
+      Object.keys(newOrders).forEach(key => {
+        if (newOrders[key].items.length === 0 && key !== tabName) {
+          delete newOrders[key];
+        }
+      });
+      return newOrders;
+    });
+    
+    setActiveOrder(tabName);
+  };
+
+  // --- AGGRESSIVE CLEANUP: Add Dine-In ---
   const handleAddTable = () => {
-    const dineInKeys = Object.keys(orders).filter(k => orders[k].type === 'Dine-In');
-    const newTableName = `Table ${dineInKeys.length + 1}`;
-    setOrders(prev => ({
-      ...prev,
-      [newTableName]: { type: 'Dine-In', items: [], status: 'Draft' }
-    }));
-    setActiveOrder(newTableName);
+    setOrders(prev => {
+      const newOrders = { ...prev };
+      
+      // Destroy all hidden empty tables so they stop stealing numbers!
+      Object.keys(newOrders).forEach(key => {
+        if (newOrders[key].items.length === 0) {
+          delete newOrders[key];
+        }
+      });
+      
+      let nextNum = 1;
+      while(newOrders[`Table ${nextNum}`]) nextNum++;
+      
+      const newName = `Table ${nextNum}`;
+      newOrders[newName] = { type: 'Dine-In', items: [], status: 'Draft' };
+      setActiveOrder(newName);
+      return newOrders;
+    });
   };
 
+  // --- AGGRESSIVE CLEANUP: Add Takeaway ---
   const handleAddTakeaway = () => {
-    const takeawayKeys = Object.keys(orders).filter(k => orders[k].type === 'Takeaway');
-    const newTakeawayName = `Takeaway ${takeawayKeys.length + 1}`;
-    setOrders(prev => ({
-      ...prev,
-      [newTakeawayName]: { type: 'Takeaway', items: [], status: 'Draft' }
-    }));
-    setActiveOrder(newTakeawayName);
+    setOrders(prev => {
+      const newOrders = { ...prev };
+      
+      // Destroy all hidden empty tables/takeaways
+      Object.keys(newOrders).forEach(key => {
+        if (newOrders[key].items.length === 0) {
+          delete newOrders[key];
+        }
+      });
+      
+      let nextNum = 1;
+      while(newOrders[`Takeaway ${nextNum}`]) nextNum++;
+      
+      const newName = `Takeaway ${nextNum}`;
+      newOrders[newName] = { type: 'Takeaway', items: [], status: 'Draft' };
+      setActiveOrder(newName);
+      return newOrders;
+    });
   };
 
-  // --- ITEM MANAGEMENT ---
   const handleAddItem = (item) => {
     setOrders(prev => {
-      const currentOrder = prev[activeOrder];
+      const currentOrder = prev[activeOrder] || { type: 'Dine-In', items: [], status: 'Draft' };
       const existingItem = currentOrder.items.find(i => i.id === item.id);
+      
       let newItems = existingItem 
         ? currentOrder.items.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i)
         : [...currentOrder.items, { ...item, qty: 1 }];
-      return { ...prev, [activeOrder]: { ...currentOrder, items: newItems } };
+
+      const newStatus = newItems.length > 0 ? 'Running' : 'Draft';
+      
+      return { 
+        ...prev, 
+        [activeOrder]: { ...currentOrder, items: newItems, status: newStatus } 
+      };
     });
   };
 
   const handleRemoveItem = (itemId) => {
-    setOrders(prev => ({
-      ...prev,
-      [activeOrder]: { ...prev[activeOrder], items: prev[activeOrder].items.filter(i => i.id !== itemId) }
-    }));
+    const userConfirmed = window.confirm("Are you sure you want to delete this item?");
+    if (!userConfirmed) return;
+
+    setOrders(prev => {
+      const currentOrder = prev[activeOrder];
+      const newItems = currentOrder.items.filter(i => i.id !== itemId);
+      
+      if (newItems.length === 0) {
+        const remainingOrders = { ...prev };
+        delete remainingOrders[activeOrder]; 
+        
+        const remainingKeys = Object.keys(remainingOrders);
+        const nextActive = remainingKeys.length > 0 ? remainingKeys[0] : 'Table 1';
+        
+        if (!remainingOrders[nextActive]) {
+           remainingOrders['Table 1'] = { type: 'Dine-In', items: [], status: 'Draft' };
+        }
+        
+        setActiveOrder(nextActive);
+        return remainingOrders;
+      }
+
+      const newStatus = newItems.length > 0 ? 'Running' : 'Draft';
+      return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: newStatus } };
+    });
   };
 
-  // Calculations
-  const currentOrderData = orders[activeOrder];
-  const subtotal = currentOrderData ? currentOrderData.items.reduce((sum, item) => sum + (item.price * item.qty), 0) : 0;
+  const handleFinalizeBill = () => {
+    if (currentOrderData.items.length === 0) return;
+    toPDF();
+    setDailyIncome(prev => prev + total);
+    setOrders(prev => {
+        const remainingOrders = { ...prev };
+        delete remainingOrders[activeOrder];
+        const remainingKeys = Object.keys(remainingOrders);
+        const nextActive = remainingKeys.length > 0 ? remainingKeys[0] : 'Table 1';
+        if (!remainingOrders[nextActive]) remainingOrders['Table 1'] = { type: 'Dine-In', items: [], status: 'Draft' };
+        setActiveOrder(nextActive);
+        return remainingOrders;
+    });
+  };
+
+  const currentOrderData = orders[activeOrder] || { items: [], status: 'Draft' };
+  const subtotal = currentOrderData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
   const tax = subtotal * 0.05;
   const total = subtotal + tax;
-  const runningOrders = Object.entries(orders).filter(([id, data]) => data.status === 'Running').map(([id]) => id);
 
-  // --- NEW FUNCTION TO FINALIZE BILL ---
-  const handleFinalizeBill = () => {
-    if (currentOrderData.items.length === 0) return; // Prevent finalizing empty bills
-    
-    toPDF(); // 1. Download PDF
-    setDailyIncome(prev => prev + total); // 2. Add to total income
-    
-    // 3. Clear the table items and set status back to draft
-    setOrders(prev => ({
-      ...prev,
-      [activeOrder]: { ...prev[activeOrder], items: [], status: 'Draft' }
-    }));
-  };
-
-  // Helper arrays for rendering the sidebar
-  const dineInTables = Object.keys(orders).filter(k => orders[k].type === 'Dine-In');
-  const takeawayOrdersList = Object.keys(orders).filter(k => orders[k].type === 'Takeaway');
+  const visibleDineIn = Object.keys(orders).filter(k => 
+    orders[k].type === 'Dine-In' && (orders[k].items.length > 0 || activeOrder === k)
+  );
+  
+  const visibleTakeaway = Object.keys(orders).filter(k => 
+    orders[k].type === 'Takeaway' && (orders[k].items.length > 0 || activeOrder === k)
+  );
 
   return (
     <div className="app-container">
@@ -107,31 +171,51 @@ function App() {
       <div className="left-sidebar">
         <div className="logo-area">Nashta POS</div>
         
-        {/* Dynamic Dine-In Section */}
         <div className="nav-section">
           <div className="section-header">
             <h3>Dine-In</h3>
-            <button className="add-btn" onClick={handleAddTable} title="Add new Table"><Plus size={16}/></button>
+            <button className="add-btn" onClick={handleAddTable}><Plus size={16}/></button>
           </div>
           <div className="scrollable-list">
-            {dineInTables.map(table => (
-              <button key={table} className={`nav-btn ${activeOrder === table ? 'active' : ''}`} onClick={() => setActiveOrder(table)}>
-                {table} {orders[table].status === 'Running' ? '🔥' : ''}
+            {visibleDineIn.map(table => (
+              <button 
+                key={table} 
+                className={`nav-btn ${activeOrder === table ? 'active' : ''}`} 
+                onClick={() => handleTabClick(table)}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <span>{table}</span>
+                  {orders[table].items.length > 0 && (
+                    <span style={{ fontSize: '11px', fontWeight: 'bold', background: activeOrder === table ? 'rgba(255,255,255,0.3)' : '#ffe0e0', color: activeOrder === table ? 'white' : '#ff6b6b', padding: '3px 8px', borderRadius: '12px' }}>
+                      {orders[table].status}
+                    </span>
+                  )}
+                </div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Dynamic Takeaway Section */}
         <div className="nav-section">
           <div className="section-header">
             <h3>Takeaway</h3>
-            <button className="add-btn" onClick={handleAddTakeaway} title="Add new Takeaway"><Plus size={16}/></button>
+            <button className="add-btn" onClick={handleAddTakeaway}><Plus size={16}/></button>
           </div>
           <div className="scrollable-list">
-            {takeawayOrdersList.map(ta => (
-              <button key={ta} className={`nav-btn ${activeOrder === ta ? 'active' : ''}`} onClick={() => setActiveOrder(ta)}>
-                {ta} {orders[ta].status === 'Running' ? '🔥' : ''}
+            {visibleTakeaway.map(ta => (
+              <button 
+                key={ta} 
+                className={`nav-btn ${activeOrder === ta ? 'active' : ''}`} 
+                onClick={() => handleTabClick(ta)}
+              >
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <span>{ta}</span>
+                  {orders[ta].items.length > 0 && (
+                    <span style={{ fontSize: '11px', fontWeight: 'bold', background: activeOrder === ta ? 'rgba(255,255,255,0.3)' : '#ffe0e0', color: activeOrder === ta ? 'white' : '#ff6b6b', padding: '3px 8px', borderRadius: '12px' }}>
+                      {orders[ta].status}
+                    </span>
+                  )}
+                </div>
               </button>
             ))}
           </div>
@@ -147,27 +231,35 @@ function App() {
       <div className="middle-section">
         <div className="middle-content">
           <div className="current-order-area">
-            <h2>{activeOrder} <span className="status-badge">{currentOrderData?.status}</span></h2>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              {activeOrder} - 
+              <span className="status-badge" style={{ fontSize: '14px', textTransform: 'uppercase', background: currentOrderData.status === 'Running' ? '#ffe0e0' : '#e0e7ff', color: currentOrderData.status === 'Running' ? '#ff6b6b' : '#4f46e5' }}>
+                {currentOrderData.status}
+              </span>
+            </h2>
+            
             <div className="order-item-list">
-              {currentOrderData?.items.length === 0 ? (
-                 <p style={{color: '#888', fontStyle: 'italic', padding: '10px 0'}}>No items added yet.</p>
+              {currentOrderData.items.length === 0 ? (
+                 <p style={{color: '#888', fontStyle: 'italic', padding: '10px 0'}}>Empty. Add items below.</p>
               ) : (
-                currentOrderData?.items.map(item => (
+                currentOrderData.items.map(item => (
                   <div className="order-item-row" key={item.id}>
-                    <span>{item.name} x {item.qty}</span>
+                    <span>{item.qty}x {item.name}</span>
                     <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
                       <strong>PKR {(item.price * item.qty).toFixed(2)}</strong>
-                      <button className="cancel-btn" onClick={() => handleRemoveItem(item.id)}><X size={14}/></button>
+                      <button className="cancel-btn" onClick={() => handleRemoveItem(item.id)} title="Cancel Item">
+                        <X size={14}/>
+                      </button>
                     </div>
                   </div>
                 ))
               )}
             </div>
-            {/* Send to Kitchen button */}
-            {currentOrderData?.items.length > 0 && currentOrderData?.status !== 'Running' && (
+            
+            {currentOrderData.items.length > 0 && currentOrderData.status !== 'Sent' && (
               <button 
                 style={{ width: '100%', padding: '12px', background: '#ff6b6b', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '10px' }}
-                onClick={() => setOrders(prev => ({...prev, [activeOrder]: { ...prev[activeOrder], status: 'Running' }}))}
+                onClick={() => setOrders(prev => ({...prev, [activeOrder]: { ...prev[activeOrder], status: 'Sent' }}))}
               >
                 <ChefHat size={18} /> Send to Kitchen (KOT)
               </button>
@@ -186,8 +278,6 @@ function App() {
         </div>
         
         <div className="running-orders-bar">
-          <strong>Running:</strong> {runningOrders.join(', ') || 'None'}
-          {/* Dynamic Income Display */}
           <div style={{marginLeft:'auto', color:'#10b981', fontWeight: 'bold', fontSize: '18px'}}>
             Today's Income: PKR {dailyIncome.toFixed(2)}
           </div>
@@ -205,7 +295,7 @@ function App() {
             <p style={{marginTop: '10px', fontWeight: 'bold'}}>Order: {activeOrder}</p>
           </div>
           <div className="bill-items">
-            {currentOrderData?.items.map(item => (
+            {currentOrderData.items.map(item => (
               <div key={item.id} className="bill-row">
                 <span>{item.qty}x {item.name}</span>
                 <span>PKR {(item.price * item.qty).toFixed(2)}</span>
@@ -219,12 +309,11 @@ function App() {
           </div>
         </div>
 
-        {/* This triggers the new handleFinalizeBill function */}
         <button 
           className="print-btn" 
           onClick={handleFinalizeBill}
-          style={{ opacity: currentOrderData?.items.length === 0 ? 0.5 : 1 }}
-          disabled={currentOrderData?.items.length === 0}
+          style={{ opacity: currentOrderData.items.length === 0 ? 0.5 : 1 }}
+          disabled={currentOrderData.items.length === 0}
         >
           Finalize & Print Bill (PDF)
         </button>
