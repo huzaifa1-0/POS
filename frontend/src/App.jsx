@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { FileText, X, ChefHat, Receipt, Package, Plus, Printer } from 'lucide-react';
+import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote } from 'lucide-react'; // Added icons
 import axios from 'axios';
 import { usePDF } from 'react-to-pdf';
 
 function App() {
   const [activeOrder, setActiveOrder] = useState('Table 1');
   const [menuItems, setMenuItems] = useState([]);
+  
+  // --- NEW: Income Breakdown States ---
   const [dailyIncome, setDailyIncome] = useState(0);
+  const [cashIncome, setCashIncome] = useState(0);
+  const [onlineIncome, setOnlineIncome] = useState(0);
+  
   const [completedOrders, setCompletedOrders] = useState([]);
   const [itemToDelete, setItemToDelete] = useState(null); 
   const { toPDF, targetRef } = usePDF({ filename: `${activeOrder}_Receipt.pdf` });
 
+  // Note: Added 'paymentMethod' to the default state
   const [orders, setOrders] = useState({
-    'Table 1': { type: 'Dine-In', items: [], status: 'Draft' },
+    'Table 1': { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' },
   });
 
   useEffect(() => {
@@ -53,7 +59,7 @@ function App() {
       let nextNum = 1;
       while(newOrders[`Table ${nextNum}`]) nextNum++;
       const newName = `Table ${nextNum}`;
-      newOrders[newName] = { type: 'Dine-In', items: [], status: 'Draft' };
+      newOrders[newName] = { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' };
       setActiveOrder(newName);
       return newOrders;
     });
@@ -68,7 +74,7 @@ function App() {
       let nextNum = 1;
       while(newOrders[`Takeaway ${nextNum}`]) nextNum++;
       const newName = `Takeaway ${nextNum}`;
-      newOrders[newName] = { type: 'Takeaway', items: [], status: 'Draft' };
+      newOrders[newName] = { type: 'Takeaway', items: [], status: 'Draft', paymentMethod: 'Cash' };
       setActiveOrder(newName);
       return newOrders;
     });
@@ -76,14 +82,13 @@ function App() {
 
   const handleAddItem = (item) => {
     setOrders(prev => {
-      const currentOrder = prev[activeOrder] || { type: 'Dine-In', items: [], status: 'Draft' };
+      const currentOrder = prev[activeOrder] || { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' };
       const existingItem = currentOrder.items.find(i => i.id === item.id);
       
       let newItems = existingItem 
         ? currentOrder.items.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i)
         : [...currentOrder.items, { ...item, qty: 1 }];
 
-      // If status was already Sent, keep it Sent. Otherwise, Running.
       const newStatus = currentOrder.status === 'Sent' ? 'Sent' : 'Running';
       return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: newStatus } };
     });
@@ -102,7 +107,7 @@ function App() {
         delete remainingOrders[activeOrder]; 
         const remainingKeys = Object.keys(remainingOrders);
         const nextActive = remainingKeys.length > 0 ? remainingKeys[0] : 'Table 1';
-        if (!remainingOrders[nextActive]) remainingOrders['Table 1'] = { type: 'Dine-In', items: [], status: 'Draft' };
+        if (!remainingOrders[nextActive]) remainingOrders['Table 1'] = { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' };
         setActiveOrder(nextActive);
         return remainingOrders;
       }
@@ -115,23 +120,33 @@ function App() {
   const handleFinalizeBill = () => {
     if (currentOrderData.items.length === 0) return;
     toPDF();
+    
+    // --- UPDATED: Distribute income based on selected payment method ---
+    const method = currentOrderData.paymentMethod || 'Cash';
+    if (method === 'Cash') {
+      setCashIncome(prev => prev + total);
+    } else {
+      setOnlineIncome(prev => prev + total);
+    }
     setDailyIncome(prev => prev + total);
+
     setCompletedOrders(prev => [
-      { id: Date.now(), name: activeOrder, type: currentOrderData.type, total: total },
+      { id: Date.now(), name: activeOrder, type: currentOrderData.type, total: total, method: method },
       ...prev
     ]);
+
     setOrders(prev => {
         const remainingOrders = { ...prev };
         delete remainingOrders[activeOrder];
         const remainingKeys = Object.keys(remainingOrders);
         const nextActive = remainingKeys.length > 0 ? remainingKeys[0] : 'Table 1';
-        if (!remainingOrders[nextActive]) remainingOrders['Table 1'] = { type: 'Dine-In', items: [], status: 'Draft' };
+        if (!remainingOrders[nextActive]) remainingOrders['Table 1'] = { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' };
         setActiveOrder(nextActive);
         return remainingOrders;
     });
   };
 
-  const currentOrderData = orders[activeOrder] || { items: [], status: 'Draft', type: 'Dine-In' };
+  const currentOrderData = orders[activeOrder] || { items: [], status: 'Draft', type: 'Dine-In', paymentMethod: 'Cash' };
   const subtotal = currentOrderData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
   const tax = subtotal * 0.05;
   const total = subtotal + tax;
@@ -139,12 +154,11 @@ function App() {
   const visibleDineIn = Object.keys(orders).filter(k => orders[k].type === 'Dine-In' && (orders[k].items.length > 0 || activeOrder === k));
   const visibleTakeaway = Object.keys(orders).filter(k => orders[k].type === 'Takeaway' && (orders[k].items.length > 0 || activeOrder === k));
 
-  // --- NEW: Helper Function for Badge Colors ---
   const getBadgeStyle = (status, isActive) => {
     if (status === 'Sent') {
-      return { background: isActive ? 'rgba(255,255,255,0.4)' : '#dcfce3', color: isActive ? 'white' : '#16a34a' }; // Green
+      return { background: isActive ? 'rgba(255,255,255,0.4)' : '#dcfce3', color: isActive ? 'white' : '#16a34a' }; 
     }
-    return { background: isActive ? 'rgba(255,255,255,0.4)' : '#ffe0e0', color: isActive ? 'white' : '#ff6b6b' }; // Red
+    return { background: isActive ? 'rgba(255,255,255,0.4)' : '#ffe0e0', color: isActive ? 'white' : '#ff6b6b' }; 
   };
 
   return (
@@ -167,7 +181,6 @@ function App() {
       <div className="left-sidebar">
         <div className="logo-area">Nashta POS</div>
         
-        {/* Dine-In Section */}
         <div className="nav-section">
           <div className="section-header">
             <h3>Dine-In</h3>
@@ -189,7 +202,6 @@ function App() {
           </div>
         </div>
 
-        {/* Takeaway Section */}
         <div className="nav-section">
           <div className="section-header">
             <h3>Takeaway</h3>
@@ -211,7 +223,6 @@ function App() {
           </div>
         </div>
 
-        {/* Completed Section */}
         <div className="nav-section">
           <div className="section-header">
             <h3>Completed</h3>
@@ -227,7 +238,7 @@ function App() {
                 <div key={order.id} style={{ padding: '10px 15px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#334155' }}>{order.name}</div>
-                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>{order.type}</div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>{order.type} • {order.method}</div>
                   </div>
                   <strong style={{ fontSize: '13px', color: '#10b981' }}>PKR {order.total.toFixed(0)}</strong>
                 </div>
@@ -268,7 +279,6 @@ function App() {
               )}
             </div>
             
-            {/* Show SEND Button if NOT Sent yet */}
             {currentOrderData.items.length > 0 && currentOrderData.status !== 'Sent' && (
               <button 
                 style={{ width: '100%', padding: '12px', background: '#ff6b6b', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '10px' }}
@@ -278,7 +288,6 @@ function App() {
               </button>
             )}
 
-            {/* Show COMPLETED TEXT if Sent */}
             {currentOrderData.status === 'Sent' && (
               <div style={{ width: '100%', padding: '12px', background: '#f0fdf4', color: '#16a34a', border: '1px solid #dcfce3', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '10px' }}>
                 ✅ Sent to Kitchen (Completed)
@@ -290,10 +299,10 @@ function App() {
             {menuItems.map(item => (
               <div className="menu-card" key={item.id} onClick={() => handleAddItem(item)}>
                 {item.icon ? (
-  <img src={item.icon} alt={item.name} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
-) : (
-  <div style={{fontSize: '40px'}}>🍽️</div>
-)}
+                  <img src={item.icon} alt={item.name} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', marginBottom: '10px' }} />
+                ) : (
+                  <div style={{fontSize: '40px', marginBottom: '10px'}}>🍽️</div>
+                )}
                 <div>{item.name}</div>
                 <div style={{color:'#ff6b6b'}}>PKR {item.price.toFixed(2)}</div>
               </div>
@@ -302,9 +311,18 @@ function App() {
         </div>
         
         <div className="running-orders-bar">
-          <div style={{marginLeft:'auto', color:'#10b981', fontWeight: 'bold', fontSize: '18px'}}>
-            Today's Income: PKR {dailyIncome.toFixed(2)}
+          
+          {/* --- NEW: Detailed Income Bar --- */}
+          <div style={{marginLeft:'auto', display: 'flex', alignItems: 'center', gap: '20px'}}>
+            <div style={{ display: 'flex', gap: '20px', fontSize: '15px', fontWeight: '600', color: '#64748b', borderRight: '2px solid #e2e8f0', paddingRight: '20px' }}>
+              <span style={{display: 'flex', alignItems: 'center', gap: '5px'}}><Banknote size={18} color="#22c55e"/> Cash: PKR {cashIncome.toFixed(0)}</span>
+              <span style={{display: 'flex', alignItems: 'center', gap: '5px'}}><CreditCard size={18} color="#3b82f6"/> Online: PKR {onlineIncome.toFixed(0)}</span>
+            </div>
+            <div style={{color:'#10b981', fontWeight: 'bold', fontSize: '20px'}}>
+              Total Income: PKR {dailyIncome.toFixed(0)}
+            </div>
           </div>
+          
         </div>
       </div>
 
@@ -330,6 +348,38 @@ function App() {
             <div className="bill-row"><span>Subtotal</span><span>PKR {subtotal.toFixed(2)}</span></div>
             <div className="bill-row" style={{color: '#888'}}><span>Tax (5%)</span><span>PKR {tax.toFixed(2)}</span></div>
             <div className="bill-row total-row"><span>Total</span><span>PKR {total.toFixed(2)}</span></div>
+            
+            {/* --- NEW: Printed Payment Method Line --- */}
+            <div className="bill-row" style={{ color: '#64748b', fontSize: '13px', marginTop: '12px', borderTop: '1px dashed #ccc', paddingTop: '12px', fontWeight: 'bold' }}>
+              <span>Payment Method</span>
+              <span>{currentOrderData.paymentMethod || 'Cash'}</span>
+            </div>
+
+          </div>
+        </div>
+
+        {/* --- NEW: Payment Selector (Does not print on the PDF) --- */}
+        <div style={{ marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+          <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '10px' }}>Select Payment:</span>
+          <div style={{ display: 'flex', gap: '20px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '15px', fontWeight: '600', color: '#334155' }}>
+              <input 
+                type="radio" 
+                name="payment" 
+                value="Cash" 
+                checked={(currentOrderData.paymentMethod || 'Cash') === 'Cash'}
+                onChange={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Cash'}}))}
+              /> 💵 Cash
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '15px', fontWeight: '600', color: '#334155' }}>
+              <input 
+                type="radio" 
+                name="payment" 
+                value="Online" 
+                checked={currentOrderData.paymentMethod === 'Online'}
+                onChange={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Online'}}))}
+              /> 💳 Online
+            </label>
           </div>
         </div>
 
