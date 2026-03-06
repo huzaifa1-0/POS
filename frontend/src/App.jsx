@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './App.css';
 import { FileText, X, ChefHat, Receipt, Package, DollarSign } from 'lucide-react';
+import axios from 'axios';
 
 function App() {
   // This state tracks which table is currently selected on the screen
@@ -16,14 +17,28 @@ function App() {
     'Takeaway 2': { type: 'Takeaway', items: [], status: 'Draft' },
   });
 
-  const menuItems = [
-    { id: 1, name: 'Burger', price: 8.50, icon: '🍔' },
-    { id: 2, name: 'Fries', price: 3.00, icon: '🍟' },
-    { id: 3, name: 'Noodles', price: 12.00, icon: '🍜' },
-    { id: 4, name: 'Pizza', price: 15.00, icon: '🍕' },
-    { id: 5, name: 'Coffee', price: 4.50, icon: '☕' },
-    { id: 6, name: 'Soup', price: 6.00, icon: '🥣' },
-  ];
+  // Change menuItems to a state variable
+  const [menuItems, setMenuItems] = useState([]);
+
+  // Fetch the actual data from Django when the app loads
+  useEffect(() => {
+    axios.get('http://127.0.0.1:8000/api/menu-items/')
+      .then(response => {
+        // Map over the Django data to format it for our React UI
+        const liveItems = response.data.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price), // Crucial: Convert Django string to number
+          icon: item.image_url || '🍽️' // Use the image_url from Django, or a default plate icon
+        }));
+        setMenuItems(liveItems);
+      })
+      .catch(error => {
+        console.error("Error fetching from Django:", error);
+        // Fallback mock data if backend is off
+        setMenuItems([{ id: 999, name: 'Backend Offline', price: 0, icon: '⚠️' }]);
+      });
+  }, []);
 
   // Function to add a clicked item to the currently active table
   const handleAddItem = (item) => {
