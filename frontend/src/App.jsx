@@ -23,7 +23,7 @@ function App() {
           id: item.id,
           name: item.name,
           price: parseFloat(item.price),
-          icon: item.image_url || '🍽️'
+          icon: item.image || null
         }));
         setMenuItems(liveItems);
       })
@@ -289,7 +289,11 @@ function App() {
           <div className="menu-grid">
             {menuItems.map(item => (
               <div className="menu-card" key={item.id} onClick={() => handleAddItem(item)}>
-                <div style={{fontSize: '40px'}}>{item.icon}</div>
+                {item.icon ? (
+  <img src={item.icon} alt={item.name} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
+) : (
+  <div style={{fontSize: '40px'}}>🍽️</div>
+)}
                 <div>{item.name}</div>
                 <div style={{color:'#ff6b6b'}}>PKR {item.price.toFixed(2)}</div>
               </div>
