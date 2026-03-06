@@ -149,7 +149,7 @@ function App() {
                       <span style={{color: '#888'}}>x {item.qty}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                      <span style={{fontWeight: 'bold', fontSize: '16px'}}>${(item.price * item.qty).toFixed(2)}</span>
+                      <span style={{fontWeight: 'bold', fontSize: '16px'}}>PKR {(item.price * item.qty).toFixed(2)}</span>
                       {/* Cancel/Delete Item Button */}
                       <button className="cancel-btn" onClick={() => handleRemoveItem(item.id)} title="Cancel Item">
                         <X size={16} strokeWidth={3} />
@@ -179,7 +179,7 @@ function App() {
                 <div className="menu-card" key={item.id} onClick={() => handleAddItem(item)}>
                   <div style={{fontSize: '45px', marginBottom: '10px'}}>{item.icon}</div>
                   <div style={{fontWeight: 'bold', color: '#333'}}>{item.name}</div>
-                  <div style={{color: '#ff6b6b', fontWeight: 'bold', marginTop: '5px'}}>${item.price.toFixed(2)}</div>
+                  <div style={{color: '#ff6b6b', fontWeight: 'bold', marginTop: '5px'}}>PKR {item.price.toFixed(2)}</div>
                 </div>
               ))}
             </div>
@@ -219,7 +219,7 @@ function App() {
             {currentOrderData.items.map(item => (
               <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '12px' }}>
                 <span>{item.qty}x {item.name}</span>
-                <span style={{fontWeight: '500'}}>${(item.price * item.qty).toFixed(2)}</span>
+                <span style={{fontWeight: '500'}}>PKR {(item.price * item.qty).toFixed(2)}</span>
               </div>
             ))}
           </div>
@@ -227,15 +227,15 @@ function App() {
           <div className="bill-totals">
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '8px' }}>
               <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>PKR {subtotal.toFixed(2)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '8px', color: '#888' }}>
               <span>Tax (5%)</span>
-              <span>${tax.toFixed(2)}</span>
+              <span>PKR {tax.toFixed(2)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '20px', fontWeight: 'bold', marginTop: '15px', paddingTop: '15px', borderTop: '2px solid #333' }}>
               <span>Total</span>
-              <span>${total.toFixed(2)}</span>
+              <span>PKR {total.toFixed(2)}</span>
             </div>
           </div>
           
