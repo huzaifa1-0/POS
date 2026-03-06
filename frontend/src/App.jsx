@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import { FileText, X, ChefHat, Receipt, Package, DollarSign } from 'lucide-react';
 import axios from 'axios';
+import { usePDF } from 'react-to-pdf';
 
 function App() {
   // This state tracks which table is currently selected on the screen
@@ -19,6 +20,7 @@ function App() {
 
   // Change menuItems to a state variable
   const [menuItems, setMenuItems] = useState([]);
+  const { toPDF, targetRef } = usePDF({ filename: `${activeOrder}_Receipt.pdf` });
 
   // Fetch the actual data from Django when the app loads
   useEffect(() => {
@@ -208,7 +210,7 @@ function App() {
       <div className="right-sidebar">
         <h2 style={{marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', color: '#333'}}><Receipt size={24}/> Bill View</h2>
         
-        <div className="bill-receipt">
+        <div className="bill-receipt" ref={targetRef}>
           <div className="bill-header">
             <h2>Nashta Restaurant</h2>
             <p style={{fontSize: '12px', color: '#888'}}>123 Food Street, City</p>
@@ -239,7 +241,8 @@ function App() {
             </div>
           </div>
           
-          <button style={{marginTop: '20px', padding: '15px', background: '#22c55e', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', transition: '0.2s'}}>
+          <button style={{marginTop: '20px', padding: '15px', background: '#22c55e', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', transition: '0.2s'}}
+            onClick={toPDF}>
             Finalize & Print Bill
           </button>
         </div>
