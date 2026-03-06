@@ -57,7 +57,7 @@ function App() {
             <div className="menu-card" key={item.id} onClick={() => addToCart(item)}>
               <div style={{fontSize: '50px'}}>{item.image}</div>
               <h4 style={{marginTop: '10px'}}>{item.name}</h4>
-              <p style={{color: '#FF6B6B', fontWeight: 'bold'}}>${item.price.toFixed(2)}</p>
+              <p style={{color: '#FF6B6B', fontWeight: 'bold'}}>${parseFloat(item.price).toFixed(2)}</p>
             </div>
           ))}
         </div>
@@ -89,10 +89,10 @@ function App() {
         <div style={{padding: '20px', borderTop: '1px solid #eee'}}>
           <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '10px'}}>
             <span>Subtotal</span>
-            <span>${cart.reduce((sum, item) => sum + item.price, 0).toFixed(2)}</span>
+            <span>${cart.reduce((sum, item) => sum + parseFloat(item.price), 0).toFixed(2)}</span>
           </div>
           <button style={{width: '100%', padding: '15px', background: '#FF6B6B', color: 'white', border: 'none', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer'}}>
-            Charge ${cart.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
+            Charge ${cart.reduce((sum, item) => sum + parseFloat(item.price), 0).toFixed(2)}
           </button>
         </div>
       </div>
