@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { FileText, X, ChefHat, Receipt, Package, Plus } from 'lucide-react';
+import { FileText, X, ChefHat, Receipt, Package, Plus, Printer } from 'lucide-react';
 import axios from 'axios';
 import { usePDF } from 'react-to-pdf';
 
@@ -8,10 +8,7 @@ function App() {
   const [activeOrder, setActiveOrder] = useState('Table 1');
   const [menuItems, setMenuItems] = useState([]);
   const [dailyIncome, setDailyIncome] = useState(0);
-  
-  // --- NEW STATE: Stores completed orders ---
   const [completedOrders, setCompletedOrders] = useState([]);
-  
   const [itemToDelete, setItemToDelete] = useState(null); 
   const { toPDF, targetRef } = usePDF({ filename: `${activeOrder}_Receipt.pdf` });
 
@@ -35,7 +32,6 @@ function App() {
 
   const handleTabClick = (tabName) => {
     if (tabName === activeOrder) return;
-    
     setOrders(prev => {
       const newOrders = { ...prev };
       Object.keys(newOrders).forEach(key => {
@@ -52,9 +48,7 @@ function App() {
     setOrders(prev => {
       const newOrders = { ...prev };
       Object.keys(newOrders).forEach(key => {
-        if (newOrders[key].items.length === 0) {
-          delete newOrders[key];
-        }
+        if (newOrders[key].items.length === 0) delete newOrders[key];
       });
       let nextNum = 1;
       while(newOrders[`Table ${nextNum}`]) nextNum++;
@@ -69,9 +63,7 @@ function App() {
     setOrders(prev => {
       const newOrders = { ...prev };
       Object.keys(newOrders).forEach(key => {
-        if (newOrders[key].items.length === 0) {
-          delete newOrders[key];
-        }
+        if (newOrders[key].items.length === 0) delete newOrders[key];
       });
       let nextNum = 1;
       while(newOrders[`Takeaway ${nextNum}`]) nextNum++;
@@ -91,18 +83,16 @@ function App() {
         ? currentOrder.items.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i)
         : [...currentOrder.items, { ...item, qty: 1 }];
 
-      const newStatus = newItems.length > 0 ? 'Running' : 'Draft';
+      // If status was already Sent, keep it Sent. Otherwise, Running.
+      const newStatus = currentOrder.status === 'Sent' ? 'Sent' : 'Running';
       return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: newStatus } };
     });
   };
 
-  const handleRemoveClick = (itemId) => {
-    setItemToDelete(itemId);
-  };
+  const handleRemoveClick = (itemId) => setItemToDelete(itemId);
 
   const executeRemoveItem = () => {
     if (!itemToDelete) return;
-
     setOrders(prev => {
       const currentOrder = prev[activeOrder];
       const newItems = currentOrder.items.filter(i => i.id !== itemToDelete);
@@ -112,38 +102,24 @@ function App() {
         delete remainingOrders[activeOrder]; 
         const remainingKeys = Object.keys(remainingOrders);
         const nextActive = remainingKeys.length > 0 ? remainingKeys[0] : 'Table 1';
-        if (!remainingOrders[nextActive]) {
-           remainingOrders['Table 1'] = { type: 'Dine-In', items: [], status: 'Draft' };
-        }
+        if (!remainingOrders[nextActive]) remainingOrders['Table 1'] = { type: 'Dine-In', items: [], status: 'Draft' };
         setActiveOrder(nextActive);
         return remainingOrders;
       }
-
-      const newStatus = newItems.length > 0 ? 'Running' : 'Draft';
+      const newStatus = currentOrder.status === 'Sent' ? 'Sent' : 'Running';
       return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: newStatus } };
     });
-
     setItemToDelete(null); 
   };
 
-  // --- UPDATED LOGIC: Save order to completed history before deleting ---
   const handleFinalizeBill = () => {
     if (currentOrderData.items.length === 0) return;
     toPDF();
     setDailyIncome(prev => prev + total);
-
-    // 1. Add to completed history
     setCompletedOrders(prev => [
-      {
-        id: Date.now(),
-        name: activeOrder,
-        type: currentOrderData.type,
-        total: total
-      },
+      { id: Date.now(), name: activeOrder, type: currentOrderData.type, total: total },
       ...prev
     ]);
-
-    // 2. Delete from active tables
     setOrders(prev => {
         const remainingOrders = { ...prev };
         delete remainingOrders[activeOrder];
@@ -160,13 +136,16 @@ function App() {
   const tax = subtotal * 0.05;
   const total = subtotal + tax;
 
-  const visibleDineIn = Object.keys(orders).filter(k => 
-    orders[k].type === 'Dine-In' && (orders[k].items.length > 0 || activeOrder === k)
-  );
-  
-  const visibleTakeaway = Object.keys(orders).filter(k => 
-    orders[k].type === 'Takeaway' && (orders[k].items.length > 0 || activeOrder === k)
-  );
+  const visibleDineIn = Object.keys(orders).filter(k => orders[k].type === 'Dine-In' && (orders[k].items.length > 0 || activeOrder === k));
+  const visibleTakeaway = Object.keys(orders).filter(k => orders[k].type === 'Takeaway' && (orders[k].items.length > 0 || activeOrder === k));
+
+  // --- NEW: Helper Function for Badge Colors ---
+  const getBadgeStyle = (status, isActive) => {
+    if (status === 'Sent') {
+      return { background: isActive ? 'rgba(255,255,255,0.4)' : '#dcfce3', color: isActive ? 'white' : '#16a34a' }; // Green
+    }
+    return { background: isActive ? 'rgba(255,255,255,0.4)' : '#ffe0e0', color: isActive ? 'white' : '#ff6b6b' }; // Red
+  };
 
   return (
     <div className="app-container">
@@ -200,7 +179,7 @@ function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                   <span>{table}</span>
                   {orders[table].items.length > 0 && (
-                    <span style={{ fontSize: '11px', fontWeight: 'bold', background: activeOrder === table ? 'rgba(255,255,255,0.3)' : '#ffe0e0', color: activeOrder === table ? 'white' : '#ff6b6b', padding: '3px 8px', borderRadius: '12px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 'bold', padding: '3px 8px', borderRadius: '12px', ...getBadgeStyle(orders[table].status, activeOrder === table) }}>
                       {orders[table].status}
                     </span>
                   )}
@@ -222,7 +201,7 @@ function App() {
                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                   <span>{ta}</span>
                   {orders[ta].items.length > 0 && (
-                    <span style={{ fontSize: '11px', fontWeight: 'bold', background: activeOrder === ta ? 'rgba(255,255,255,0.3)' : '#ffe0e0', color: activeOrder === ta ? 'white' : '#ff6b6b', padding: '3px 8px', borderRadius: '12px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 'bold', padding: '3px 8px', borderRadius: '12px', ...getBadgeStyle(orders[ta].status, activeOrder === ta) }}>
                       {orders[ta].status}
                     </span>
                   )}
@@ -232,7 +211,7 @@ function App() {
           </div>
         </div>
 
-        {/* --- NEW SECTION: Completed Orders --- */}
+        {/* Completed Section */}
         <div className="nav-section">
           <div className="section-header">
             <h3>Completed</h3>
@@ -256,11 +235,6 @@ function App() {
             )}
           </div>
         </div>
-
-        <div className="admin-nav">
-          <button className="nav-btn"><Package size={18}/> Inventory</button>
-          <button className="nav-btn"><FileText size={18}/> Reports</button>
-        </div>
       </div>
 
       {/* MIDDLE SECTION */}
@@ -269,7 +243,11 @@ function App() {
           <div className="current-order-area">
             <h2 style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
               {activeOrder} - 
-              <span className="status-badge" style={{ fontSize: '14px', textTransform: 'uppercase', background: currentOrderData.status === 'Running' ? '#ffe0e0' : '#e0e7ff', color: currentOrderData.status === 'Running' ? '#ff6b6b' : '#4f46e5' }}>
+              <span className="status-badge" style={{ 
+                fontSize: '14px', textTransform: 'uppercase', 
+                background: currentOrderData.status === 'Sent' ? '#dcfce3' : currentOrderData.status === 'Running' ? '#ffe0e0' : '#e0e7ff', 
+                color: currentOrderData.status === 'Sent' ? '#16a34a' : currentOrderData.status === 'Running' ? '#ff6b6b' : '#4f46e5' 
+              }}>
                 {currentOrderData.status}
               </span>
             </h2>
@@ -283,15 +261,14 @@ function App() {
                     <span>{item.qty}x {item.name}</span>
                     <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
                       <strong>PKR {(item.price * item.qty).toFixed(2)}</strong>
-                      <button className="cancel-btn" onClick={() => handleRemoveClick(item.id)} title="Cancel Item">
-                        <X size={14}/>
-                      </button>
+                      <button className="cancel-btn" onClick={() => handleRemoveClick(item.id)} title="Cancel Item"><X size={14}/></button>
                     </div>
                   </div>
                 ))
               )}
             </div>
             
+            {/* Show SEND Button if NOT Sent yet */}
             {currentOrderData.items.length > 0 && currentOrderData.status !== 'Sent' && (
               <button 
                 style={{ width: '100%', padding: '12px', background: '#ff6b6b', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '10px' }}
@@ -299,6 +276,13 @@ function App() {
               >
                 <ChefHat size={18} /> Send to Kitchen (KOT)
               </button>
+            )}
+
+            {/* Show COMPLETED TEXT if Sent */}
+            {currentOrderData.status === 'Sent' && (
+              <div style={{ width: '100%', padding: '12px', background: '#f0fdf4', color: '#16a34a', border: '1px solid #dcfce3', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '10px' }}>
+                ✅ Sent to Kitchen (Completed)
+              </div>
             )}
           </div>
 
@@ -348,10 +332,9 @@ function App() {
         <button 
           className="print-btn" 
           onClick={handleFinalizeBill}
-          style={{ opacity: currentOrderData.items.length === 0 ? 0.5 : 1 }}
           disabled={currentOrderData.items.length === 0}
         >
-          Finalize & Print Bill (PDF)
+          <Printer size={18} /> Finalize & Print Bill (PDF)
         </button>
       </div>
     </div>
