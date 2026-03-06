@@ -11,7 +11,7 @@ class MenuItem(models.Model):
     name = models.CharField(max_length=200)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    image_url = models.URLField(blank=True, null=True)
+    image = models.ImageField(upload_to='menu_images/', blank=True, null=True)
     stock_available = models.IntegerField(default=100)
 
     def __str__(self):
