@@ -301,9 +301,60 @@
 }
 
 @media (max-width: 600px) {
-  /* Adjust grid columns for phones */
+  /* --- HORIZONTAL SCROLLING MENU --- */
+  .menu-grid {
+    flex-wrap: nowrap; /* Forces all items into one single row */
+    overflow-x: auto;  /* Enables horizontal scrolling (swipe left/right) */
+    overflow-y: hidden; /* Stops any accidental up/down wiggling */
+    gap: 12px; 
+    padding-bottom: 12px; /* Breathing room for the scrollbar */
+    -webkit-overflow-scrolling: touch; /* Makes swiping smooth on iPhones */
+  }
+
+  /* Sleek horizontal scrollbar */
+  .menu-grid::-webkit-scrollbar { 
+    height: 6px; /* Use height instead of width for horizontal scrollbars */
+  }
+  .menu-grid::-webkit-scrollbar-thumb { 
+    background-color: #cbd5e1; 
+    border-radius: 5px; 
+  }
+
+  /* Fixed size for cards so they line up perfectly in the swipe row */
   .menu-card {
-    width: calc(50% - 8px); 
+    flex: 0 0 auto; /* Prevents the cards from shrinking or squishing */
+    width: 110px;   /* Perfect width for a thumb swipe */
+    padding: 10px 5px; 
+    border-radius: 8px;
+  }
+  
+  /* Keep the compact images */
+  .menu-card img {
+    width: 50px !important;
+    height: 50px !important;
+    margin-bottom: 5px !important;
+    border-radius: 6px !important;
+  }
+
+  /* Shrink the Emoji if an image is missing */
+  .menu-card div[style*="40px"] {
+    font-size: 30px !important;
+    margin-bottom: 5px !important;
+  }
+
+  /* Keep text neat with the "..." cut-off */
+  .menu-card div:nth-child(2) {
+    font-size: 12px;
+    line-height: 1.2;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; 
+  }
+  
+  .menu-card div:last-child {
+    font-size: 12px;
+    font-weight: bold;
   }
   
   .bill-receipt {
@@ -311,12 +362,7 @@
   }
 }
 
-@media (max-width: 400px) {
-  /* Full width items on very small phones */
-  .menu-card {
-    width: 100%; 
-  }
-}
+/* We can remove the 400px query because the horizontal scroll handles all small screen sizes automatically now! */
 
 
 /* --- MODAL (POP-UP) STYLES --- */
