@@ -527,18 +527,18 @@ function App() {
           <div className="bill-receipt" ref={targetRef} style={{ background: 'white', padding: '25px', color: '#000', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
             
             {/* Header */}
-            <div className="bill-header" style={{ textAlign: 'center', marginBottom: '15px' }}>
+            <div className="bill-header" style={{ textAlign: 'center', marginBottom: '5px' }}>
               <h2 style={{ color: 'black', margin: 0, fontSize: '22px', fontWeight: '900', letterSpacing: '1px' }}>NASHTA POS</h2>
               <p style={{ fontSize: '12px', color: '#555', margin: '5px 0' }}>123 Food Street, Lahore</p>
               <p style={{ fontSize: '12px', color: '#555', margin: 0 }}>Phone: +92 300 1234567</p>
               
-              <div style={{ borderBottom: '2px dashed #ddd', margin: '15px 0' }}></div>
+              <div style={{ borderBottom: '2px dashed #ddd', margin: '10px 0' }}></div>
               
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 'bold' }}>
                   <span>Order: {activeOrder}</span>
                   <span>{new Date().toLocaleDateString()}</span>
               </div>
-              <div style={{ borderBottom: '2px dashed #ddd', margin: '15px 0' }}></div>
+              
             </div>
 
             {/* Items */}
@@ -557,8 +557,8 @@ function App() {
             </div>
 
             {/* Totals */}
-            <div className="bill-totals" style={{ marginTop: '20px', paddingTop: '15px', borderTop: '2px dashed #ddd' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', margin: '5px 0' }}>
+            <div className="bill-totals" style={{ marginTop: '10px', paddingTop: '15px', borderTop: '1px dashed #ddd' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', margin: '2px 0' }}>
                 <span>Subtotal</span>
                 <span>PKR {subtotal.toFixed(2)}</span>
               </div>
