@@ -218,3 +218,102 @@
 
 
 
+/* --- Authentication Styles --- */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f4f6f8;
+}
+
+.auth-card {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.auth-card h2 { margin-bottom: 20px; color: #333; }
+.auth-card input {
+  width: 100%; padding: 12px; margin-bottom: 15px;
+  border: 1px solid #ddd; border-radius: 8px; font-size: 16px;
+}
+.auth-btn {
+  width: 100%; padding: 12px; background: #4f46e5; color: white;
+  border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
+}
+.auth-btn:hover { background: #4338ca; }
+.auth-switch { margin-top: 15px; color: #4f46e5; cursor: pointer; font-size: 14px; }
+.auth-error { color: #ff4d4f; font-size: 14px; margin-bottom: 15px; }
+
+
+/* --- MOBILE RESPONSIVENESS (Media Queries) --- */
+
+@media (max-width: 1024px) {
+  .app-container {
+    flex-direction: column;
+    overflow-y: auto; 
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* Make sidebars stretch full width and flow naturally */
+  .left-sidebar, .right-sidebar {
+    width: 100%;
+    border-right: none;
+    border-left: none;
+    border-bottom: 2px solid #ddd;
+    max-height: none;
+  }
+  
+  .left-sidebar { padding-bottom: 15px; }
+
+  /* Limit list heights on mobile so they don't take up the whole screen */
+  .scrollable-list {
+    max-height: 150px;
+  }
+
+  /* Middle section becomes block */
+  .middle-section {
+    width: 100%;
+    flex: none;
+    overflow-y: visible;
+  }
+
+  /* Adjust grid columns for tablets */
+  .menu-card {
+    width: calc(33.333% - 10px); 
+  }
+
+  .running-orders-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .running-orders-bar > div {
+    margin-left: 0 !important;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Adjust grid columns for phones */
+  .menu-card {
+    width: calc(50% - 8px); 
+  }
+  
+  .bill-receipt {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 400px) {
+  /* Full width items on very small phones */
+  .menu-card {
+    width: 100%; 
+  }
+}

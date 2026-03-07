@@ -1,14 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote } from 'lucide-react'; // Added icons
+import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut } from 'lucide-react';
 import axios from 'axios';
 import { usePDF } from 'react-to-pdf';
 
 function App() {
+  // --- 1. UPDATED AUTHENTICATION STATES ---
+  const [token, setToken] = useState(localStorage.getItem('access_token'));
+  const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
+  
+  // New state variables for the advanced form
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+
+  // --- EXISTING STATES ---
   const [activeOrder, setActiveOrder] = useState('Table 1');
   const [menuItems, setMenuItems] = useState([]);
   
-  // --- NEW: Income Breakdown States ---
   const [dailyIncome, setDailyIncome] = useState(0);
   const [cashIncome, setCashIncome] = useState(0);
   const [onlineIncome, setOnlineIncome] = useState(0);
@@ -17,25 +28,85 @@ function App() {
   const [itemToDelete, setItemToDelete] = useState(null); 
   const { toPDF, targetRef } = usePDF({ filename: `${activeOrder}_Receipt.pdf` });
 
-  // Note: Added 'paymentMethod' to the default state
   const [orders, setOrders] = useState({
     'Table 1': { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' },
   });
 
-  useEffect(() => {
-    axios.get('https://pos-production-2d19.up.railway.app/api/menu-items/')
-      .then(response => {
-        const liveItems = response.data.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: parseFloat(item.price),
-          icon: item.image || null
-        }));
-        setMenuItems(liveItems);
-      })
-      .catch(error => console.error("Backend Error:", error));
-  }, []);
+  const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
+  useEffect(() => {
+    if (token) {
+      axios.get(`${API_BASE_URL}/menu-items/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(response => {
+          const liveItems = response.data.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: parseFloat(item.price),
+            icon: item.image || null
+          }));
+          setMenuItems(liveItems);
+        })
+        .catch(error => {
+          console.error("Backend Error:", error);
+          if(error.response?.status === 401) handleLogout(); 
+        });
+    }
+  }, [token]);
+
+  // --- 2. UPDATED AUTHENTICATION HANDLER ---
+  // --- UPDATED AUTHENTICATION HANDLER ---
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+
+    if (authMode === 'signup') {
+      // 1. Check if passwords match
+      if (password !== confirmPassword) {
+        return setAuthError("Passwords do not match!");
+      }
+      
+      // 2. NEW: Check strict password policy
+      // At least 8 chars, 1 uppercase, 1 number, 1 special character
+      const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      if (!passwordRegex.test(password)) {
+        return setAuthError("Password must be at least 8 characters, with 1 uppercase, 1 number, and 1 special character.");
+      }
+    }
+
+    try {
+      if (authMode === 'login') {
+        const res = await axios.post(`${API_BASE_URL}/auth/login/`, { 
+          username: email, 
+          password: password 
+        });
+        localStorage.setItem('access_token', res.data.access);
+        setToken(res.data.access);
+      } else {
+        await axios.post(`${API_BASE_URL}/auth/register/`, { 
+          name: name,
+          email: email, 
+          password: password 
+        });
+        setAuthMode('login');
+        setAuthError('Registration successful. Please log in.');
+        setPassword('');
+        setConfirmPassword('');
+      }
+    } catch (err) {
+      setAuthError(err.response?.data?.error || err.response?.data?.detail || 'Authentication failed');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    setToken(null);
+    setEmail('');
+    setPassword('');
+  };
+
+  // --- EXISTING HANDLERS ---
   const handleTabClick = (tabName) => {
     if (tabName === activeOrder) return;
     setOrders(prev => {
@@ -121,7 +192,6 @@ function App() {
     if (currentOrderData.items.length === 0) return;
     toPDF();
     
-    // --- UPDATED: Distribute income based on selected payment method ---
     const method = currentOrderData.paymentMethod || 'Cash';
     if (method === 'Cash') {
       setCashIncome(prev => prev + total);
@@ -146,6 +216,92 @@ function App() {
     });
   };
 
+  // --- 3. CONDITIONAL RENDERING: DYNAMIC LOGIN/SIGNUP FORM ---
+  if (!token) {
+    return (
+      <div className="auth-container">
+        <div className="auth-card">
+          <h2>{authMode === 'login' ? 'Login to POS' : 'Register POS Admin'}</h2>
+          
+          {authError && (
+            <p className="auth-error" style={{color: authError.includes('successful') ? 'green' : '#ff4d4f'}}>
+              {authError}
+            </p>
+          )}
+          
+          <form onSubmit={handleAuth}>
+            
+            {/* CONDITIONAL: ONLY SHOW NAME IF SIGNUP */}
+            {authMode === 'signup' && (
+              <input 
+                type="text" 
+                placeholder="Full Name" 
+                value={name} 
+                onChange={e => setName(e.target.value)} 
+                required 
+              />
+            )}
+
+            {/* ALWAYS SHOW EMAIL & PASSWORD */}
+            <input 
+              type="email" 
+              placeholder="Email Address" 
+              value={email} 
+              onChange={e => setEmail(e.target.value)} 
+              required 
+            />
+            
+            <input 
+              type="password" 
+              placeholder="Password" 
+              value={password} 
+              onChange={e => setPassword(e.target.value)} 
+              required 
+            />
+
+            {/* --- NEW: PASSWORD REQUIREMENTS HELPER TEXT --- */}
+            {authMode === 'signup' && (
+              <div style={{ textAlign: 'left', fontSize: '12px', color: '#666', marginBottom: '15px', padding: '0 5px' }}>
+                <strong style={{ color: '#333' }}>Password must contain:</strong>
+                <ul style={{ margin: '5px 0 0 20px', padding: 0 }}>
+                  <li>At least 8 characters long</li>
+                  <li>One uppercase and one lowercase letter</li>
+                  <li>One number & one special character (!@#$%^&*)</li>
+                </ul>
+              </div>
+            )}
+
+            {/* CONDITIONAL: ONLY SHOW CONFIRM PASSWORD IF SIGNUP */}
+            {authMode === 'signup' && (
+              <input 
+                type="password" 
+                placeholder="Confirm Password" 
+                value={confirmPassword} 
+                onChange={e => setConfirmPassword(e.target.value)} 
+                required 
+              />
+            )}
+
+            <button type="submit" className="auth-btn">
+              {authMode === 'login' ? 'Login' : 'Sign Up'}
+            </button>
+          </form>
+          
+          <p 
+            onClick={() => {
+              setAuthMode(authMode === 'login' ? 'signup' : 'login');
+              setAuthError(''); // Clear errors when flipping views
+            }} 
+            className="auth-switch"
+          >
+            {authMode === 'login' ? "Don't have an account? Sign up" : "Already have an account? Login"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // --- EXISTING UI RENDER FOR LOGGED IN USERS ---
   const currentOrderData = orders[activeOrder] || { items: [], status: 'Draft', type: 'Dine-In', paymentMethod: 'Cash' };
   const subtotal = currentOrderData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
   const tax = subtotal * 0.05;
@@ -179,7 +335,45 @@ function App() {
 
       {/* LEFT SIDEBAR */}
       <div className="left-sidebar">
-        <div className="logo-area">Nashta POS</div>
+        <div className="logo-area" style={{
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginTop: '25px',    /* Adds breathing room from the top */
+          marginBottom: '25px', /* Adds space before the Dine-In section */
+          padding: '0 5px'
+        }}>
+          
+          {/* Beautiful Gradient Shop Name */}
+          <span style={{
+            fontSize: '24px', 
+            fontWeight: '900', 
+            background: 'linear-gradient(45deg, #ff6b6b, #f97316)', 
+            WebkitBackgroundClip: 'text', 
+            WebkitTextFillColor: 'transparent',
+            letterSpacing: '0.5px',
+            textShadow: '0px 2px 4px rgba(0,0,0,0.05)'
+          }}>
+            Nashta POS
+          </span>
+
+          {/* Polished Logout Button */}
+          <button 
+            onClick={handleLogout} 
+            style={{ 
+              display: 'flex', alignItems: 'center', gap: '6px', 
+              background: '#fee2e2', color: '#ef4444', border: '1px solid #fecaca', 
+              padding: '6px 12px', borderRadius: '8px', 
+              cursor: 'pointer', fontWeight: 'bold', fontSize: '13px',
+              boxShadow: '0 2px 4px rgba(239, 68, 68, 0.1)',
+              transition: '0.2s ease-in-out'
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.background = '#fecaca'; e.currentTarget.style.transform = 'scale(1.05)'; }}
+            onMouseOut={(e) => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.transform = 'scale(1)'; }}
+          >
+            <LogOut size={15} /> Logout
+          </button>
+        </div>
         
         <div className="nav-section">
           <div className="section-header">
@@ -311,8 +505,6 @@ function App() {
         </div>
         
         <div className="running-orders-bar">
-          
-          {/* --- NEW: Detailed Income Bar --- */}
           <div style={{marginLeft:'auto', display: 'flex', alignItems: 'center', gap: '20px'}}>
             <div style={{ display: 'flex', gap: '20px', fontSize: '15px', fontWeight: '600', color: '#64748b', borderRight: '2px solid #e2e8f0', paddingRight: '20px' }}>
               <span style={{display: 'flex', alignItems: 'center', gap: '5px'}}><Banknote size={18} color="#22c55e"/> Cash: PKR {cashIncome.toFixed(0)}</span>
@@ -322,7 +514,6 @@ function App() {
               Total Income: PKR {dailyIncome.toFixed(0)}
             </div>
           </div>
-          
         </div>
       </div>
 
@@ -349,7 +540,6 @@ function App() {
             <div className="bill-row" style={{color: '#888'}}><span>Tax (5%)</span><span>PKR {tax.toFixed(2)}</span></div>
             <div className="bill-row total-row"><span>Total</span><span>PKR {total.toFixed(2)}</span></div>
             
-            {/* --- NEW: Printed Payment Method Line --- */}
             <div className="bill-row" style={{ color: '#64748b', fontSize: '13px', marginTop: '12px', borderTop: '1px dashed #ccc', paddingTop: '12px', fontWeight: 'bold' }}>
               <span>Payment Method</span>
               <span>{currentOrderData.paymentMethod || 'Cash'}</span>
@@ -358,7 +548,6 @@ function App() {
           </div>
         </div>
 
-        {/* --- NEW: Payment Selector (Does not print on the PDF) --- */}
         <div style={{ marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
           <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '10px' }}>Select Payment:</span>
           <div style={{ display: 'flex', gap: '20px' }}>

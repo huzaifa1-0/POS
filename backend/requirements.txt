@@ -1,6 +1,7 @@
 Django>=4.2
 djangorestframework
 django-cors-headers
+djangorestframework-simplejwt
 Pillow
 gunicorn
 whitenoise
