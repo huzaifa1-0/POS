@@ -521,31 +521,66 @@ function App() {
       <div className="right-sidebar">
         <h2 style={{marginBottom: '15px'}}><Receipt size={20}/> Bill View</h2>
         
-        <div className="bill-receipt" ref={targetRef} style={{ background: 'white' }}>
-          <div className="bill-header">
-            <h2 style={{color: 'black', margin: 0}}>Nashta Restaurant</h2>
-            <p style={{fontSize: '12px', color: '#666'}}>123 Food Street, City</p>
-            <p style={{marginTop: '10px', fontWeight: 'bold'}}>Order: {activeOrder}</p>
+        <div className="bill-receipt" ref={targetRef} style={{ background: 'white', padding: '25px', color: '#000', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+          
+          {/* Header */}
+          <div className="bill-header" style={{ textAlign: 'center', marginBottom: '15px' }}>
+            <h2 style={{ color: 'black', margin: 0, fontSize: '22px', fontWeight: '900', letterSpacing: '1px' }}>NASHTA POS</h2>
+            <p style={{ fontSize: '12px', color: '#555', margin: '5px 0' }}>123 Food Street, Lahore</p>
+            <p style={{ fontSize: '12px', color: '#555', margin: 0 }}>Phone: +92 300 1234567</p>
+            
+            <div style={{ borderBottom: '2px dashed #ddd', margin: '15px 0' }}></div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 'bold' }}>
+                <span>Order: {activeOrder}</span>
+                <span>{new Date().toLocaleDateString()}</span>
+            </div>
+            <div style={{ borderBottom: '2px dashed #ddd', margin: '15px 0' }}></div>
           </div>
-          <div className="bill-items">
+
+          {/* Items */}
+          <div className="bill-items" style={{ flex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px', paddingBottom: '5px', borderBottom: '1px solid #eee' }}>
+                <span>Item</span>
+                <span>Amount</span>
+            </div>
+            
             {currentOrderData.items.map(item => (
-              <div key={item.id} className="bill-row">
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', margin: '8px 0', color: '#333' }}>
                 <span>{item.qty}x {item.name}</span>
                 <span>PKR {(item.price * item.qty).toFixed(2)}</span>
               </div>
             ))}
           </div>
-          <div className="bill-totals">
-            <div className="bill-row"><span>Subtotal</span><span>PKR {subtotal.toFixed(2)}</span></div>
-            <div className="bill-row" style={{color: '#888'}}><span>Tax (5%)</span><span>PKR {tax.toFixed(2)}</span></div>
-            <div className="bill-row total-row"><span>Total</span><span>PKR {total.toFixed(2)}</span></div>
-            
-            <div className="bill-row" style={{ color: '#64748b', fontSize: '13px', marginTop: '12px', borderTop: '1px dashed #ccc', paddingTop: '12px', fontWeight: 'bold' }}>
-              <span>Payment Method</span>
-              <span>{currentOrderData.paymentMethod || 'Cash'}</span>
-            </div>
 
+          {/* Totals */}
+          <div className="bill-totals" style={{ marginTop: '20px', paddingTop: '15px', borderTop: '2px dashed #ddd' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', margin: '5px 0' }}>
+              <span>Subtotal</span>
+              <span>PKR {subtotal.toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#666', margin: '5px 0' }}>
+              <span>Tax (5%)</span>
+              <span>PKR {tax.toFixed(2)}</span>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '900', margin: '12px 0', paddingTop: '12px', borderTop: '1px solid #eee' }}>
+              <span>TOTAL</span>
+              <span>PKR {total.toFixed(2)}</span>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '12px', marginTop: '10px' }}>
+              <span>Payment Method</span>
+              <span style={{ fontWeight: 'bold', color: '#333' }}>{currentOrderData.paymentMethod || 'Cash'}</span>
+            </div>
           </div>
+
+          {/* Thank You Footer */}
+          <div style={{ textAlign: 'center', marginTop: '30px', borderTop: '2px dashed #ddd', paddingTop: '20px' }}>
+            <h3 style={{ fontSize: '16px', color: '#000', margin: '0 0 5px 0', fontWeight: 'bold' }}>Thank You!</h3>
+            <p style={{ fontSize: '12px', color: '#666', margin: 0, fontStyle: 'italic' }}>Please visit us again.</p>
+          </div>
+
         </div>
 
         <div style={{ marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
