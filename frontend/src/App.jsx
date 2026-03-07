@@ -23,7 +23,7 @@ function App() {
   });
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/menu-items/')
+    axios.get('https://pos-production-2d19.up.railway.app/api/menu-items/')
       .then(response => {
         const liveItems = response.data.map(item => ({
           id: item.id,
