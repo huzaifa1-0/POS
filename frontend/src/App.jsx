@@ -518,102 +518,112 @@ function App() {
       </div>
 
       {/* RIGHT SIDEBAR (The Receipt) */}
-      <div className="right-sidebar">
-        <h2 style={{marginBottom: '15px'}}><Receipt size={20}/> Bill View</h2>
+      <div className="right-sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <h2 style={{ marginBottom: '15px', flexShrink: 0 }}><Receipt size={20} /> Bill View</h2>
         
-        <div className="bill-receipt" ref={targetRef} style={{ background: 'white', padding: '25px', color: '#000', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+        {/* --- NEW WRAPPER FOR SCROLLING --- */}
+        <div style={{ flex: 1, overflowY: 'auto', paddingRight: '5px', paddingBottom: '10px' }}>
           
-          {/* Header */}
-          <div className="bill-header" style={{ textAlign: 'center', marginBottom: '15px' }}>
-            <h2 style={{ color: 'black', margin: 0, fontSize: '22px', fontWeight: '900', letterSpacing: '1px' }}>NASHTA POS</h2>
-            <p style={{ fontSize: '12px', color: '#555', margin: '5px 0' }}>123 Food Street, Lahore</p>
-            <p style={{ fontSize: '12px', color: '#555', margin: 0 }}>Phone: +92 300 1234567</p>
+          <div className="bill-receipt" ref={targetRef} style={{ background: 'white', padding: '25px', color: '#000', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
             
-            <div style={{ borderBottom: '2px dashed #ddd', margin: '15px 0' }}></div>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 'bold' }}>
-                <span>Order: {activeOrder}</span>
-                <span>{new Date().toLocaleDateString()}</span>
-            </div>
-            <div style={{ borderBottom: '2px dashed #ddd', margin: '15px 0' }}></div>
-          </div>
-
-          {/* Items */}
-          <div className="bill-items" style={{ flex: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px', paddingBottom: '5px', borderBottom: '1px solid #eee' }}>
-                <span>Item</span>
-                <span>Amount</span>
-            </div>
-            
-            {currentOrderData.items.map(item => (
-              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', margin: '8px 0', color: '#333' }}>
-                <span>{item.qty}x {item.name}</span>
-                <span>PKR {(item.price * item.qty).toFixed(2)}</span>
+            {/* Header */}
+            <div className="bill-header" style={{ textAlign: 'center', marginBottom: '15px' }}>
+              <h2 style={{ color: 'black', margin: 0, fontSize: '22px', fontWeight: '900', letterSpacing: '1px' }}>NASHTA POS</h2>
+              <p style={{ fontSize: '12px', color: '#555', margin: '5px 0' }}>123 Food Street, Lahore</p>
+              <p style={{ fontSize: '12px', color: '#555', margin: 0 }}>Phone: +92 300 1234567</p>
+              
+              <div style={{ borderBottom: '2px dashed #ddd', margin: '15px 0' }}></div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 'bold' }}>
+                  <span>Order: {activeOrder}</span>
+                  <span>{new Date().toLocaleDateString()}</span>
               </div>
-            ))}
-          </div>
-
-          {/* Totals */}
-          <div className="bill-totals" style={{ marginTop: '20px', paddingTop: '15px', borderTop: '2px dashed #ddd' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', margin: '5px 0' }}>
-              <span>Subtotal</span>
-              <span>PKR {subtotal.toFixed(2)}</span>
+              <div style={{ borderBottom: '2px dashed #ddd', margin: '15px 0' }}></div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#666', margin: '5px 0' }}>
-              <span>Tax (5%)</span>
-              <span>PKR {tax.toFixed(2)}</span>
-            </div>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '900', margin: '12px 0', paddingTop: '12px', borderTop: '1px solid #eee' }}>
-              <span>TOTAL</span>
-              <span>PKR {total.toFixed(2)}</span>
-            </div>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '12px', marginTop: '10px' }}>
-              <span>Payment Method</span>
-              <span style={{ fontWeight: 'bold', color: '#333' }}>{currentOrderData.paymentMethod || 'Cash'}</span>
-            </div>
-          </div>
 
-          {/* Thank You Footer */}
-          <div style={{ textAlign: 'center', marginTop: '30px', borderTop: '2px dashed #ddd', paddingTop: '20px' }}>
-            <h3 style={{ fontSize: '16px', color: '#000', margin: '0 0 5px 0', fontWeight: 'bold' }}>Thank You!</h3>
-            <p style={{ fontSize: '12px', color: '#666', margin: 0, fontStyle: 'italic' }}>Please visit us again.</p>
-          </div>
+            {/* Items */}
+            <div className="bill-items">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px', paddingBottom: '5px', borderBottom: '1px solid #eee' }}>
+                  <span>Item</span>
+                  <span>Amount</span>
+              </div>
+              
+              {currentOrderData.items.map(item => (
+                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', margin: '8px 0', color: '#333' }}>
+                  <span>{item.qty}x {item.name}</span>
+                  <span>PKR {(item.price * item.qty).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
 
-        </div>
+            {/* Totals */}
+            <div className="bill-totals" style={{ marginTop: '20px', paddingTop: '15px', borderTop: '2px dashed #ddd' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', margin: '5px 0' }}>
+                <span>Subtotal</span>
+                <span>PKR {subtotal.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#666', margin: '5px 0' }}>
+                <span>Tax (5%)</span>
+                <span>PKR {tax.toFixed(2)}</span>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '900', margin: '12px 0', paddingTop: '12px', borderTop: '1px solid #eee' }}>
+                <span>TOTAL</span>
+                <span>PKR {total.toFixed(2)}</span>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '12px', marginTop: '10px' }}>
+                <span>Payment Method</span>
+                <span style={{ fontWeight: 'bold', color: '#333' }}>{currentOrderData.paymentMethod || 'Cash'}</span>
+              </div>
+            </div>
 
-        <div style={{ marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-          <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '10px' }}>Select Payment:</span>
-          <div style={{ display: 'flex', gap: '20px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '15px', fontWeight: '600', color: '#334155' }}>
-              <input 
-                type="radio" 
-                name="payment" 
-                value="Cash" 
-                checked={(currentOrderData.paymentMethod || 'Cash') === 'Cash'}
-                onChange={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Cash'}}))}
-              /> 💵 Cash
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '15px', fontWeight: '600', color: '#334155' }}>
-              <input 
-                type="radio" 
-                name="payment" 
-                value="Online" 
-                checked={currentOrderData.paymentMethod === 'Online'}
-                onChange={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Online'}}))}
-              /> 💳 Online
-            </label>
+            {/* Thank You Footer */}
+            <div style={{ textAlign: 'center', marginTop: '30px', borderTop: '2px dashed #ddd', paddingTop: '20px' }}>
+              <h3 style={{ fontSize: '16px', color: '#000', margin: '0 0 5px 0', fontWeight: 'bold' }}>Thank You!</h3>
+              <p style={{ fontSize: '12px', color: '#666', margin: 0, fontStyle: 'italic' }}>Please visit us again.</p>
+            </div>
+
           </div>
         </div>
+        {/* --- END SCROLLABLE WRAPPER --- */}
 
-        <button 
-          className="print-btn" 
-          onClick={handleFinalizeBill}
-          disabled={currentOrderData.items.length === 0}
-        >
-          <Printer size={18} /> Finalize & Print Bill (PDF)
-        </button>
+        {/* This bottom section stays locked in place */}
+        <div style={{ flexShrink: 0, marginTop: '10px' }}>
+          <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '10px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '10px' }}>Select Payment:</span>
+            <div style={{ display: 'flex', gap: '20px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '15px', fontWeight: '600', color: '#334155' }}>
+                <input 
+                  type="radio" 
+                  name="payment" 
+                  value="Cash" 
+                  checked={(currentOrderData.paymentMethod || 'Cash') === 'Cash'}
+                  onChange={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Cash'}}))}
+                /> 💵 Cash
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '15px', fontWeight: '600', color: '#334155' }}>
+                <input 
+                  type="radio" 
+                  name="payment" 
+                  value="Online" 
+                  checked={currentOrderData.paymentMethod === 'Online'}
+                  onChange={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Online'}}))}
+                /> 💳 Online
+              </label>
+            </div>
+          </div>
+
+          <button 
+            className="print-btn" 
+            onClick={handleFinalizeBill}
+            disabled={currentOrderData.items.length === 0}
+            style={{ marginTop: 0 }}
+          >
+            <Printer size={18} /> Finalize & Print Bill (PDF)
+          </button>
+        </div>
+
       </div>
     </div>
   );
