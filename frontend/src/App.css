@@ -1095,85 +1095,82 @@
     }
 }
 
-
 /* =========================================
-   MOBILE RESPONSIVENESS (VERTICAL SCROLL CARDS)
+   MOBILE RESPONSIVENESS (SINGLE ROW COMPACT VIEW)
    ========================================= */
-.mobile-label { display: none; font-size: 10px; color: #64748b; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; }
+.mobile-label { display: none; font-size: 8px; color: #64748b; font-weight: 800; margin-bottom: 2px; text-transform: uppercase; }
+.item-details-stack { display: flex; flex-direction: column; gap: 4px; }
+.static-val { font-size: 15px; color: #1e293b; }
+.static-total-val { font-size: 16px; color: #10b981; }
 
 @media (max-width: 768px) {
     .hide-on-mobile { display: none !important; }
     
-    /* 1. Fix Action Bar for mobile */
+    /* Search and Add Buttons formatting */
     .inventory-action-header { flex-direction: column; align-items: stretch; }
     .inventory-action-controls { flex-direction: column; align-items: stretch; width: 100%; }
     .search-bar-container { max-width: 100%; }
     .inventory-action-controls > div { width: 100%; display: flex; gap: 10px; }
-    .edit-toggle-btn, .add-stock-btn { flex: 1; justify-content: center; } 
+    .add-stock-btn { flex: 1; justify-content: center; } 
 
-    /* 2. Lock horizontal scroll, force vertical scroll */
+    /* Lock vertical scrolling */
     .scrollable-table-container {
         overflow-x: hidden !important; 
         overflow-y: auto !important;
     }
     
-    /* 3. Turn table rows into floating cards stacked vertically */
+    /* THE MAGIC: Force the whole row to stay horizontal! */
     .split-row { 
-        flex-direction: column; 
-        align-items: stretch; 
-        gap: 12px; 
-        padding: 16px; 
-        position: relative; 
+        flex-direction: row !important; 
+        align-items: center !important; 
+        gap: 4px !important; 
+        padding: 12px 8px !important; 
     }
     
-    /* 4. Item Name & Unit become the card Header */
+    /* 1. Item Name side takes exactly 30% of the row space */
     .inventory-left-side { 
-        width: 100% !important; 
-        border-bottom: 1px dashed #e2e8f0; 
-        padding-bottom: 12px; 
-        padding-right: 40px; /* Space for the delete icon */
+        width: 30% !important; 
+        border-bottom: none !important; 
+        padding: 0 !important; 
     }
-    .new-item-inputs { flex-wrap: wrap; }
+    .item-title { font-size: 11px !important; word-break: break-word; line-height: 1.2; }
+    .item-unit-badge { font-size: 8px !important; padding: 2px 4px !important; }
+    .new-item-inputs { flex-direction: column; gap: 4px; }
     
-    /* 5. Right side inputs IN THE SAME ROW (Side-by-Side) */
+    /* 2. Stats side takes exactly 70% of the row space */
     .inventory-right-side { 
-        flex-direction: row; /* Places them side-by-side */
-        align-items: flex-start; 
-        justify-content: space-between;
-        gap: 8px; 
-        width: 100%; 
+        flex-direction: row !important; 
+        align-items: center !important; 
+        justify-content: space-between !important;
+        gap: 2px !important; 
+        width: 70% !important; 
     }
     
-    /* Forces the 3 stats into 3 equal columns */
+    /* 3. Divide the 3 stats evenly (33% each) since the delete button is gone */
+    .col-price { width: 33% !important; }
+    .col-qty { width: 33% !important; }
+    .col-total { width: 33% !important; border-top: none !important; padding-top: 0 !important; margin-top: 0 !important; }
+    
     .inventory-right-side > div { 
-        width: 32% !important; 
         display: flex; 
-        flex-direction: column; /* Puts label above the number */
+        flex-direction: column; 
         align-items: flex-start; 
-        justify-content: flex-start; 
+        padding: 0 !important;
     }
     
     .mobile-label { display: block !important; }
-    .col-price, .col-qty, .col-total { padding: 0 !important; }
     
-    /* Total adjustments for inline row */
-    .col-total { border-top: none; padding-top: 0; margin-top: 0; }
-    .col-total strong { font-size: 14px !important; color: #10b981 !important; word-break: break-word; }
-    
-    /* Make inputs slightly compact to fit nicely side-by-side */
-    .qty-update-wrapper, .input-with-prefix { width: 100%; max-width: 100%; border-radius: 6px; }
-    
-    .input-with-prefix span { padding: 6px 4px; font-size: 10px; }
-    .input-with-prefix input { padding: 6px 4px; font-size: 12px; }
-    
-    .qty-update-wrapper button { padding: 6px 8px; font-size: 12px; }
-    .qty-update-wrapper input { flex: 1; padding: 6px 0; font-size: 12px; width: 100%; text-align: center; }
-    
-    /* Trash icon pins to top right of the card */
-    .col-actions { 
-        position: absolute !important; 
-        top: 16px !important; 
-        right: 16px !important; 
-        width: auto !important; 
+    /* 4. SHRINK THE TEXT: Make Total and Unit Price text much smaller to fit cleanly */
+    .static-val, .static-total-val { 
+        font-size: 9px !important; /* Made this smaller */
+        font-weight: 600 !important; /* Made it less bold */
+        word-break: break-word; 
     }
+    
+    /* Make the editing inputs tiny when adding a new item */
+    .input-with-prefix, .qty-update-wrapper { width: 100%; max-width: 100%; border-radius: 4px; }
+    .input-with-prefix span { padding: 4px 2px; font-size: 8px; }
+    .input-with-prefix input { padding: 4px 2px; font-size: 10px; }
+    .qty-update-wrapper button { padding: 4px 6px; font-size: 10px; }
+    .qty-update-wrapper input { flex: 1; padding: 4px 0; font-size: 10px; width: 100%; text-align: center; }
 }
