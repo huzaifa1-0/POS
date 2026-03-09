@@ -1,28 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Wallet, Plus, Check, Search } from 'lucide-react'; // Removed Trash2 and AlertTriangle
+import { Package, Wallet, Plus, Check, Search } from 'lucide-react';
+import axios from 'axios'; // NEW: Imported Axios
 
-const PRE_BUILT_STOCK = [
-  { id: 1, name: 'Oil', qty: 0, unit: 'Litre', price: 600 },
-  { id: 2, name: 'Flour (Atta)', qty: 0, unit: 'KG', price: 150 },
-  { id: 3, name: 'Channay', qty: 0, unit: 'KG', price: 300 },
-  { id: 4, name: 'Eggs', qty: 0, unit: 'Dozen', price: 400 },
-  { id: 5, name: 'Milk', qty: 0, unit: 'Litre', price: 200 },
-];
+// NEW: Point this to your Django API
+const API_URL = 'http://127.0.0.1:8000/api/inventory/';
 
 const Inventory = () => {
-  const [items, setItems] = useState(() => {
-    const saved = localStorage.getItem('nashta_pos_inline_inventory');
-    return saved ? JSON.parse(saved) : PRE_BUILT_STOCK;
-  });
-
+  // CHANGED: Starts empty and fetches from the database
+  const [items, setItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // NEW: Fetch items from the database when the page loads
   useEffect(() => {
-    localStorage.setItem('nashta_pos_inline_inventory', JSON.stringify(items));
-  }, [items]);
+    fetchInventory();
+  }, []);
+
+  const fetchInventory = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      setItems(response.data);
+    } catch (error) {
+      console.error("Error fetching inventory:", error);
+    }
+  };
 
   const handleAddNewRow = () => {
-    const newRow = { id: Date.now(), name: '', qty: 0, unit: 'KG', price: 0, isNew: true };
+    // Uses a temporary negative ID so it doesn't mess with real database IDs
+    const newRow = { id: -Date.now(), name: '', qty: 0, unit: 'KG', price: 0, isNew: true };
     setItems([newRow, ...items]);
     setSearchTerm(''); 
   };
@@ -37,15 +41,31 @@ const Inventory = () => {
     }));
   };
 
-  const handleSaveNewItem = (id, name) => {
-    if (!name.trim()) {
+  // NEW: Saves the item directly to the Django database
+  const handleSaveNewItem = async (id) => {
+    const itemToSave = items.find(i => i.id === id);
+    
+    if (!itemToSave.name.trim()) {
       alert("Please enter an item name before saving.");
       return;
     }
-    setItems(items.map(item => item.id === id ? { ...item, isNew: false } : item));
-  };
 
-  // --- DELETE LOGIC HAS BEEN COMPLETELY REMOVED ---
+    try {
+      // Send the data to your backend
+      const response = await axios.post(API_URL, {
+        name: itemToSave.name,
+        qty: itemToSave.qty,
+        unit: itemToSave.unit,
+        price: itemToSave.price
+      });
+      
+      // Update the table with the real item returned from Django (which includes the real database ID)
+      setItems(items.map(item => item.id === id ? { ...response.data, isNew: false } : item));
+    } catch (error) {
+      console.error("Error saving item to database:", error);
+      alert("Failed to save item. Make sure your Django server is running!");
+    }
+  };
 
   const totalInventoryValue = items.reduce((sum, item) => sum + (item.qty * item.price), 0);
 
@@ -56,13 +76,11 @@ const Inventory = () => {
   return (
     <div style={{ flex: 1, padding: '20px', background: '#f8fafc', display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px' }}>
         <Package size={28} color="#ff6b6b" />
         <h2 style={{ margin: 0, color: '#1e293b' }}>Stock Manager</h2>
       </div>
 
-      {/* Total Value Card */}
       <div className="inventory-summary-card" style={{ flexShrink: 0 }}>
         <div className="summary-icon"><Wallet size={28} color="#fff"/></div>
         <div>
@@ -71,7 +89,6 @@ const Inventory = () => {
         </div>
       </div>
 
-      {/* Action Bar */}
       <div className="inventory-action-header">
         <h3 style={{ margin: 0, color: '#475569' }}>Current Stock Items</h3>
         <div className="inventory-action-controls">
@@ -95,7 +112,6 @@ const Inventory = () => {
         </div>
       </div>
 
-      {/* --- SCROLLABLE TABLE CONTAINER --- */}
       <div className="scrollable-table-container">
         <div className="fixed-inventory-list">
           
@@ -105,19 +121,17 @@ const Inventory = () => {
               <span className="col-price">Unit Price</span>
               <span className="col-qty">Quantity</span>
               <span className="col-total">Total Price</span>
-              {/* Removed Actions Header */}
             </div>
           </div>
 
           {filteredItems.length === 0 ? (
             <div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
-              No items match your search.
+              No inventory found in database.
             </div>
           ) : (
             filteredItems.map(item => (
               <div key={item.id} className="fixed-inventory-row split-row">
                 
-                {/* 1. LEFT SIDE: Name & Unit */}
                 <div className="inventory-left-side">
                   {item.isNew ? (
                     <div className="new-item-inputs">
@@ -140,7 +154,7 @@ const Inventory = () => {
                         <option value="Pack">Pack</option>
                       </select>
                       <button 
-                        onClick={() => handleSaveNewItem(item.id, item.name)} 
+                        onClick={() => handleSaveNewItem(item.id)} 
                         className="save-new-item-btn"
                         title="Save Item"
                       >
@@ -155,10 +169,8 @@ const Inventory = () => {
                   )}
                 </div>
                 
-                {/* 2. RIGHT SIDE: Inputs & Calculations */}
                 <div className="inventory-right-side">
                   
-                  {/* UNIT PRICE */}
                   <div className="col-price">
                     <label className="mobile-label">Price</label>
                     {item.isNew ? (
@@ -175,7 +187,6 @@ const Inventory = () => {
                     )}
                   </div>
 
-                  {/* QUANTITY */}
                   <div className="col-qty">
                     <label className="mobile-label">Qty</label>
                     {item.isNew ? (
@@ -193,13 +204,10 @@ const Inventory = () => {
                     )}
                   </div>
 
-                  {/* TOTAL */}
                   <div className="col-total">
                     <label className="mobile-label">Total</label>
                     <strong className="static-total-val">PKR {(item.qty * item.price).toLocaleString()}</strong>
                   </div>
-
-                  {/* DELETE BUTTON SECTION COMPLETELY REMOVED */}
 
                 </div>
               </div>

@@ -1098,15 +1098,15 @@
 /* =========================================
    MOBILE RESPONSIVENESS (SINGLE ROW COMPACT VIEW)
    ========================================= */
-.mobile-label { display: none; font-size: 8px; color: #64748b; font-weight: 800; margin-bottom: 2px; text-transform: uppercase; }
-.item-details-stack { display: flex; flex-direction: column; gap: 4px; }
+.mobile-label { display: none; font-size: 7px; color: #64748b; font-weight: 800; margin-bottom: 2px; text-transform: uppercase; }
+.item-details-stack { display: flex; flex-direction: column; gap: 2px; }
 .static-val { font-size: 15px; color: #1e293b; }
 .static-total-val { font-size: 16px; color: #10b981; }
 
 @media (max-width: 768px) {
     .hide-on-mobile { display: none !important; }
     
-    /* Search and Add Buttons formatting */
+    /* Action Bar (Search and Add) formatting */
     .inventory-action-header { flex-direction: column; align-items: stretch; }
     .inventory-action-controls { flex-direction: column; align-items: stretch; width: 100%; }
     .search-bar-container { max-width: 100%; }
@@ -1119,12 +1119,12 @@
         overflow-y: auto !important;
     }
     
-    /* THE MAGIC: Force the whole row to stay horizontal! */
+    /* THE MAGIC: Force the whole row to stay completely horizontal! */
     .split-row { 
         flex-direction: row !important; 
         align-items: center !important; 
         gap: 4px !important; 
-        padding: 12px 8px !important; 
+        padding: 10px 5px !important; /* Tighter padding to save space */
     }
     
     /* 1. Item Name side takes exactly 30% of the row space */
@@ -1133,11 +1133,13 @@
         border-bottom: none !important; 
         padding: 0 !important; 
     }
-    .item-title { font-size: 11px !important; word-break: break-word; line-height: 1.2; }
-    .item-unit-badge { font-size: 8px !important; padding: 2px 4px !important; }
+    
+    /* 2. MAKE TEXT SMALLER for the Item Details */
+    .item-title { font-size: 10px !important; word-break: break-word; line-height: 1.1; }
+    .item-unit-badge { font-size: 7px !important; padding: 2px 4px !important; width: fit-content; }
     .new-item-inputs { flex-direction: column; gap: 4px; }
     
-    /* 2. Stats side takes exactly 70% of the row space */
+    /* 3. Stats side takes exactly 70% of the row space and stays horizontal */
     .inventory-right-side { 
         flex-direction: row !important; 
         align-items: center !important; 
@@ -1146,7 +1148,7 @@
         width: 70% !important; 
     }
     
-    /* 3. Divide the 3 stats evenly (33% each) since the delete button is gone */
+    /* 4. Divide the 3 stats evenly (33% each) */
     .col-price { width: 33% !important; }
     .col-qty { width: 33% !important; }
     .col-total { width: 33% !important; border-top: none !important; padding-top: 0 !important; margin-top: 0 !important; }
@@ -1160,17 +1162,22 @@
     
     .mobile-label { display: block !important; }
     
-    /* 4. SHRINK THE TEXT: Make Total and Unit Price text much smaller to fit cleanly */
+    /* 5. MAKE TEXT SMALLER for the Numbers (Price, Qty, Total) */
     .static-val, .static-total-val { 
-        font-size: 9px !important; /* Made this smaller */
-        font-weight: 600 !important; /* Made it less bold */
+        font-size: 10px !important; /* Shrunk text */
+        font-weight: 700 !important; 
         word-break: break-word; 
     }
     
-    /* Make the editing inputs tiny when adding a new item */
+    /* Make the editing inputs tiny when adding/editing an item on mobile */
     .input-with-prefix, .qty-update-wrapper { width: 100%; max-width: 100%; border-radius: 4px; }
     .input-with-prefix span { padding: 4px 2px; font-size: 8px; }
-    .input-with-prefix input { padding: 4px 2px; font-size: 10px; }
-    .qty-update-wrapper button { padding: 4px 6px; font-size: 10px; }
-    .qty-update-wrapper input { flex: 1; padding: 4px 0; font-size: 10px; width: 100%; text-align: center; }
+    .input-with-prefix input { padding: 4px 2px; font-size: 9px; }
+    .qty-update-wrapper button { padding: 4px 6px; font-size: 9px; }
+    .qty-update-wrapper input { flex: 1; padding: 4px 0; font-size: 9px; width: 100%; text-align: center; }
+    
+    /* Make inputs for "Add New Row" tiny on mobile */
+    .new-name-input, .new-unit-select { padding: 4px; font-size: 9px; border-radius: 4px; }
+    .save-new-item-btn { padding: 4px; border-radius: 4px; }
+    .save-new-item-btn svg { width: 14px; height: 14px; }
 }
