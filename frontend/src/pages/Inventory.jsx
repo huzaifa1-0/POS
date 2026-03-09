@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Wallet, Plus, Trash2, Check, Search, AlertTriangle, Edit2 } from 'lucide-react'; // Added Edit2
+import { Package, Wallet, Plus, Trash2, Check, Search, AlertTriangle, Edit2 } from 'lucide-react';
 
 const PRE_BUILT_STOCK = [
   { id: 1, name: 'Oil', qty: 0, unit: 'Litre', price: 600 },
@@ -17,8 +17,6 @@ const Inventory = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [itemToDelete, setItemToDelete] = useState(null); 
-  
-  // --- NEW: Global toggle to unlock/lock the table for editing ---
   const [isEditingTable, setIsEditingTable] = useState(false);
 
   useEffect(() => {
@@ -29,7 +27,6 @@ const Inventory = () => {
     const newRow = { id: Date.now(), name: '', qty: 0, unit: 'KG', price: 0, isNew: true };
     setItems([newRow, ...items]);
     setSearchTerm(''); 
-    // Removed setIsEditingTable(true) so the rest of the table stays locked!
   };
 
   const handleUpdateField = (id, field, value) => {
@@ -70,13 +67,11 @@ const Inventory = () => {
   return (
     <div style={{ flex: 1, padding: '20px', background: '#f8fafc', display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px' }}>
         <Package size={28} color="#ff6b6b" />
         <h2 style={{ margin: 0, color: '#1e293b' }}>Stock Manager</h2>
       </div>
 
-      {/* Total Value Card */}
       <div className="inventory-summary-card" style={{ flexShrink: 0 }}>
         <div className="summary-icon"><Wallet size={28} color="#fff"/></div>
         <div>
@@ -85,42 +80,38 @@ const Inventory = () => {
         </div>
       </div>
 
-      {/* Action Bar (Search, Edit Table, & Add) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexShrink: 0, flexWrap: 'wrap', gap: '15px' }}>
+      {/* --- REPLACED INLINE STYLES WITH CLASSES FOR MOBILE FIX --- */}
+      <div className="inventory-action-header">
         <h3 style={{ margin: 0, color: '#475569' }}>Current Stock Items</h3>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flex: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+        <div className="inventory-action-controls">
           
-          <div style={{ position: 'relative', maxWidth: '250px', width: '100%' }}>
-            <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <div className="search-bar-container">
+            <Search size={18} className="search-icon-inside" />
             <input 
               type="text" 
               placeholder="Search items..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ width: '100%', padding: '10px 10px 10px 38px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '14px' }}
+              className="inventory-search-input"
             />
           </div>
 
-          {/* --- NEW: EDIT TABLE BUTTON --- */}
-          <button 
-            onClick={() => setIsEditingTable(!isEditingTable)}
-            style={{ 
-              padding: '10px 16px', borderRadius: '8px', border: 'none', fontWeight: 'bold', fontSize: '14px',
-              display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'white', whiteSpace: 'nowrap',
-              background: isEditingTable ? '#f59e0b' : '#3b82f6', transition: '0.2s', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-            }}
-          >
-            {isEditingTable ? <Check size={18} /> : <Edit2 size={18} />}
-            {isEditingTable ? 'Done Editing' : 'Edit Table'}
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button 
+              onClick={() => setIsEditingTable(!isEditingTable)}
+              className={`edit-toggle-btn ${isEditingTable ? 'editing-active' : ''}`}
+            >
+              {isEditingTable ? <Check size={18} /> : <Edit2 size={18} />}
+              {isEditingTable ? 'Done' : 'Edit'}
+            </button>
 
-          <button className="add-stock-btn" onClick={handleAddNewRow} style={{ whiteSpace: 'nowrap' }}>
-            <Plus size={18} /> Add New Item
-          </button>
+            <button className="add-stock-btn" onClick={handleAddNewRow}>
+              <Plus size={18} /> Add
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* --- SCROLLABLE TABLE CONTAINER --- */}
       <div className="scrollable-table-container">
         <div className="fixed-inventory-list">
           
@@ -142,21 +133,20 @@ const Inventory = () => {
             filteredItems.map(item => (
               <div key={item.id} className="fixed-inventory-row split-row">
                 
-                {/* 1. LEFT SIDE: Name & Unit */}
-                <div className="inventory-left-side" style={{ width: '100%' }}>
+                <div className="inventory-left-side">
                   {item.isNew ? (
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                    <div className="new-item-inputs">
                       <input 
                         type="text" placeholder="Item Name..." 
                         value={item.name} 
                         onChange={(e) => handleUpdateField(item.id, 'name', e.target.value)}
-                        style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', width: '150px', outline: 'none' }}
+                        className="new-name-input"
                         autoFocus
                       />
                       <select 
                         value={item.unit} 
                         onChange={(e) => handleUpdateField(item.id, 'unit', e.target.value)}
-                        style={{ padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none' }}
+                        className="new-unit-select"
                       >
                         <option value="KG">KG</option>
                         <option value="Litre">Litre</option>
@@ -166,7 +156,7 @@ const Inventory = () => {
                       </select>
                       <button 
                         onClick={() => handleSaveNewItem(item.id, item.name)} 
-                        style={{ padding: '8px', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        className="save-new-item-btn"
                         title="Save Item"
                       >
                         <Check size={18} />
@@ -180,10 +170,8 @@ const Inventory = () => {
                   )}
                 </div>
                 
-                {/* 2. RIGHT SIDE: Inputs & Actions */}
                 <div className="inventory-right-side">
                   
-                  {/* --- CONDITIONAL UNIT PRICE: Static text vs Input --- */}
                   <div className="col-price">
                     <label className="mobile-label">Unit Price:</label>
                     {(isEditingTable || item.isNew) ? (
@@ -200,7 +188,6 @@ const Inventory = () => {
                     )}
                   </div>
 
-                  {/* --- CONDITIONAL QUANTITY: Static text vs Input --- */}
                   <div className="col-qty">
                     <label className="mobile-label">Quantity:</label>
                     {(isEditingTable || item.isNew) ? (
@@ -218,13 +205,11 @@ const Inventory = () => {
                     )}
                   </div>
 
-                  {/* Total (Always Static) */}
                   <div className="col-total">
                     <label className="mobile-label">Total:</label>
                     <strong>PKR {(item.qty * item.price).toLocaleString()}</strong>
                   </div>
 
-                  {/* --- CONDITIONAL DELETE: Only visible in Edit Mode --- */}
                   <div className="col-actions">
                     {(isEditingTable || item.isNew) && (
                       <button className="inline-delete-btn" onClick={() => confirmDelete(item.id)} title="Remove Item">
@@ -240,7 +225,6 @@ const Inventory = () => {
         </div>
       </div>
 
-      {/* --- CUSTOM DELETE MODAL --- */}
       {itemToDelete && (
         <div className="modal-overlay" onClick={() => setItemToDelete(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ textAlign: 'center', padding: '30px', maxWidth: '350px' }}>

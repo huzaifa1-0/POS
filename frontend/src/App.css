@@ -976,3 +976,204 @@
     
     .col-actions { position: absolute; top: 15px; right: 15px; width: auto; }
 }
+
+/* =========================================
+   ACTION BAR STYLES (Header controls)
+   ========================================= */
+.inventory-action-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.inventory-action-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex: 1;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.search-bar-container {
+    position: relative; 
+    max-width: 250px; 
+    width: 100%;
+}
+.search-icon-inside { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+.inventory-search-input { width: 100%; padding: 10px 10px 10px 38px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-size: 14px; transition: 0.2s; }
+.inventory-search-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+.edit-toggle-btn {
+    padding: 10px 16px; border-radius: 8px; border: none; font-weight: bold; font-size: 14px;
+    display: flex; align-items: center; gap: 6px; cursor: pointer; color: white; white-space: nowrap;
+    background: #3b82f6; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.edit-toggle-btn:hover { background: #2563eb; }
+.edit-toggle-btn.editing-active { background: #f59e0b; }
+
+/* New Item Input Group Styles */
+.new-item-inputs { display: flex; gap: 8px; align-items: center; width: 100%; }
+.new-name-input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; flex: 1; min-width: 100px; outline: none; }
+.new-unit-select { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; background: white; }
+.save-new-item-btn { padding: 8px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; }
+
+/* =========================================
+   MOBILE RESPONSIVENESS (PERFECT CARDS)
+   ========================================= */
+.mobile-label { display: none; font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 0; text-transform: uppercase; }
+
+@media (max-width: 768px) {
+    .hide-on-mobile { display: none !important; }
+    
+    /* 1. Fix Action Bar for mobile */
+    .inventory-action-header { flex-direction: column; align-items: stretch; }
+    .inventory-action-controls { flex-direction: column; align-items: stretch; width: 100%; }
+    .search-bar-container { max-width: 100%; }
+    .inventory-action-controls > div { width: 100%; display: flex; }
+    .edit-toggle-btn, .add-stock-btn { flex: 1; justify-content: center; } /* Makes buttons 50/50 width */
+
+    /* 2. Turn table rows into floating cards */
+    .split-row { 
+        flex-direction: column; 
+        align-items: stretch; 
+        gap: 12px; 
+        padding: 16px; 
+        position: relative; 
+    }
+    
+    /* 3. Left side becomes the card Header */
+    .inventory-left-side { 
+        width: 100% !important; 
+        border-bottom: 1px dashed #e2e8f0; 
+        padding-bottom: 12px; 
+        padding-right: 40px; /* Safe space so text doesn't hide behind trash icon */
+    }
+    .new-item-inputs { flex-wrap: wrap; }
+    
+    /* 4. Right side inputs line up perfectly */
+    .inventory-right-side { 
+        flex-direction: column; 
+        align-items: stretch; 
+        gap: 12px; 
+        width: 100%; 
+    }
+    
+    .inventory-right-side > div { 
+        width: 100% !important; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+    }
+    
+    .mobile-label { display: block !important; }
+    .col-price, .col-qty, .col-total { width: 100% !important; padding: 0 !important; }
+    
+    /* Total stands out at the bottom of the card */
+    .col-total { 
+        border-top: 1px dashed #e2e8f0; 
+        padding-top: 12px; 
+        margin-top: 5px; 
+    }
+    .col-total strong { font-size: 18px !important; color: #10b981 !important; }
+    
+    /* Input sizing fix */
+    .qty-update-wrapper, .input-with-prefix { max-width: 160px; }
+    .qty-update-wrapper { justify-content: space-between; width: 100%; }
+    .qty-update-wrapper input { flex: 1; }
+    
+    /* Trash icon pins to top right of the card */
+    .col-actions { 
+        position: absolute; 
+        top: 16px; 
+        right: 16px; 
+        width: auto !important; 
+    }
+}
+
+
+/* =========================================
+   MOBILE RESPONSIVENESS (VERTICAL SCROLL CARDS)
+   ========================================= */
+.mobile-label { display: none; font-size: 10px; color: #64748b; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; }
+
+@media (max-width: 768px) {
+    .hide-on-mobile { display: none !important; }
+    
+    /* 1. Fix Action Bar for mobile */
+    .inventory-action-header { flex-direction: column; align-items: stretch; }
+    .inventory-action-controls { flex-direction: column; align-items: stretch; width: 100%; }
+    .search-bar-container { max-width: 100%; }
+    .inventory-action-controls > div { width: 100%; display: flex; gap: 10px; }
+    .edit-toggle-btn, .add-stock-btn { flex: 1; justify-content: center; } 
+
+    /* 2. Lock horizontal scroll, force vertical scroll */
+    .scrollable-table-container {
+        overflow-x: hidden !important; 
+        overflow-y: auto !important;
+    }
+    
+    /* 3. Turn table rows into floating cards stacked vertically */
+    .split-row { 
+        flex-direction: column; 
+        align-items: stretch; 
+        gap: 12px; 
+        padding: 16px; 
+        position: relative; 
+    }
+    
+    /* 4. Item Name & Unit become the card Header */
+    .inventory-left-side { 
+        width: 100% !important; 
+        border-bottom: 1px dashed #e2e8f0; 
+        padding-bottom: 12px; 
+        padding-right: 40px; /* Space for the delete icon */
+    }
+    .new-item-inputs { flex-wrap: wrap; }
+    
+    /* 5. Right side inputs IN THE SAME ROW (Side-by-Side) */
+    .inventory-right-side { 
+        flex-direction: row; /* Places them side-by-side */
+        align-items: flex-start; 
+        justify-content: space-between;
+        gap: 8px; 
+        width: 100%; 
+    }
+    
+    /* Forces the 3 stats into 3 equal columns */
+    .inventory-right-side > div { 
+        width: 32% !important; 
+        display: flex; 
+        flex-direction: column; /* Puts label above the number */
+        align-items: flex-start; 
+        justify-content: flex-start; 
+    }
+    
+    .mobile-label { display: block !important; }
+    .col-price, .col-qty, .col-total { padding: 0 !important; }
+    
+    /* Total adjustments for inline row */
+    .col-total { border-top: none; padding-top: 0; margin-top: 0; }
+    .col-total strong { font-size: 14px !important; color: #10b981 !important; word-break: break-word; }
+    
+    /* Make inputs slightly compact to fit nicely side-by-side */
+    .qty-update-wrapper, .input-with-prefix { width: 100%; max-width: 100%; border-radius: 6px; }
+    
+    .input-with-prefix span { padding: 6px 4px; font-size: 10px; }
+    .input-with-prefix input { padding: 6px 4px; font-size: 12px; }
+    
+    .qty-update-wrapper button { padding: 6px 8px; font-size: 12px; }
+    .qty-update-wrapper input { flex: 1; padding: 6px 0; font-size: 12px; width: 100%; text-align: center; }
+    
+    /* Trash icon pins to top right of the card */
+    .col-actions { 
+        position: absolute !important; 
+        top: 16px !important; 
+        right: 16px !important; 
+        width: auto !important; 
+    }
+}
