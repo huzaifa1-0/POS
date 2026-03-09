@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2 } from 'lucide-react';
+import { Routes, Route, NavLink } from 'react-router-dom'; // NEW
+import Inventory from './pages/Inventory'; // NEW
+import Reports from './pages/Reports'; // NEW
+import Expenses from './pages/Expenses'; // NEW
 import axios from 'axios';
 import { usePDF } from 'react-to-pdf';
 
@@ -441,41 +445,35 @@ function App() {
         </div>
       )}
 
-      {/* --- NEW LEFT NAVIGATION RAIL --- */}
       <div className="nav-rail">
         <div className="nav-rail-top">
           <div className="rail-logo">🍳</div>
-          <button 
-            className={`rail-btn ${activeView === 'pos' ? 'active' : ''}`} 
-            onClick={() => setActiveView('pos')}
-            title="POS Home"
-          >
+          <NavLink to="/" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="POS Home">
             <Home size={24} />
-          </button>
-          <button 
-            className={`rail-btn ${activeView === 'reports' ? 'active' : ''}`} 
-            onClick={() => setActiveView('reports')}
-            title="Reports"
-          >
+          </NavLink>
+          <NavLink to="/reports" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Reports">
             <BarChart2 size={24} />
-          </button>
+          </NavLink>
+          <NavLink to="/inventory" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Inventory">
+            <Package size={24} />
+          </NavLink>
+          <NavLink to="/expenses" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Expenses">
+            <FileText size={24} />
+          </NavLink>
         </div>
         <div className="nav-rail-bottom">
-          <button 
-            className="rail-btn logout-btn" 
-            onClick={handleLogout}
-            title="Logout"
-          >
+          <button className="rail-btn logout-btn" onClick={handleLogout} title="Logout">
             <LogOut size={24} />
           </button>
         </div>
       </div>
 
-      {/* --- CONDITIONAL RENDER: Show POS or Reports --- */}
-      {activeView === 'pos' ? (
-        <>
-          {/* LEFT SIDEBAR (Orders) */}
-          <div className="left-sidebar">
+      {/* --- MULTI-PAGE ROUTING --- */}
+      <Routes>
+        <Route path="/" element={
+          <>
+            {/* LEFT SIDEBAR (Orders) */}
+            <div className="left-sidebar">
         <div className="logo-area" style={{
           display: 'flex', 
           justifyContent: 'space-between', 
@@ -679,13 +677,14 @@ function App() {
 
       
       </>
-      ) : (
-        /* --- REPORTS VIEW PLACEHOLDER --- */
-        <div className="reports-view" style={{ flex: 1, padding: '40px', background: '#fff', overflowY: 'auto' }}>
-          <h2>📊 Reports Dashboard</h2>
-          <p style={{ color: '#64748b', marginTop: '10px' }}>Your daily sales, top items, and income analytics will appear here soon.</p>
-        </div>
-      )}
+      } />
+        
+        {/* NEW SEPARATE PAGES */}
+        <Route path="/reports" element={<Reports dailyIncome={dailyIncome} cashIncome={cashIncome} onlineIncome={onlineIncome} completedOrders={completedOrders} />} />
+        <Route path="/inventory" element={<Inventory />} />
+        <Route path="/expenses" element={<Expenses />} />
+        
+      </Routes>
     </div>
   );
 }
