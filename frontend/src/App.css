@@ -72,7 +72,7 @@
   margin: 15px 0; 
   display: flex; 
   flex-direction: column; 
-  gap: 10px; 
+  gap: 0px; 
   max-height: 220px; /* Limits height to about 4 items */
   overflow-y: auto;  /* Adds scrollbar if more than 4 items */
   padding-right: 5px;
@@ -679,4 +679,37 @@
     font-size: 15px;
     color: #1e293b;
     font-weight: 700;
+}
+
+.redesigned-cart-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 6px 5px !important; /* REDUCED PADDING FROM 12px TO 6px */
+    background: transparent !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    margin-bottom: 0 !important;
+}
+/* ... keep the middle lines exactly as they are ... */
+.cancel-wrapper {
+    height: auto; 
+    margin-bottom: 6px;
+}
+
+.small-cancel-icon-btn {
+    background: #fee2e2; /* ADDED A LIGHT RED BACKGROUND */
+    border: 1px solid #fca5a5; /* ADDED A RED BORDER */
+    border-radius: 4px; /* ROUNDED CORNERS */
+    color: #dc2626; /* DARKER RED ICON */
+    cursor: pointer;
+    padding: 2px 4px; /* GIVES IT SIZE */
+    opacity: 1; /* MADE FULLY VISIBLE */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s ease-in-out;
+}
+.small-cancel-icon-btn:hover { 
+    background: #fca5a5; 
+    color: white; 
 }

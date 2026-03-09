@@ -615,16 +615,31 @@ function App() {
               )}
             </div>
             
-            {/* NEW: View Receipt Button */}
+            {/* --- NEW: TOTAL BILL SUMMARY --- */}
+            {currentOrderData.items.length > 0 && (
+              <div style={{ marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#64748b', fontSize: '14px' }}>
+                  <span>Subtotal:</span>
+                  <span>PKR {subtotal.toFixed(2)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #cbd5e1', paddingTop: '10px', marginTop: '5px', fontWeight: '900', fontSize: '18px', color: '#0f172a' }}>
+                  <span>Total Bill:</span>
+                  <span>PKR {total.toFixed(2)}</span>
+                </div>
+              </div>
+            )}
+
+            {/* View Receipt Button */}
             {currentOrderData.items.length > 0 && (
               <button 
-                style={{ width: '100%', padding: '12px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '10px' }}
+                style={{ width: '100%', padding: '12px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '15px' }}
                 onClick={() => setShowReceiptModal(true)}
               >
                 <Receipt size={18} /> View Receipt
               </button>
             )}
 
+            {/* Send to Kitchen Button */}
             {currentOrderData.items.length > 0 && currentOrderData.status !== 'Sent' && (
               <button 
                 style={{ width: '100%', padding: '12px', background: '#ff6b6b', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '10px' }}
