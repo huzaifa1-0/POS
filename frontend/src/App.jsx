@@ -27,6 +27,7 @@ function App() {
   
   const [completedOrders, setCompletedOrders] = useState([]);
   const [itemToDelete, setItemToDelete] = useState(null); 
+  const [showReceiptModal, setShowReceiptModal] = useState(false); /* NEW: Controls the receipt modal */
   const { toPDF, targetRef } = usePDF({ filename: `${activeOrder}_Receipt.pdf` });
 
   // Replace your existing orders state with this
@@ -232,6 +233,7 @@ function App() {
     }
 
     toPDF();
+    setShowReceiptModal(false); // Closes the receipt pop-up after printing
     
     const method = currentOrderData.paymentMethod || 'Cash';
     if (method === 'Cash') {
@@ -370,6 +372,74 @@ function App() {
               <button className="btn-cancel" onClick={() => setItemToDelete(null)}>Cancel</button>
               <button className="btn-confirm" onClick={executeRemoveItem}>Yes, Delete</button>
             </div>
+          </div>
+        </div>
+      )}
+      {showReceiptModal && (
+        <div className="modal-overlay" onClick={() => setShowReceiptModal(false)}>
+          <div className="modal-content receipt-modal" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}><Receipt size={20} /> Bill View</h3>
+              <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }} onClick={() => setShowReceiptModal(false)}><X size={20}/></button>
+            </div>
+            
+            <div style={{ overflowY: 'auto', maxHeight: '50vh', paddingRight: '5px', marginBottom: '15px' }}>
+              <div className="bill-receipt" ref={targetRef} style={{ background: 'white', padding: '20px', color: '#000', borderRadius: '8px', border: '1px dashed #ccc' }}>
+                <div className="bill-header" style={{ textAlign: 'center', marginBottom: '15px', borderBottom: '1px dashed #ccc', paddingBottom: '15px' }}>
+                  <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '900' }}>NASHTA POS</h2>
+                  <p style={{ fontSize: '12px', color: '#555', margin: '5px 0' }}>123 Food Street, Lahore</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 'bold', marginTop: '10px' }}>
+                      <span>Order: {activeOrder}</span>
+                      <span>{new Date().toLocaleDateString()}</span>
+                  </div>
+                </div>
+
+                <div className="bill-items">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px', paddingBottom: '5px', borderBottom: '1px solid #eee' }}>
+                      <span>Item</span>
+                      <span>Amount</span>
+                  </div>
+                  {currentOrderData.items.map(item => (
+                    <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', margin: '8px 0', color: '#333' }}>
+                      <span>{item.qty}x {item.name}</span>
+                      <span>PKR {(item.price * item.qty).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bill-totals" style={{ marginTop: '10px', paddingTop: '15px', borderTop: '1px dashed #ddd' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>Subtotal</span><span>PKR {subtotal.toFixed(2)}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#666', margin: '5px 0' }}><span>Tax (5%)</span><span>PKR {tax.toFixed(2)}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '900', margin: '12px 0', paddingTop: '12px', borderTop: '1px solid #eee' }}>
+                    <span>TOTAL</span><span>PKR {total.toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '12px' }}>
+                    <span>Method</span><span style={{ fontWeight: 'bold', color: '#333' }}>{currentOrderData.paymentMethod || 'Cash'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '15px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '10px', textAlign: 'left' }}>Select Payment:</span>
+              <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '15px', fontWeight: '600', color: '#334155' }}>
+                  <input type="radio" name="payment" value="Cash" checked={(currentOrderData.paymentMethod || 'Cash') === 'Cash'} onChange={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Cash'}}))} /> 💵 Cash
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '15px', fontWeight: '600', color: '#334155' }}>
+                  <input type="radio" name="payment" value="Online" checked={currentOrderData.paymentMethod === 'Online'} onChange={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Online'}}))} /> 💳 Online
+                </label>
+              </div>
+            </div>
+
+            <button 
+              className="print-btn" 
+              onClick={handleFinalizeBill}
+              disabled={currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent'}
+              style={{ marginTop: 0, opacity: (currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent') ? 0.5 : 1, cursor: (currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent') ? 'not-allowed' : 'pointer' }}
+            >
+              <Printer size={18} /> Finalize & Print Bill (PDF)
+            </button>
           </div>
         </div>
       )}
@@ -521,22 +591,40 @@ function App() {
                  <p style={{color: '#888', fontStyle: 'italic', padding: '10px 0'}}>Empty. Add items below.</p>
               ) : (
                 currentOrderData.items.map(item => (
-                  <div className="order-item-row" key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <button onClick={() => handleQuantityChange(item.id, -1)} style={{ padding: '2px 8px', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc' }}>-</button>
-                      <span style={{ fontWeight: 'bold' }}>{item.qty}</span>
-                      <button onClick={() => handleQuantityChange(item.id, 1)} style={{ padding: '2px 8px', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc' }}>+</button>
-                      <span style={{ marginLeft: '10px' }}>{item.name}</span>
+                  <div className="order-item-row redesigned-cart-row" key={item.id}>
+                    <div className="item-left-block">
+                      <span className="item-name">{item.name}</span>
                     </div>
-                    <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                      <strong>PKR {(item.price * item.qty).toFixed(2)}</strong>
-                      <button className="cancel-btn" onClick={() => handleRemoveClick(item.id)} title="Delete Completely"><X size={14}/></button>
+                    <div className="item-right-group">
+                      <div className="item-controls-block">
+                        <div className="cancel-wrapper">
+                          <button className="small-cancel-icon-btn" onClick={() => handleRemoveClick(item.id)} title="Delete Completely"><X size={12}/></button>
+                        </div>
+                        <div className="qty-controls-row">
+                          <button className="qty-btn" onClick={() => handleQuantityChange(item.id, -1)}>-</button>
+                          <span className="qty-val">{item.qty}</span>
+                          <button className="qty-btn" onClick={() => handleQuantityChange(item.id, 1)}>+</button>
+                        </div>
+                      </div>
+                      <div className="item-price-block">
+                        <strong className="item-total-price">PKR {(item.price * item.qty).toFixed(2)}</strong>
+                      </div>
                     </div>
                   </div>
                 ))
               )}
             </div>
             
+            {/* NEW: View Receipt Button */}
+            {currentOrderData.items.length > 0 && (
+              <button 
+                style={{ width: '100%', padding: '12px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '10px' }}
+                onClick={() => setShowReceiptModal(true)}
+              >
+                <Receipt size={18} /> View Receipt
+              </button>
+            )}
+
             {currentOrderData.items.length > 0 && currentOrderData.status !== 'Sent' && (
               <button 
                 style={{ width: '100%', padding: '12px', background: '#ff6b6b', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '10px' }}
@@ -581,118 +669,7 @@ function App() {
         </div>
       </div>
 
-      {/* RIGHT SIDEBAR (The Receipt) */}
-      <div className="right-sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <h2 style={{ marginBottom: '15px', flexShrink: 0 }}><Receipt size={20} /> Bill View</h2>
-        
-        {/* --- NEW WRAPPER FOR SCROLLING --- */}
-        <div style={{ flex: 1, overflowY: 'auto', paddingRight: '5px', paddingBottom: '10px' }}>
-          
-          <div className="bill-receipt" ref={targetRef} style={{ background: 'white', padding: '25px', color: '#000', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
-            
-            {/* Header */}
-            <div className="bill-header" style={{ textAlign: 'center', marginBottom: '5px' }}>
-              <h2 style={{ color: 'black', margin: 0, fontSize: '22px', fontWeight: '900', letterSpacing: '1px' }}>NASHTA POS</h2>
-              <p style={{ fontSize: '12px', color: '#555', margin: '5px 0' }}>123 Food Street, Lahore</p>
-              <p style={{ fontSize: '12px', color: '#555', margin: 0 }}>Phone: +92 300 1234567</p>
-              
-              <div style={{ borderBottom: '2px dashed #ddd', margin: '10px 0' }}></div>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 'bold' }}>
-                  <span>Order: {activeOrder}</span>
-                  <span>{new Date().toLocaleDateString()}</span>
-              </div>
-              
-            </div>
-
-            {/* Items */}
-            <div className="bill-items">
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px', paddingBottom: '5px', borderBottom: '1px solid #eee' }}>
-                  <span>Item</span>
-                  <span>Amount</span>
-              </div>
-              
-              {currentOrderData.items.map(item => (
-                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', margin: '8px 0', color: '#333' }}>
-                  <span>{item.qty}x {item.name}</span>
-                  <span>PKR {(item.price * item.qty).toFixed(2)}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Totals */}
-            <div className="bill-totals" style={{ marginTop: '10px', paddingTop: '15px', borderTop: '1px dashed #ddd' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', margin: '2px 0' }}>
-                <span>Subtotal</span>
-                <span>PKR {subtotal.toFixed(2)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#666', margin: '5px 0' }}>
-                <span>Tax (5%)</span>
-                <span>PKR {tax.toFixed(2)}</span>
-              </div>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '900', margin: '12px 0', paddingTop: '12px', borderTop: '1px solid #eee' }}>
-                <span>TOTAL</span>
-                <span>PKR {total.toFixed(2)}</span>
-              </div>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '12px', marginTop: '10px' }}>
-                <span>Payment Method</span>
-                <span style={{ fontWeight: 'bold', color: '#333' }}>{currentOrderData.paymentMethod || 'Cash'}</span>
-              </div>
-            </div>
-
-            {/* Thank You Footer */}
-            <div style={{ textAlign: 'center', marginTop: '30px', borderTop: '2px dashed #ddd', paddingTop: '20px' }}>
-              <h3 style={{ fontSize: '16px', color: '#000', margin: '0 0 5px 0', fontWeight: 'bold' }}>Thank You!</h3>
-              <p style={{ fontSize: '12px', color: '#666', margin: 0, fontStyle: 'italic' }}>Please visit us again.</p>
-            </div>
-
-          </div>
-        </div>
-        {/* --- END SCROLLABLE WRAPPER --- */}
-
-        {/* This bottom section stays locked in place */}
-        <div style={{ flexShrink: 0, marginTop: '10px' }}>
-          <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '10px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '10px' }}>Select Payment:</span>
-            <div style={{ display: 'flex', gap: '20px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '15px', fontWeight: '600', color: '#334155' }}>
-                <input 
-                  type="radio" 
-                  name="payment" 
-                  value="Cash" 
-                  checked={(currentOrderData.paymentMethod || 'Cash') === 'Cash'}
-                  onChange={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Cash'}}))}
-                /> 💵 Cash
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '15px', fontWeight: '600', color: '#334155' }}>
-                <input 
-                  type="radio" 
-                  name="payment" 
-                  value="Online" 
-                  checked={currentOrderData.paymentMethod === 'Online'}
-                  onChange={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Online'}}))}
-                /> 💳 Online
-              </label>
-            </div>
-          </div>
-
-          <button 
-            className="print-btn" 
-            onClick={handleFinalizeBill}
-            disabled={currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent'}
-            style={{ 
-              marginTop: 0, 
-              opacity: (currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent') ? 0.5 : 1,
-              cursor: (currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent') ? 'not-allowed' : 'pointer'
-            }}
-          >
-            <Printer size={18} /> Finalize & Print Bill (PDF)
-          </button>
-        </div>
-
-      </div>
+      
       </>
       ) : (
         /* --- REPORTS VIEW PLACEHOLDER --- */
