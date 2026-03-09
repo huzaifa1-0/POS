@@ -7,6 +7,8 @@ const PRE_BUILT_STOCK = [
   { id: 3, name: 'Channay', qty: 0, unit: 'KG', price: 300 },
   { id: 4, name: 'Eggs', qty: 0, unit: 'Dozen', price: 400 },
   { id: 5, name: 'Milk', qty: 0, unit: 'Litre', price: 200 },
+  { id: 6, name: 'Potatoes', qty: 0, unit: 'Litre', price: 200 },
+  { id: 7, name: 'Tomatoes', qty: 0, unit: 'Litre', price: 200 },
 ];
 
 const Inventory = () => {
