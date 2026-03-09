@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Wallet, Plus, Trash2, Check, Search, AlertTriangle } from 'lucide-react'; // Added AlertTriangle
+import { Package, Wallet, Plus, Trash2, Check, Search, AlertTriangle, Edit2 } from 'lucide-react'; // Added Edit2
 
 const PRE_BUILT_STOCK = [
   { id: 1, name: 'Oil', qty: 0, unit: 'Litre', price: 600 },
@@ -7,8 +7,6 @@ const PRE_BUILT_STOCK = [
   { id: 3, name: 'Channay', qty: 0, unit: 'KG', price: 300 },
   { id: 4, name: 'Eggs', qty: 0, unit: 'Dozen', price: 400 },
   { id: 5, name: 'Milk', qty: 0, unit: 'Litre', price: 200 },
-  { id: 6, name: 'Potatoes', qty: 0, unit: 'Litre', price: 200 },
-  { id: 7, name: 'Tomatoes', qty: 0, unit: 'Litre', price: 200 },
 ];
 
 const Inventory = () => {
@@ -18,9 +16,10 @@ const Inventory = () => {
   });
 
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // --- NEW: State to track which item is being deleted for the custom popup ---
   const [itemToDelete, setItemToDelete] = useState(null); 
+  
+  // --- NEW: Global toggle to unlock/lock the table for editing ---
+  const [isEditingTable, setIsEditingTable] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('nashta_pos_inline_inventory', JSON.stringify(items));
@@ -30,6 +29,7 @@ const Inventory = () => {
     const newRow = { id: Date.now(), name: '', qty: 0, unit: 'KG', price: 0, isNew: true };
     setItems([newRow, ...items]);
     setSearchTerm(''); 
+    // Removed setIsEditingTable(true) so the rest of the table stays locked!
   };
 
   const handleUpdateField = (id, field, value) => {
@@ -50,16 +50,14 @@ const Inventory = () => {
     setItems(items.map(item => item.id === id ? { ...item, isNew: false } : item));
   };
 
-  // --- CHANGED: Now this just opens the custom modal instead of the browser popup ---
   const confirmDelete = (id) => {
     setItemToDelete(id); 
   };
 
-  // --- NEW: This runs when the user clicks "Yes, Delete" inside the custom modal ---
   const executeDelete = () => {
     if (itemToDelete) {
       setItems(items.filter(item => item.id !== itemToDelete));
-      setItemToDelete(null); // Close the modal
+      setItemToDelete(null);
     }
   };
 
@@ -87,11 +85,12 @@ const Inventory = () => {
         </div>
       </div>
 
-      {/* Action Bar (Search & Add) */}
+      {/* Action Bar (Search, Edit Table, & Add) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexShrink: 0, flexWrap: 'wrap', gap: '15px' }}>
         <h3 style={{ margin: 0, color: '#475569' }}>Current Stock Items</h3>
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
-          <div style={{ position: 'relative', maxWidth: '300px', width: '100%' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flex: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+          
+          <div style={{ position: 'relative', maxWidth: '250px', width: '100%' }}>
             <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
             <input 
               type="text" 
@@ -101,6 +100,20 @@ const Inventory = () => {
               style={{ width: '100%', padding: '10px 10px 10px 38px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '14px' }}
             />
           </div>
+
+          {/* --- NEW: EDIT TABLE BUTTON --- */}
+          <button 
+            onClick={() => setIsEditingTable(!isEditingTable)}
+            style={{ 
+              padding: '10px 16px', borderRadius: '8px', border: 'none', fontWeight: 'bold', fontSize: '14px',
+              display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'white', whiteSpace: 'nowrap',
+              background: isEditingTable ? '#f59e0b' : '#3b82f6', transition: '0.2s', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+            }}
+          >
+            {isEditingTable ? <Check size={18} /> : <Edit2 size={18} />}
+            {isEditingTable ? 'Done Editing' : 'Edit Table'}
+          </button>
+
           <button className="add-stock-btn" onClick={handleAddNewRow} style={{ whiteSpace: 'nowrap' }}>
             <Plus size={18} /> Add New Item
           </button>
@@ -134,8 +147,7 @@ const Inventory = () => {
                   {item.isNew ? (
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
                       <input 
-                        type="text" 
-                        placeholder="Item Name..." 
+                        type="text" placeholder="Item Name..." 
                         value={item.name} 
                         onChange={(e) => handleUpdateField(item.id, 'name', e.target.value)}
                         style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', width: '150px', outline: 'none' }}
@@ -171,41 +183,54 @@ const Inventory = () => {
                 {/* 2. RIGHT SIDE: Inputs & Actions */}
                 <div className="inventory-right-side">
                   
+                  {/* --- CONDITIONAL UNIT PRICE: Static text vs Input --- */}
                   <div className="col-price">
                     <label className="mobile-label">Unit Price:</label>
-                    <div className="input-with-prefix">
-                      <span>PKR</span>
-                      <input 
-                        type="number" min="0" placeholder="0"
-                        value={item.price === 0 ? '' : item.price} 
-                        onChange={(e) => handleUpdateField(item.id, 'price', e.target.value)}
-                      />
-                    </div>
+                    {(isEditingTable || item.isNew) ? (
+                      <div className="input-with-prefix">
+                        <span>PKR</span>
+                        <input 
+                          type="number" min="0" placeholder="0"
+                          value={item.price === 0 ? '' : item.price} 
+                          onChange={(e) => handleUpdateField(item.id, 'price', e.target.value)}
+                        />
+                      </div>
+                    ) : (
+                      <strong style={{ fontSize: '15px', color: '#1e293b' }}>PKR {item.price}</strong>
+                    )}
                   </div>
 
+                  {/* --- CONDITIONAL QUANTITY: Static text vs Input --- */}
                   <div className="col-qty">
                     <label className="mobile-label">Quantity:</label>
-                    <div className="qty-update-wrapper">
-                      <button onClick={() => handleUpdateField(item.id, 'qty', Math.max(0, item.qty - 1))}>-</button>
-                      <input 
-                        type="number" min="0" placeholder="0"
-                        value={item.qty === 0 ? '' : item.qty} 
-                        onChange={(e) => handleUpdateField(item.id, 'qty', e.target.value)}
-                      />
-                      <button onClick={() => handleUpdateField(item.id, 'qty', item.qty + 1)}>+</button>
-                    </div>
+                    {(isEditingTable || item.isNew) ? (
+                      <div className="qty-update-wrapper">
+                        <button onClick={() => handleUpdateField(item.id, 'qty', Math.max(0, item.qty - 1))}>-</button>
+                        <input 
+                          type="number" min="0" placeholder="0"
+                          value={item.qty === 0 ? '' : item.qty} 
+                          onChange={(e) => handleUpdateField(item.id, 'qty', e.target.value)}
+                        />
+                        <button onClick={() => handleUpdateField(item.id, 'qty', item.qty + 1)}>+</button>
+                      </div>
+                    ) : (
+                      <strong style={{ fontSize: '15px', color: '#1e293b' }}>{item.qty}</strong>
+                    )}
                   </div>
 
+                  {/* Total (Always Static) */}
                   <div className="col-total">
                     <label className="mobile-label">Total:</label>
                     <strong>PKR {(item.qty * item.price).toLocaleString()}</strong>
                   </div>
 
+                  {/* --- CONDITIONAL DELETE: Only visible in Edit Mode --- */}
                   <div className="col-actions">
-                    {/* CHANGED: This now triggers confirmDelete instead of handleDeleteRow */}
-                    <button className="inline-delete-btn" onClick={() => confirmDelete(item.id)} title="Remove Item">
-                      <Trash2 size={18} />
-                    </button>
+                    {(isEditingTable || item.isNew) && (
+                      <button className="inline-delete-btn" onClick={() => confirmDelete(item.id)} title="Remove Item">
+                        <Trash2 size={18} />
+                      </button>
+                    )}
                   </div>
 
                 </div>
@@ -215,36 +240,22 @@ const Inventory = () => {
         </div>
       </div>
 
-      {/* --- NEW: BEAUTIFUL CUSTOM DELETE MODAL --- */}
+      {/* --- CUSTOM DELETE MODAL --- */}
       {itemToDelete && (
         <div className="modal-overlay" onClick={() => setItemToDelete(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ textAlign: 'center', padding: '30px', maxWidth: '350px' }}>
-            
-            {/* Warning Icon Container */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
               <div style={{ background: '#fee2e2', padding: '15px', borderRadius: '50%', color: '#ef4444', display: 'inline-flex' }}>
                 <AlertTriangle size={36} />
               </div>
             </div>
-
             <h3 style={{ margin: '0 0 10px 0', fontSize: '22px', color: '#1e293b', fontWeight: '800' }}>Delete Item?</h3>
             <p style={{ color: '#64748b', fontSize: '14px', margin: '0 0 25px 0', lineHeight: '1.5' }}>
               Are you sure you want to permanently remove this item from your stock list? This action cannot be undone.
             </p>
-            
             <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
-              <button 
-                onClick={() => setItemToDelete(null)}
-                style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={executeDelete}
-                style={{ flex: 1, padding: '12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s', boxShadow: '0 4px 6px rgba(239, 68, 68, 0.2)' }}
-              >
-                Yes, Delete
-              </button>
+              <button onClick={() => setItemToDelete(null)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}>Cancel</button>
+              <button onClick={executeDelete} style={{ flex: 1, padding: '12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s', boxShadow: '0 4px 6px rgba(239, 68, 68, 0.2)' }}>Yes, Delete</button>
             </div>
           </div>
         </div>
