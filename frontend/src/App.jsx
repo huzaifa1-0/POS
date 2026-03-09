@@ -345,10 +345,9 @@ function App() {
   }
 
   // --- EXISTING UI RENDER FOR LOGGED IN USERS ---
+  // --- EXISTING UI RENDER FOR LOGGED IN USERS ---
   const currentOrderData = orders[activeOrder] || { items: [], status: 'Draft', type: 'Dine-In', paymentMethod: 'Cash' };
-  const subtotal = currentOrderData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-  const tax = subtotal * 0.05;
-  const total = subtotal + tax;
+  const total = currentOrderData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
   const visibleDineIn = Object.keys(orders).filter(k => orders[k].type === 'Dine-In' && (orders[k].items.length > 0 || activeOrder === k));
   const visibleTakeaway = Object.keys(orders).filter(k => orders[k].type === 'Takeaway' && (orders[k].items.length > 0 || activeOrder === k));
@@ -408,12 +407,10 @@ function App() {
                 </div>
 
                 <div className="bill-totals" style={{ marginTop: '10px', paddingTop: '15px', borderTop: '1px dashed #ddd' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>Subtotal</span><span>PKR {subtotal.toFixed(2)}</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#666', margin: '5px 0' }}><span>Tax (5%)</span><span>PKR {tax.toFixed(2)}</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '900', margin: '12px 0', paddingTop: '12px', borderTop: '1px solid #eee' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: '900', margin: '5px 0', color: '#000' }}>
                     <span>TOTAL</span><span>PKR {total.toFixed(2)}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '13px', marginTop: '10px' }}>
                     <span>Method</span><span style={{ fontWeight: 'bold', color: '#333' }}>{currentOrderData.paymentMethod || 'Cash'}</span>
                   </div>
                 </div>
@@ -618,11 +615,7 @@ function App() {
             {/* --- NEW: TOTAL BILL SUMMARY --- */}
             {currentOrderData.items.length > 0 && (
               <div style={{ marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#64748b', fontSize: '14px' }}>
-                  <span>Subtotal:</span>
-                  <span>PKR {subtotal.toFixed(2)}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #cbd5e1', paddingTop: '10px', marginTop: '5px', fontWeight: '900', fontSize: '18px', color: '#0f172a' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '900', fontSize: '18px', color: '#0f172a' }}>
                   <span>Total Bill:</span>
                   <span>PKR {total.toFixed(2)}</span>
                 </div>
