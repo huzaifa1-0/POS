@@ -1,208 +1,253 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Search, Plus, X, Wallet, Edit2, Trash2 } from 'lucide-react';
-import axios from 'axios';
+import { Package, Wallet, Plus, Trash2, Check, Search, AlertTriangle } from 'lucide-react'; // Added AlertTriangle
+
+const PRE_BUILT_STOCK = [
+  { id: 1, name: 'Oil', qty: 0, unit: 'Litre', price: 600 },
+  { id: 2, name: 'Flour (Atta)', qty: 0, unit: 'KG', price: 150 },
+  { id: 3, name: 'Channay', qty: 0, unit: 'KG', price: 300 },
+  { id: 4, name: 'Eggs', qty: 0, unit: 'Dozen', price: 400 },
+  { id: 5, name: 'Milk', qty: 0, unit: 'Litre', price: 200 },
+];
 
 const Inventory = () => {
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
+  const [items, setItems] = useState(() => {
+    const saved = localStorage.getItem('nashta_pos_inline_inventory');
+    return saved ? JSON.parse(saved) : PRE_BUILT_STOCK;
+  });
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [items, setItems] = useState([]);
-  const [newItem, setNewItem] = useState({ name: '', qty: '', unit: 'KG', price: '' });
-
-  // Get your backend URL and auth token (if you use token auth)
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
-  const token = localStorage.getItem('access_token');
   
-  // Headers for API calls
-  const config = {
-    headers: { Authorization: `Bearer ${token}` }
-  };
+  // --- NEW: State to track which item is being deleted for the custom popup ---
+  const [itemToDelete, setItemToDelete] = useState(null); 
 
-  // 1. FETCH INVENTORY FROM DATABASE ON LOAD
   useEffect(() => {
-    fetchInventory();
-  }, []);
+    localStorage.setItem('nashta_pos_inline_inventory', JSON.stringify(items));
+  }, [items]);
 
-  const fetchInventory = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/inventory/`, config);
-      setItems(response.data);
-    } catch (error) {
-      console.error("Error fetching inventory:", error);
-    }
+  const handleAddNewRow = () => {
+    const newRow = { id: Date.now(), name: '', qty: 0, unit: 'KG', price: 0, isNew: true };
+    setItems([newRow, ...items]);
+    setSearchTerm(''); 
   };
 
-  // Automatically calculate total value directly from database items
-  const totalInventoryValue = items.reduce((sum, item) => sum + (Number(item.qty) * Number(item.price)), 0);
-  const filteredItems = items.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
-
-  // 2. SAVE NEW ITEM TO DATABASE
-  const handleAddItem = async (e) => {
-    e.preventDefault();
-    if (!newItem.name || !newItem.qty || !newItem.price) return;
-    
-    try {
-      const response = await axios.post(`${API_BASE_URL}/inventory/`, newItem, config);
-      setItems([response.data, ...items]); // Add new item to the top of the list
-      setNewItem({ name: '', qty: '', unit: 'KG', price: '' });
-      setShowAddModal(false);
-    } catch (error) {
-      console.error("Error adding inventory item:", error);
-      alert("Failed to save item to database.");
-    }
-  };
-
-  // 3. UPDATE EXISTING ITEM IN DATABASE
-  const handleUpdateItem = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.put(`${API_BASE_URL}/inventory/${editingItem.id}/`, editingItem, config);
-      setItems(items.map(item => item.id === editingItem.id ? response.data : item));
-      setEditingItem(null);
-    } catch (error) {
-      console.error("Error updating inventory item:", error);
-      alert("Failed to update item in database.");
-    }
-  };
-
-  // 4. DELETE ITEM FROM DATABASE
-  const handleDeleteItem = async (id) => {
-    if (window.confirm("Are you sure you want to permanently delete this stock item?")) {
-      try {
-        await axios.delete(`${API_BASE_URL}/inventory/${id}/`, config);
-        setItems(items.filter(item => item.id !== id));
-      } catch (error) {
-        console.error("Error deleting inventory item:", error);
-        alert("Failed to delete item from database.");
+  const handleUpdateField = (id, field, value) => {
+    setItems(items.map(item => {
+      if (item.id === id) {
+        const finalValue = (field === 'qty' || field === 'price') ? Number(value) : value;
+        return { ...item, [field]: finalValue };
       }
+      return item;
+    }));
+  };
+
+  const handleSaveNewItem = (id, name) => {
+    if (!name.trim()) {
+      alert("Please enter an item name before saving.");
+      return;
+    }
+    setItems(items.map(item => item.id === id ? { ...item, isNew: false } : item));
+  };
+
+  // --- CHANGED: Now this just opens the custom modal instead of the browser popup ---
+  const confirmDelete = (id) => {
+    setItemToDelete(id); 
+  };
+
+  // --- NEW: This runs when the user clicks "Yes, Delete" inside the custom modal ---
+  const executeDelete = () => {
+    if (itemToDelete) {
+      setItems(items.filter(item => item.id !== itemToDelete));
+      setItemToDelete(null); // Close the modal
     }
   };
+
+  const totalInventoryValue = items.reduce((sum, item) => sum + (item.qty * item.price), 0);
+
+  const filteredItems = items.filter(item => 
+    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div style={{ flex: 1, padding: '20px', background: '#f8fafc', overflowY: 'auto' }}>
+    <div style={{ flex: 1, padding: '20px', background: '#f8fafc', display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+      
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px' }}>
         <Package size={28} color="#ff6b6b" />
-        <h2 style={{ margin: 0, color: '#1e293b' }}>Stock Inventory</h2>
+        <h2 style={{ margin: 0, color: '#1e293b' }}>Stock Manager</h2>
       </div>
 
-      <div className="inventory-summary-card">
+      {/* Total Value Card */}
+      <div className="inventory-summary-card" style={{ flexShrink: 0 }}>
         <div className="summary-icon"><Wallet size={28} color="#fff"/></div>
         <div>
           <p>Total Inventory Value</p>
-          <h3>PKR {totalInventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+          <h3>PKR {totalInventoryValue.toLocaleString()}</h3>
         </div>
       </div>
 
-      <div className="inventory-actions-bar">
-        <div className="search-wrapper">
-          <Search size={18} className="search-icon" />
-          <input type="text" placeholder="Search stock..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="inventory-search-input" />
+      {/* Action Bar (Search & Add) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexShrink: 0, flexWrap: 'wrap', gap: '15px' }}>
+        <h3 style={{ margin: 0, color: '#475569' }}>Current Stock Items</h3>
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
+          <div style={{ position: 'relative', maxWidth: '300px', width: '100%' }}>
+            <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <input 
+              type="text" 
+              placeholder="Search items..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ width: '100%', padding: '10px 10px 10px 38px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '14px' }}
+            />
+          </div>
+          <button className="add-stock-btn" onClick={handleAddNewRow} style={{ whiteSpace: 'nowrap' }}>
+            <Plus size={18} /> Add New Item
+          </button>
         </div>
-        <button className="add-stock-btn" onClick={() => setShowAddModal(true)}>
-          <Plus size={18} /> Add Stock
-        </button>
       </div>
 
-      <div className="inventory-list">
-        {filteredItems.length === 0 ? (
-          <p style={{ color: '#64748b', textAlign: 'center', marginTop: '20px' }}>No items found in database.</p>
-        ) : (
-          filteredItems.map(item => (
-            <div key={item.id} className="inventory-item-card">
-              <div className="item-info">
-                <h4>{item.name}</h4>
-                <span className="item-price">PKR {Number(item.price).toFixed(2)} / {item.unit}</span>
-              </div>
-              <div className="item-right-section">
-                <div className="item-qty-badge">
-                  <span className="qty-number">{Number(item.qty)}</span>
-                  <span className="qty-unit">{item.unit}</span>
-                </div>
-                <div className="item-action-buttons">
-                  <button className="action-icon-btn edit-btn" onClick={() => setEditingItem(item)} title="Edit Item"><Edit2 size={16} /></button>
-                  <button className="action-icon-btn delete-btn" onClick={() => handleDeleteItem(item.id)} title="Delete Item"><Trash2 size={16} /></button>
-                </div>
-              </div>
+      {/* --- SCROLLABLE TABLE CONTAINER --- */}
+      <div className="scrollable-table-container">
+        <div className="fixed-inventory-list">
+          
+          <div className="fixed-inventory-header hide-on-mobile split-header">
+            <span className="inventory-left-side">Item Details</span>
+            <div className="inventory-right-side">
+              <span className="col-price">Unit Price</span>
+              <span className="col-qty">Quantity</span>
+              <span className="col-total">Total Price</span>
+              <span className="col-actions"></span>
             </div>
-          ))
-        )}
+          </div>
+
+          {filteredItems.length === 0 ? (
+            <div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
+              No items match your search.
+            </div>
+          ) : (
+            filteredItems.map(item => (
+              <div key={item.id} className="fixed-inventory-row split-row">
+                
+                {/* 1. LEFT SIDE: Name & Unit */}
+                <div className="inventory-left-side" style={{ width: '100%' }}>
+                  {item.isNew ? (
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                      <input 
+                        type="text" 
+                        placeholder="Item Name..." 
+                        value={item.name} 
+                        onChange={(e) => handleUpdateField(item.id, 'name', e.target.value)}
+                        style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', width: '150px', outline: 'none' }}
+                        autoFocus
+                      />
+                      <select 
+                        value={item.unit} 
+                        onChange={(e) => handleUpdateField(item.id, 'unit', e.target.value)}
+                        style={{ padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none' }}
+                      >
+                        <option value="KG">KG</option>
+                        <option value="Litre">Litre</option>
+                        <option value="Dozen">Dozen</option>
+                        <option value="Pcs">Pcs</option>
+                        <option value="Pack">Pack</option>
+                      </select>
+                      <button 
+                        onClick={() => handleSaveNewItem(item.id, item.name)} 
+                        style={{ padding: '8px', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        title="Save Item"
+                      >
+                        <Check size={18} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <strong className="item-title">{item.name}</strong>
+                      <span className="item-unit-badge">{item.unit}</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* 2. RIGHT SIDE: Inputs & Actions */}
+                <div className="inventory-right-side">
+                  
+                  <div className="col-price">
+                    <label className="mobile-label">Unit Price:</label>
+                    <div className="input-with-prefix">
+                      <span>PKR</span>
+                      <input 
+                        type="number" min="0" placeholder="0"
+                        value={item.price === 0 ? '' : item.price} 
+                        onChange={(e) => handleUpdateField(item.id, 'price', e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="col-qty">
+                    <label className="mobile-label">Quantity:</label>
+                    <div className="qty-update-wrapper">
+                      <button onClick={() => handleUpdateField(item.id, 'qty', Math.max(0, item.qty - 1))}>-</button>
+                      <input 
+                        type="number" min="0" placeholder="0"
+                        value={item.qty === 0 ? '' : item.qty} 
+                        onChange={(e) => handleUpdateField(item.id, 'qty', e.target.value)}
+                      />
+                      <button onClick={() => handleUpdateField(item.id, 'qty', item.qty + 1)}>+</button>
+                    </div>
+                  </div>
+
+                  <div className="col-total">
+                    <label className="mobile-label">Total:</label>
+                    <strong>PKR {(item.qty * item.price).toLocaleString()}</strong>
+                  </div>
+
+                  <div className="col-actions">
+                    {/* CHANGED: This now triggers confirmDelete instead of handleDeleteRow */}
+                    <button className="inline-delete-btn" onClick={() => confirmDelete(item.id)} title="Remove Item">
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
-      {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content inventory-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}><Plus size={20}/> Add New Stock</h3>
-              <button className="modal-close-icon" onClick={() => setShowAddModal(false)}><X size={20}/></button>
+      {/* --- NEW: BEAUTIFUL CUSTOM DELETE MODAL --- */}
+      {itemToDelete && (
+        <div className="modal-overlay" onClick={() => setItemToDelete(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ textAlign: 'center', padding: '30px', maxWidth: '350px' }}>
+            
+            {/* Warning Icon Container */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+              <div style={{ background: '#fee2e2', padding: '15px', borderRadius: '50%', color: '#ef4444', display: 'inline-flex' }}>
+                <AlertTriangle size={36} />
+              </div>
             </div>
-            <form onSubmit={handleAddItem} className="inventory-form">
-              <div>
-                <label>Item Name</label>
-                <input type="text" placeholder="e.g., Sugar, Eggs" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} required />
-              </div>
-              <div className="form-row">
-                <div>
-                  <label>Quantity</label>
-                  <input type="number" step="0.01" placeholder="0" value={newItem.qty} onChange={e => setNewItem({...newItem, qty: e.target.value})} required />
-                </div>
-                <div>
-                  <label>Unit Type</label>
-                  <select value={newItem.unit} onChange={e => setNewItem({...newItem, unit: e.target.value})}>
-                    <option value="KG">Kilogram (KG)</option>
-                    <option value="Litre">Litre (L)</option>
-                    <option value="Dozen">Dozen</option>
-                    <option value="Pcs">Pieces (Pcs)</option>
-                    <option value="Pack">Packet</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label>Price Per Unit (PKR)</label>
-                <input type="number" step="0.01" placeholder="e.g., 150" value={newItem.price} onChange={e => setNewItem({...newItem, price: e.target.value})} required />
-              </div>
-              <button type="submit" className="save-inventory-btn">Save Item to Database</button>
-            </form>
+
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '22px', color: '#1e293b', fontWeight: '800' }}>Delete Item?</h3>
+            <p style={{ color: '#64748b', fontSize: '14px', margin: '0 0 25px 0', lineHeight: '1.5' }}>
+              Are you sure you want to permanently remove this item from your stock list? This action cannot be undone.
+            </p>
+            
+            <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+              <button 
+                onClick={() => setItemToDelete(null)}
+                style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={executeDelete}
+                style={{ flex: 1, padding: '12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s', boxShadow: '0 4px 6px rgba(239, 68, 68, 0.2)' }}
+              >
+                Yes, Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {editingItem && (
-        <div className="modal-overlay" onClick={() => setEditingItem(null)}>
-          <div className="modal-content inventory-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}><Edit2 size={20}/> Edit Stock</h3>
-              <button className="modal-close-icon" onClick={() => setEditingItem(null)}><X size={20}/></button>
-            </div>
-            <form onSubmit={handleUpdateItem} className="inventory-form">
-              <div>
-                <label>Item Name</label>
-                <input type="text" value={editingItem.name} onChange={e => setEditingItem({...editingItem, name: e.target.value})} required />
-              </div>
-              <div className="form-row">
-                <div>
-                  <label>Quantity</label>
-                  <input type="number" step="0.01" value={editingItem.qty} onChange={e => setEditingItem({...editingItem, qty: e.target.value})} required />
-                </div>
-                <div>
-                  <label>Unit Type</label>
-                  <select value={editingItem.unit} onChange={e => setEditingItem({...editingItem, unit: e.target.value})}>
-                    <option value="KG">Kilogram (KG)</option>
-                    <option value="Litre">Litre (L)</option>
-                    <option value="Dozen">Dozen</option>
-                    <option value="Pcs">Pieces (Pcs)</option>
-                    <option value="Pack">Packet</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label>Price Per Unit (PKR)</label>
-                <input type="number" step="0.01" value={editingItem.price} onChange={e => setEditingItem({...editingItem, price: e.target.value})} required />
-              </div>
-              <button type="submit" className="save-inventory-btn" style={{ background: '#3b82f6', boxShadow: '0 4px 10px rgba(59, 130, 246, 0.3)' }}>Update in Database</button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

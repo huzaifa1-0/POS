@@ -852,3 +852,127 @@
     .item-right-section { flex-direction: column; align-items: flex-end; gap: 10px; }
     .item-action-buttons { flex-direction: row; }
 }
+/* =========================================
+   INVENTORY MANAGER (LEFT / RIGHT SPLIT)
+   ========================================= */
+
+.inventory-summary-card {
+    background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+    border-radius: 12px; padding: 20px; color: white; display: flex; 
+    align-items: center; gap: 20px; margin-bottom: 20px;
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+}
+.inventory-summary-card p { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;}
+.inventory-summary-card h3 { margin: 5px 0 0 0; font-size: 26px; font-weight: 900; }
+.summary-icon { background: rgba(255,255,255,0.2); padding: 12px; border-radius: 12px; }
+
+.add-stock-btn {
+    background: #10b981; color: white; border: none; border-radius: 8px;
+    padding: 10px 16px; font-weight: bold; font-size: 14px; display: flex; 
+    align-items: center; gap: 6px; cursor: pointer; transition: 0.2s;
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+}
+.add-stock-btn:hover { background: #059669; transform: translateY(-1px); }
+
+.scrollable-table-container {
+    flex: 1; overflow-y: auto; background: white; border-radius: 12px; 
+    border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.fixed-inventory-header {
+    background: #f8fafc; padding: 15px 20px; font-weight: 700;
+    color: #475569; border-bottom: 2px solid #e2e8f0; font-size: 13px; 
+    text-transform: uppercase; position: sticky; top: 0; z-index: 10;
+}
+.fixed-inventory-row {
+    padding: 15px 20px; border-bottom: 1px solid #e2e8f0; transition: 0.2s;
+}
+.fixed-inventory-row:last-child { border-bottom: none; }
+.fixed-inventory-row:hover { background: #f1f5f9; }
+
+/* --- THE LEFT / RIGHT SPLIT MAGIC --- */
+.split-header, .split-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Left Side (Name & Unit) */
+.inventory-left-side {
+    flex: 1; /* Pushes the right side all the way to the right edge */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+.item-title { font-size: 18px; color: #1e293b; }
+.item-unit-badge {
+    font-size: 11px; background: #e0e7ff; color: #4f46e5;
+    padding: 3px 8px; border-radius: 6px; font-weight: 800; text-transform: uppercase;
+}
+
+/* Right Side (Inputs & Controls) */
+.inventory-right-side {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    justify-content: flex-end;
+}
+
+/* Fixed column widths to keep columns perfectly aligned on desktop */
+.col-price { width: 140px; }
+.col-qty { width: 130px; }
+.col-total { width: 130px; text-align: right; font-size: 16px; color: #0f172a; font-weight: 800; }
+.col-actions { width: 40px; display: flex; justify-content: flex-end; }
+
+/* Input Styling */
+.input-with-prefix { 
+    display: flex; align-items: center; background: white; border: 1px solid #cbd5e1; 
+    border-radius: 8px; overflow: hidden; transition: 0.2s; 
+}
+.input-with-prefix:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.input-with-prefix span { background: #f1f5f9; padding: 8px; font-size: 12px; color: #64748b; font-weight: bold; border-right: 1px solid #cbd5e1; }
+.input-with-prefix input { border: none; width: 100%; padding: 8px; font-size: 14px; font-weight: bold; outline: none; color: #1e293b; }
+
+.qty-update-wrapper { 
+    display: flex; align-items: center; border: 1px solid #cbd5e1; border-radius: 8px; 
+    overflow: hidden; background: white; width: fit-content; transition: 0.2s; 
+}
+.qty-update-wrapper:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.qty-update-wrapper button { background: #f1f5f9; border: none; padding: 8px 12px; cursor: pointer; font-weight: bold; font-size: 16px; color: #475569; transition: 0.2s; }
+.qty-update-wrapper button:hover { background: #e2e8f0; color: #1e293b; }
+.qty-update-wrapper input { width: 45px; text-align: center; border: none; border-left: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1; padding: 8px 0; font-size: 14px; font-weight: bold; outline: none; color: #1e293b; }
+.qty-update-wrapper input[type="number"]::-webkit-inner-spin-button, .qty-update-wrapper input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.inline-delete-btn {
+    background: #fef2f2; color: #ef4444; border: none; padding: 8px; border-radius: 8px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;
+}
+.inline-delete-btn:hover { background: #fee2e2; color: #dc2626; transform: scale(1.05); }
+
+/* =========================================
+   MOBILE RESPONSIVENESS
+   ========================================= */
+.mobile-label { display: none; font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; }
+
+@media (max-width: 768px) {
+    .hide-on-mobile { display: none; }
+    
+    .split-row { flex-direction: column; align-items: stretch; gap: 15px; padding: 20px; position: relative; }
+    
+    /* Left side is now the top header of the mobile card */
+    .inventory-left-side { border-bottom: 1px dashed #e2e8f0; padding-bottom: 15px; width: 85%; }
+    
+    /* Right side stacks vertically on mobile */
+    .inventory-right-side { flex-direction: column; align-items: stretch; gap: 15px; width: 100%; }
+    .inventory-right-side > div { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+    
+    .mobile-label { display: block; margin: 0; }
+    .col-price, .col-qty, .col-total { width: 100%; padding: 0; }
+    .col-total { border-top: 1px dashed #e2e8f0; padding-top: 15px; margin-top: 5px; font-size: 20px; color: #10b981; }
+    
+    .qty-update-wrapper { width: 140px; justify-content: space-between; }
+    .qty-update-wrapper input { flex: 1; }
+    
+    .col-actions { position: absolute; top: 15px; right: 15px; width: auto; }
+}
