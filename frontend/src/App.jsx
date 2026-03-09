@@ -28,9 +28,18 @@ function App() {
   const [itemToDelete, setItemToDelete] = useState(null); 
   const { toPDF, targetRef } = usePDF({ filename: `${activeOrder}_Receipt.pdf` });
 
-  const [orders, setOrders] = useState({
-    'Table 1': { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' },
+  // Replace your existing orders state with this
+  const [orders, setOrders] = useState(() => {
+    const savedOrders = localStorage.getItem('nashta_pos_orders');
+    return savedOrders ? JSON.parse(savedOrders) : {
+      'Table 1': { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' },
+    };
   });
+
+  // Add this useEffect to sync changes automatically
+  useEffect(() => {
+    localStorage.setItem('nashta_pos_orders', JSON.stringify(orders));
+  }, [orders]);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
 
@@ -62,14 +71,17 @@ function App() {
     setAuthError('');
 
     if (authMode === 'signup') {
-      // 1. Check if passwords match
+      // Prevent XSS in username
+      if (/<[^>]*>?/gm.test(name)) {
+        return setAuthError("Invalid characters in name. Scripts are not allowed.");
+      }
+
       if (password !== confirmPassword) {
         return setAuthError("Passwords do not match!");
       }
       
-      // 2. NEW: Check strict password policy
-      // At least 8 chars, 1 uppercase, 1 number, 1 special character
-      const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      // Updated Regex: Allows any special characters, minimum 8 chars, 1 upper, 1 number
+      const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
       if (!passwordRegex.test(password)) {
         return setAuthError("Password must be at least 8 characters, with 1 uppercase, 1 number, and 1 special character.");
       }
@@ -167,6 +179,25 @@ function App() {
 
   const handleRemoveClick = (itemId) => setItemToDelete(itemId);
 
+  const handleQuantityChange = (itemId, delta) => {
+    setOrders(prev => {
+      const currentOrder = prev[activeOrder];
+      let newItems = currentOrder.items.map(item => {
+        if (item.id === itemId) {
+          return { ...item, qty: item.qty + delta };
+        }
+        return item;
+      }).filter(item => item.qty > 0);
+
+      if (newItems.length === 0) {
+         return { ...prev, [activeOrder]: { ...currentOrder, items: [], status: 'Draft' } };
+      }
+
+      const newStatus = currentOrder.status === 'Sent' ? 'Running' : currentOrder.status;
+      return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: newStatus } };
+    });
+  };
+
   const executeRemoveItem = () => {
     if (!itemToDelete) return;
     setOrders(prev => {
@@ -189,7 +220,16 @@ function App() {
   };
 
   const handleFinalizeBill = () => {
-    if (currentOrderData.items.length === 0) return;
+    if (currentOrderData.items.length === 0) {
+      alert("Cart is empty! Please add items before finalizing.");
+      return;
+    }
+    
+    if (currentOrderData.status !== 'Sent') {
+      alert("Error: Order must be sent to the kitchen before generating a bill.");
+      return;
+    }
+
     toPDF();
     
     const method = currentOrderData.paymentMethod || 'Cash';
@@ -462,11 +502,16 @@ function App() {
                  <p style={{color: '#888', fontStyle: 'italic', padding: '10px 0'}}>Empty. Add items below.</p>
               ) : (
                 currentOrderData.items.map(item => (
-                  <div className="order-item-row" key={item.id}>
-                    <span>{item.qty}x {item.name}</span>
+                  <div className="order-item-row" key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button onClick={() => handleQuantityChange(item.id, -1)} style={{ padding: '2px 8px', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc' }}>-</button>
+                      <span style={{ fontWeight: 'bold' }}>{item.qty}</span>
+                      <button onClick={() => handleQuantityChange(item.id, 1)} style={{ padding: '2px 8px', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc' }}>+</button>
+                      <span style={{ marginLeft: '10px' }}>{item.name}</span>
+                    </div>
                     <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
                       <strong>PKR {(item.price * item.qty).toFixed(2)}</strong>
-                      <button className="cancel-btn" onClick={() => handleRemoveClick(item.id)} title="Cancel Item"><X size={14}/></button>
+                      <button className="cancel-btn" onClick={() => handleRemoveClick(item.id)} title="Delete Completely"><X size={14}/></button>
                     </div>
                   </div>
                 ))
@@ -617,8 +662,12 @@ function App() {
           <button 
             className="print-btn" 
             onClick={handleFinalizeBill}
-            disabled={currentOrderData.items.length === 0}
-            style={{ marginTop: 0 }}
+            disabled={currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent'}
+            style={{ 
+              marginTop: 0, 
+              opacity: (currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent') ? 0.5 : 1,
+              cursor: (currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent') ? 'not-allowed' : 'pointer'
+            }}
           >
             <Printer size={18} /> Finalize & Print Bill (PDF)
           </button>
