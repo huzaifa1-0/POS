@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut } from 'lucide-react';
+import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2 } from 'lucide-react';
 import axios from 'axios';
 import { usePDF } from 'react-to-pdf';
 
@@ -17,6 +17,7 @@ function App() {
   const [authError, setAuthError] = useState('');
 
   // --- EXISTING STATES ---
+  const [activeView, setActiveView] = useState('pos');
   const [activeOrder, setActiveOrder] = useState('Table 1');
   const [menuItems, setMenuItems] = useState([]);
   
@@ -373,8 +374,41 @@ function App() {
         </div>
       )}
 
-      {/* LEFT SIDEBAR */}
-      <div className="left-sidebar">
+      {/* --- NEW LEFT NAVIGATION RAIL --- */}
+      <div className="nav-rail">
+        <div className="nav-rail-top">
+          <div className="rail-logo">🍳</div>
+          <button 
+            className={`rail-btn ${activeView === 'pos' ? 'active' : ''}`} 
+            onClick={() => setActiveView('pos')}
+            title="POS Home"
+          >
+            <Home size={24} />
+          </button>
+          <button 
+            className={`rail-btn ${activeView === 'reports' ? 'active' : ''}`} 
+            onClick={() => setActiveView('reports')}
+            title="Reports"
+          >
+            <BarChart2 size={24} />
+          </button>
+        </div>
+        <div className="nav-rail-bottom">
+          <button 
+            className="rail-btn logout-btn" 
+            onClick={handleLogout}
+            title="Logout"
+          >
+            <LogOut size={24} />
+          </button>
+        </div>
+      </div>
+
+      {/* --- CONDITIONAL RENDER: Show POS or Reports --- */}
+      {activeView === 'pos' ? (
+        <>
+          {/* LEFT SIDEBAR (Orders) */}
+          <div className="left-sidebar">
         <div className="logo-area" style={{
           display: 'flex', 
           justifyContent: 'space-between', 
@@ -397,22 +431,7 @@ function App() {
             Nashta POS
           </span>
 
-          {/* Polished Logout Button */}
-          <button 
-            onClick={handleLogout} 
-            style={{ 
-              display: 'flex', alignItems: 'center', gap: '6px', 
-              background: '#fee2e2', color: '#ef4444', border: '1px solid #fecaca', 
-              padding: '6px 12px', borderRadius: '8px', 
-              cursor: 'pointer', fontWeight: 'bold', fontSize: '13px',
-              boxShadow: '0 2px 4px rgba(239, 68, 68, 0.1)',
-              transition: '0.2s ease-in-out'
-            }}
-            onMouseOver={(e) => { e.currentTarget.style.background = '#fecaca'; e.currentTarget.style.transform = 'scale(1.05)'; }}
-            onMouseOut={(e) => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.transform = 'scale(1)'; }}
-          >
-            <LogOut size={15} /> Logout
-          </button>
+          
         </div>
         
         <div className="nav-section">
@@ -674,6 +693,14 @@ function App() {
         </div>
 
       </div>
+      </>
+      ) : (
+        /* --- REPORTS VIEW PLACEHOLDER --- */
+        <div className="reports-view" style={{ flex: 1, padding: '40px', background: '#fff', overflowY: 'auto' }}>
+          <h2>📊 Reports Dashboard</h2>
+          <p style={{ color: '#64748b', marginTop: '10px' }}>Your daily sales, top items, and income analytics will appear here soon.</p>
+        </div>
+      )}
     </div>
   );
 }
