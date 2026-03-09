@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
-from .models import Category, MenuItem, Order
-from .serializers import CategorySerializer, MenuItemSerializer
+from .models import Category, MenuItem, InventoryItem
+from .serializers import CategorySerializer, MenuItemSerializer, InventoryItemSerializer
 
 # --- NEW: Registration View ---
 class RegisterView(APIView):
@@ -36,3 +36,10 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class MenuItemViewSet(viewsets.ModelViewSet):
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
+
+
+
+class InventoryItemViewSet(viewsets.ModelViewSet):
+    queryset = InventoryItem.objects.all().order_by('-created_at')
+    serializer_class = InventoryItemSerializer
+    # permission_classes = [permissions.IsAuthenticated]
