@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Wallet, Plus, Check, Search, Settings} from 'lucide-react';
+import { Package, Wallet, Plus, Check, Search, Settings, X} from 'lucide-react';
 import axios from 'axios'; // NEW: Imported Axios
 
 // NEW: Point this to your Django API
@@ -67,6 +67,10 @@ const Inventory = () => {
       console.error("Error saving item to database:", error);
       alert("Failed to save item. Make sure your Django server is running!");
     }
+  };
+  // NEW: Cancels the newly added row before it's saved
+  const handleCancelNewItem = (id) => {
+    setItems(items.filter(item => item.id !== id));
   };
 
   const totalInventoryValue = items.reduce((sum, item) => sum + (item.qty * item.price), 0);
@@ -171,6 +175,13 @@ const Inventory = () => {
                       >
                         <Check size={18} />
                       </button>
+                      <button 
+                      onClick={() => handleCancelNewItem(item.id)} 
+                      className="cancel-new-item-btn"
+                      title="Cancel"
+                    >
+                      <X size={18} />
+                    </button>
                     </div>
                   ) : (
                     <div className="item-details-stack">
