@@ -1375,12 +1375,15 @@
 /* =========================================
    MANAGE INVENTORY PAGE STYLES
    ========================================= */
-.manage-inv-container { flex: 1; padding: 20px; background: #f8fafc; overflow-y: auto; height: 100%; }
+/* =========================================
+   MANAGE INVENTORY PAGE STYLES
+   ========================================= */
+.manage-inv-container { flex: 1; padding: 20px; background: #f8fafc; overflow: hidden; height: 100%; display: flex; flex-direction: column; }
 
 .manage-inv-header {
   display: flex; justify-content: space-between; align-items: center; 
   margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e2e8f0;
-  flex-wrap: wrap; gap: 15px;
+  flex-wrap: wrap; gap: 15px; flex-shrink: 0;
 }
 .manage-inv-header h2 { margin: 0; color: #1e293b; font-size: 24px; }
 
@@ -1391,103 +1394,106 @@
 }
 .back-btn:hover { background: #f1f5f9; color: #1e293b; }
 
-.manage-inv-list { display: flex; flex-direction: column; gap: 12px; padding-bottom: 80px; }
+.manage-inv-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px; padding-bottom: 20px; }
+.manage-inv-list::-webkit-scrollbar { width: 6px; }
+.manage-inv-list::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
 
 .manage-inv-card {
-  background: white; border: 1px solid #e2e8f0; border-radius: 12px;
-  padding: 16px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: 0.2s;
+  background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: 12px 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: 0.2s;
 }
-.manage-inv-card:hover { border-color: #cbd5e1; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-.manage-inv-card.editing { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); background: #f8fafc; }
+.manage-inv-card:hover { border-color: #cbd5e1; box-shadow: 0 3px 8px rgba(0,0,0,0.04); }
+.manage-inv-card.editing { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); background: #f8fafc; padding: 8px 10px; }
 
-/* Display Mode Styles */
-.manage-inv-display { display: flex; justify-content: space-between; align-items: center; gap: 15px; }
-.inv-item-name { margin: 0 0 8px 0; font-size: 18px; color: #1e293b; font-weight: 700; }
-.inv-item-details { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.inv-price-badge { background: #dcfce7; color: #166534; padding: 5px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; }
-.inv-qty-badge { background: #f1f5f9; color: #475569; padding: 5px 10px; border-radius: 6px; font-size: 13px; font-weight: 600; }
+/* --- DISPLAY MODE: Info on Left, Actions on Right --- */
+.manage-inv-display { 
+  display: flex; 
+  justify-content: space-between; /* Pushes left and right apart */
+  align-items: center; 
+  width: 100%; 
+  gap: 15px; 
+}
 
-.manage-inv-actions { display: flex; gap: 10px; }
-.btn-icon-edit { background: #eff6ff; color: #3b82f6; border: none; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; transition: 0.2s; }
-.btn-icon-edit:hover { background: #3b82f6; color: white; transform: translateY(-2px); }
-.btn-icon-delete { background: #fef2f2; color: #ef4444; border: none; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; transition: 0.2s; }
-.btn-icon-delete:hover { background: #ef4444; color: white; transform: translateY(-2px); }
+.display-info-section { display: flex; flex-direction: column; gap: 5px; flex: 1; overflow: hidden; }
+.inv-item-name { margin: 0; font-size: 16px; color: #1e293b; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* Edit Form Styles */
-.manage-inv-edit-form { display: flex; flex-direction: column; gap: 15px; }
-.edit-inputs-grid { display: flex; flex-direction: column; gap: 12px; }
-.edit-field { display: flex; flex-direction: column; gap: 6px; flex: 1; }
-.edit-field label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; }
-.edit-field input, .edit-field select { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s; background: white; }
-.edit-field input:focus, .edit-field select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-.edit-field-row { display: flex; gap: 15px; align-items: center; }
+.inv-item-details { display: flex; gap: 8px; align-items: center; }
+.inv-price-badge { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+.inv-qty-badge { background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
 
-.edit-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; border-top: 1px dashed #cbd5e1; padding-top: 15px; }
-.btn-save-edit { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+/* The Action Buttons container */
+.right-aligned-actions { 
+  display: flex; 
+  gap: 6px; 
+  align-items: center;
+  flex-shrink: 0; /* CRITICAL: Stops buttons from being squished */
+}
+
+.btn-icon-edit { background: #eff6ff; color: #3b82f6; border: none; padding: 8px; border-radius: 6px; cursor: pointer; display: flex; transition: 0.2s; }
+.btn-icon-edit:hover { background: #3b82f6; color: white; transform: translateY(-1px); }
+.btn-icon-delete { background: #fef2f2; color: #ef4444; border: none; padding: 8px; border-radius: 6px; cursor: pointer; display: flex; transition: 0.2s; }
+.btn-icon-delete:hover { background: #ef4444; color: white; transform: translateY(-1px); }
+
+/* --- SINGLE FLAT ROW EDIT MODE STYLES --- */
+.manage-inv-edit-form.single-row-edit {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.single-row-edit input, .single-row-edit select {
+  padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; transition: 0.2s; background: white; width: 100%;
+}
+.single-row-edit input:focus, .single-row-edit select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+.single-row-edit .name-input { flex: 4; min-width: 150px; }
+.single-row-edit .qty-input { flex: 1.5; max-width: 80px; text-align: center; }
+.single-row-edit .unit-select { flex: 2; max-width: 100px; padding: 6px 4px; }
+
+.compact-price-input { display: flex; align-items: center; flex: 2; min-width: 100px; max-width: 140px; position: relative; }
+.compact-price-input .prefix-icon { position: absolute; left: 8px; color: #64748b; pointer-events: none; }
+.compact-price-input .price-input { padding-left: 24px !important; text-align: right; }
+
+.btn-save-edit { background: #10b981; color: white; border: none; padding: 7px 12px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.btn-cancel-edit { background: #f1f5f9; color: #475569; border: none; padding: 7px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; }
 .btn-save-edit:hover { background: #059669; }
-.btn-cancel-edit { background: #f1f5f9; color: #475569; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
 .btn-cancel-edit:hover { background: #e2e8f0; color: #1e293b; }
 
-.empty-state { text-align: center; padding: 40px 20px; color: #64748b; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; font-weight: 500; }
+.empty-state { text-align: center; padding: 30px 20px; color: #64748b; background: white; border-radius: 10px; border: 1px dashed #cbd5e1; font-weight: 500; }
 
-/* 📱 MOBILE RESPONSIVENESS (THE MAGIC) */
+/* 📱 MOBILE RESPONSIVENESS UPDATES (MAX-WIDTH 600PX) */
 @media (max-width: 600px) {
   .manage-inv-container { padding: 15px; }
-  
-  /* Stacks header and search bar */
   .manage-inv-header { flex-direction: column; align-items: flex-start; gap: 15px; }
   .manage-inv-header > div { width: 100%; }
   .search-bar-container { max-width: 100% !important; }
+  .manage-inv-list { padding-bottom: 80px; }
+  .manage-inv-card { padding: 8px 10px; }
+
+  /* Display Mode: Shrink details but KEEP buttons right-aligned */
+  .inv-item-name { font-size: 14px !important; }
+  .inv-item-details { gap: 5px !important; margin-top: 2px !important; }
+  .inv-price-badge, .inv-qty-badge { padding: 3px 6px !important; font-size: 10px !important; }
   
-  /* Stacks item details and makes buttons stretch for thumbs */
-  .manage-inv-display { flex-direction: column; align-items: flex-start; gap: 15px; }
-  .manage-inv-actions { width: 100%; justify-content: flex-end; border-top: 1px dashed #e2e8f0; padding-top: 15px; }
-  .btn-icon-edit, .btn-icon-delete { flex: 1; justify-content: center; padding: 12px; } /* Makes buttons huge for easy tapping */
+  .right-aligned-actions { gap: 4px !important; }
+  .btn-icon-edit, .btn-icon-delete { padding: 6px !important; border-radius: 5px !important; }
+  .btn-icon-edit svg, .btn-icon-delete svg { width: 14px !important; height: 14px !important; }
   
-  /* Stacks inputs in edit mode */
-  .edit-field-row { flex-direction: column; gap: 12px; }
-  .edit-actions { flex-direction: column-reverse; gap: 10px; } /* Puts save button on top for mobile */
-  .btn-save-edit, .btn-cancel-edit { width: 100%; justify-content: center; padding: 14px; font-size: 16px; }
-}
+  /* Edit Mode: Extreme Single-Row Squeeze */
+  .manage-inv-edit-form.single-row-edit { gap: 2px !important; }
+  .single-row-edit input, .single-row-edit select { font-size: 10px !important; padding: 4px 2px !important; height: 28px !important; border-radius: 4px !important; }
+  .single-row-edit input::placeholder { font-size: 9px !important; opacity: 0.7; }
 
-
-/* =========================================
-   INDEPENDENT SCROLLING (TABLES ONLY)
-   ========================================= */
-
-/* 1. Force Manage Inventory to keep its header fixed */
-.manage-inv-container { 
-  display: flex !important; 
-  flex-direction: column !important; 
-  overflow: hidden !important; /* Prevents the whole page from scrolling */
-}
-
-/* 2. Tell the Manage Inventory list to take remaining space and scroll */
-.manage-inv-list { 
-  flex: 1 !important; 
-  overflow-y: auto !important; /* Makes ONLY the list scroll */
-  padding-right: 5px;
-  padding-bottom: 20px !important;
-}
-
-/* 3. Add sleek, custom scrollbars to both tables so they look professional */
-.manage-inv-list::-webkit-scrollbar,
-.scrollable-table-container::-webkit-scrollbar { 
-  width: 6px; 
-}
-.manage-inv-list::-webkit-scrollbar-thumb,
-.scrollable-table-container::-webkit-scrollbar-thumb { 
-  background-color: #cbd5e1; 
-  border-radius: 10px; 
-}
-
-/* 4. 📱 MOBILE LOCK: The most important part for phones */
-@media (max-width: 1024px) {
-  .inventory-page-wrapper, 
-  .manage-inv-container {
-    /* Locks the page height to the screen size minus your bottom nav bar (80px) */
-    height: calc(100vh - 80px) !important; 
-    max-height: calc(100vh - 80px) !important;
-    overflow: hidden !important;
-  }
+  .single-row-edit .name-input { flex: 4.5 !important; min-width: 0 !important; max-width: none !important; }
+  .compact-price-input { flex: 2.2 !important; min-width: 0 !important; max-width: 60px !important; }
+  .compact-price-input .prefix-icon { left: 3px !important; width: 10px; height: 10px; }
+  .compact-price-input .price-input { padding-left: 14px !important; }
+  
+  .single-row-edit .qty-input { flex: 1.2 !important; min-width: 0 !important; max-width: 35px !important; }
+  .single-row-edit .unit-select { flex: 2 !important; min-width: 0 !important; max-width: 50px !important; padding: 4px 1px !important; }
+  
+  .btn-save-edit span.mobile-hide-text { display: none !important; }
+  .btn-save-edit, .btn-cancel-edit { padding: 4px !important; }
 }

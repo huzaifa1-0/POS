@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Trash2, Edit2, X, Search } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Edit2, X, Search, DollarSign } from 'lucide-react';
 
 const API_URL = 'http://127.0.0.1:8000/api/inventory/';
 
@@ -69,7 +69,6 @@ const ManageInventory = () => {
   return (
     <div className="manage-inv-container">
       
-      {/* Header Area */}
       <div className="manage-inv-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <button className="back-btn" onClick={() => navigate('/inventory')}>
@@ -78,61 +77,52 @@ const ManageInventory = () => {
           <h2>Manage Inventory</h2>
         </div>
         
-        {/* Added a Search Bar for easier editing! */}
         <div className="search-bar-container" style={{ margin: 0, maxWidth: '250px' }}>
           <Search size={18} className="search-icon-inside" />
           <input 
-            type="text" placeholder="Search items to edit..." 
+            type="text" placeholder="Search items..." 
             value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
             className="inventory-search-input"
           />
         </div>
       </div>
 
-      {/* Item List Area */}
       <div className="manage-inv-list">
         {filteredItems.map((item) => (
           <div key={item.id} className={`manage-inv-card ${editingId === item.id ? 'editing' : ''}`}>
             
             {editingId === item.id ? (
-              // --- EDIT MODE UI (Clean Grid) ---
-              <div className="manage-inv-edit-form">
-                <div className="edit-inputs-grid">
-                  <div className="edit-field">
-                    <label>Item Name</label>
-                    <input type="text" name="name" value={editFormData.name} onChange={handleFormChange} />
-                  </div>
-                  <div className="edit-field-row">
-                    <div className="edit-field">
-                      <label>Price (PKR)</label>
-                      <input type="number" name="price" value={editFormData.price} onChange={handleFormChange} />
-                    </div>
-                    <div className="edit-field">
-                      <label>Quantity</label>
-                      <input type="number" name="qty" value={editFormData.qty} onChange={handleFormChange} />
-                    </div>
-                    <div className="edit-field">
-                      <label>Unit</label>
-                      <select name="unit" value={editFormData.unit} onChange={handleFormChange}>
-                        <option value="KG">KG</option>
-                        <option value="Litre">Litre</option>
-                        <option value="Dozen">Dozen</option>
-                        <option value="Pcs">Pcs</option>
-                        <option value="Pack">Pack</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
+              // --- EDIT MODE UI (Single Flat Row Structure) ---
+              <div className="manage-inv-edit-form single-row-edit">
                 
-                <div className="edit-actions">
-                  <button className="btn-cancel-edit" onClick={handleCancelEdit}><X size={16}/> Cancel</button>
-                  <button className="btn-save-edit" onClick={() => handleSaveEdit(item.id)}><Save size={16}/> Save</button>
+                <input type="text" name="name" value={editFormData.name} onChange={handleFormChange} className="name-input" placeholder="Item Name"/>
+                
+                <div className="compact-price-input">
+                  <DollarSign size={14} className="prefix-icon"/>
+                  <input type="number" name="price" value={editFormData.price} onChange={handleFormChange} className="price-input" placeholder="Price"/>
+                </div>
+
+                <input type="number" name="qty" value={editFormData.qty} onChange={handleFormChange} className="qty-input" placeholder="Qty" />
+                
+                <select name="unit" value={editFormData.unit} onChange={handleFormChange} className="unit-select">
+                  <option value="KG">KG</option>
+                  <option value="Litre">Litre</option>
+                  <option value="Dozen">Dozen</option>
+                  <option value="Pcs">Pcs</option>
+                  <option value="Pack">Pack</option>
+                </select>
+                
+                {/* Save/Cancel locked to the right */}
+                <div className="edit-actions right-aligned-actions">
+                  <button className="btn-cancel-edit" onClick={handleCancelEdit}><X size={16}/></button>
+                  <button className="btn-save-edit" onClick={() => handleSaveEdit(item.id)}><Save size={16}/> <span className="mobile-hide-text">Save</span></button>
                 </div>
               </div>
             ) : (
-              // --- DISPLAY MODE UI (Sleek Card) ---
+              // --- DISPLAY MODE UI (Info on Left, Actions strictly on Right) ---
               <div className="manage-inv-display">
-                <div className="manage-inv-info">
+                
+                <div className="display-info-section">
                   <h3 className="inv-item-name">{item.name}</h3>
                   <div className="inv-item-details">
                     <span className="inv-price-badge">PKR {item.price}</span>
@@ -140,10 +130,12 @@ const ManageInventory = () => {
                   </div>
                 </div>
                 
-                <div className="manage-inv-actions">
+                {/* Edit/Delete strictly locked to the right */}
+                <div className="manage-inv-actions right-aligned-actions">
                   <button className="btn-icon-edit" onClick={() => handleEditClick(item)}><Edit2 size={18}/></button>
                   <button className="btn-icon-delete" onClick={() => handleDeleteItem(item.id)}><Trash2 size={18}/></button>
                 </div>
+
               </div>
             )}
 
