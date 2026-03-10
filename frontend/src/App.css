@@ -1141,32 +1141,34 @@
     
     /* 3. Stats side takes exactly 70% of the row space and stays horizontal */
     .inventory-right-side { 
-        flex-direction: row !important; 
+       flex-direction: row !important; 
         align-items: center !important; 
         justify-content: space-between !important;
-        gap: 2px !important; 
-        width: 70% !important; 
+        gap: 8px !important; /* FIX: Increased from 2px to 8px for much better spacing */
+        width: 70% !important;
     }
     
     /* 4. Divide the 3 stats evenly (33% each) */
-    .col-price { width: 33% !important; }
-    .col-qty { width: 33% !important; }
-    .col-total { width: 33% !important; border-top: none !important; padding-top: 0 !important; margin-top: 0 !important; }
+    .col-price { width: 33% !important; align-items: flex-start !important; }
+    .col-qty { width: 33% !important; align-items: center !important; }
+    .col-total { width: 33% !important; align-items: flex-end !important; border-top: none !important; padding-top: 0 !important; margin-top: 0 !important; }
     
-    .inventory-right-side > div { 
+   .inventory-right-side > div { 
         display: flex; 
         flex-direction: column; 
-        align-items: flex-start; 
         padding: 0 !important;
     }
     
-    .mobile-label { display: block !important; }
+    .mobile-label { 
+        display: block !important; 
+        font-size: 6.5px !important; /* FIX: Scaled down slightly to match the smaller numbers */
+    }
     
     /* 5. MAKE TEXT SMALLER for the Numbers (Price, Qty, Total) */
-    .static-val, .static-total-val { 
-        font-size: 10px !important; /* Shrunk text */
+   .static-val, .static-total-val { 
+        font-size: 8.5px !important; /* FIX: Reduced from 10px for a smaller, cleaner look */
         font-weight: 700 !important; 
-        word-break: break-word; 
+        white-space: nowrap !important; /* FIX: Keeps PKR and the number together */
     }
     
     /* Make the editing inputs tiny when adding/editing an item on mobile */
@@ -1180,4 +1182,118 @@
     .new-name-input, .new-unit-select { padding: 4px; font-size: 9px; border-radius: 4px; }
     .save-new-item-btn { padding: 4px; border-radius: 4px; }
     .save-new-item-btn svg { width: 14px; height: 14px; }
+}
+
+/* --- Base Desktop Styles (if you don't have them already) --- */
+.fixed-inventory-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.inventory-left-side {
+  flex: 1;
+}
+
+.inventory-right-side {
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.mobile-label {
+  display: none; /* Hide labels on desktop */
+}
+
+/* --- Mobile Responsiveness (The Magic) --- */
+@media (max-width: 768px) {
+  /* 1. Hide the desktop header completely */
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  /* 2. Stack the main row container vertically */
+  .fixed-inventory-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    padding: 15px;
+  }
+  /* --- Add this inside your @media (max-width: 768px) block --- */
+
+  /* 7. Normalize all font sizes and weights in the table */
+  .fixed-inventory-row .item-title {
+    font-size: 18px !important; /* Makes the item name larger as requested */
+    font-weight: 700 !important; /* Makes it nice and bold */
+    color: #1e293b;
+  }
+  .fixed-inventory-row .static-val,
+  .fixed-inventory-row .static-total-val,
+  .fixed-inventory-row .item-unit-badge {
+   font-size: 14px !important; 
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* 8. Soften the mobile labels */
+  .mobile-label {
+    color: #64748b;
+    text-transform: capitalize; /* Changes harsh "PRICE" to softer "Price" */
+  }
+
+  /* 9. Make sure the 'PKR' inside the input fields is also small */
+  .input-with-prefix span {
+    font-size: 14px !important;
+  }
+  /* 3. Make the inputs for new items stack neatly */
+  .new-item-inputs {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .new-item-inputs input, 
+  .new-item-inputs select {
+    width: 100%;
+    padding: 10px;
+  }
+
+  /* 4. Format the right side (Price, Qty, Total) into neat mobile rows */
+  .inventory-right-side {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important; /* 3 equal columns */
+    gap: 5px;
+    width: 100%;
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: 6px;
+    align-items: start !important;
+  }
+
+  /* 5. Align the label on the left and value on the right */
+  .col-price, .col-qty, .col-total {
+   display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important; 
+    justify-content: flex-start !important; /* FIX: Locks all text to the top so Qty doesn't sag */
+    text-align: center;
+    width: 100% !important;
+  }
+
+  /* 6. Show the mobile labels */
+  .mobile-label {
+   display: block;
+    font-size: 12px !important;
+    color: #64748b;
+    text-transform: capitalize;
+    margin-bottom: 6px !important;
+  }
 }
