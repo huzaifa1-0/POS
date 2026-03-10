@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from .models import Category, MenuItem, InventoryItem
 from .serializers import CategorySerializer, MenuItemSerializer, InventoryItemSerializer
+from decimal import Decimal
 
 # --- NEW: Registration View ---
 class RegisterView(APIView):
@@ -42,4 +43,25 @@ class MenuItemViewSet(viewsets.ModelViewSet):
 class InventoryItemViewSet(viewsets.ModelViewSet):
     queryset = InventoryItem.objects.all().order_by('-created_at')
     serializer_class = InventoryItemSerializer
-    # permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        name = request.data.get('name')
+        vendor_name = request.data.get('vendor_name', 'General Vendor')
+        incoming_qty = Decimal(request.data.get('qty', 0))
+
+        # Check if this exact item from this exact vendor already exists
+        existing_item = InventoryItem.objects.filter(
+            name__iexact=name, 
+            vendor_name__iexact=vendor_name
+        ).first()
+
+        if existing_item:
+            # LOGIC: 150kg + 40kg = 190kg
+            existing_item.qty += incoming_qty
+            # Optional: Update price to the newest price
+            existing_item.price = request.data.get('price', existing_item.price) 
+            existing_item.save()
+            return Response({'message': 'Stock updated successfully', 'qty': existing_item.qty}, status=status.HTTP_200_OK)
+        
+        # If it doesn't exist, create a brand new row normally
+        return super().create(request, *args, **kwargs)
