@@ -719,6 +719,80 @@
    INVENTORY PAGE STYLES (Impressive & Mobile Friendly)
    ========================================= */
 
+
+/* =========================================
+   INVENTORY MAIN HEADER (MOBILE RESPONSIVE)
+   ========================================= */
+.inventory-main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 15px;
+  gap: 15px;
+  flex-wrap: wrap; /* Allows wrapping on small screens */
+}
+
+.inventory-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inventory-title-group h2 {
+  margin: 0;
+  color: #1e293b;
+}
+
+.manage-inv-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: 0.2s;
+}
+
+.manage-inv-nav-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* 📱 MOBILE RESPONSIVENESS */
+/* 📱 MOBILE RESPONSIVENESS */
+@media (max-width: 600px) {
+  .inventory-main-header {
+    flex-direction: row !important; /* FIX: Forces them to stay on the same horizontal line */
+    align-items: center !important;
+    flex-wrap: nowrap !important; /* FIX: Prevents the button from dropping to the next line */
+  }
+  
+  /* Shrink the title slightly to make room */
+  .inventory-title-group h2 {
+    font-size: 18px !important; 
+  }
+  
+  .inventory-title-group svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  /* Shrink the button so it fits perfectly on the right */
+  .manage-inv-nav-btn {
+    width: auto !important; /* FIX: Removes the 100% stretch */
+    padding: 8px 12px !important; /* Smaller padding */
+    font-size: 12px !important; /* Smaller text */
+    white-space: nowrap !important; /* Keeps "Manage Inventory" on one line */
+  }
+}
 /* Total Value Gradient Card */
 .inventory-summary-card {
     background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
@@ -1296,4 +1370,82 @@
     text-transform: capitalize;
     margin-bottom: 6px !important;
   }
+}
+
+/* =========================================
+   MANAGE INVENTORY PAGE STYLES
+   ========================================= */
+.manage-inv-container { flex: 1; padding: 20px; background: #f8fafc; overflow-y: auto; height: 100%; }
+
+.manage-inv-header {
+  display: flex; justify-content: space-between; align-items: center; 
+  margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e2e8f0;
+  flex-wrap: wrap; gap: 15px;
+}
+.manage-inv-header h2 { margin: 0; color: #1e293b; font-size: 24px; }
+
+.back-btn {
+  background: white; border: 1px solid #cbd5e1; padding: 8px; 
+  border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: #475569; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.back-btn:hover { background: #f1f5f9; color: #1e293b; }
+
+.manage-inv-list { display: flex; flex-direction: column; gap: 12px; padding-bottom: 80px; }
+
+.manage-inv-card {
+  background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 16px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: 0.2s;
+}
+.manage-inv-card:hover { border-color: #cbd5e1; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+.manage-inv-card.editing { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); background: #f8fafc; }
+
+/* Display Mode Styles */
+.manage-inv-display { display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+.inv-item-name { margin: 0 0 8px 0; font-size: 18px; color: #1e293b; font-weight: 700; }
+.inv-item-details { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.inv-price-badge { background: #dcfce7; color: #166534; padding: 5px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; }
+.inv-qty-badge { background: #f1f5f9; color: #475569; padding: 5px 10px; border-radius: 6px; font-size: 13px; font-weight: 600; }
+
+.manage-inv-actions { display: flex; gap: 10px; }
+.btn-icon-edit { background: #eff6ff; color: #3b82f6; border: none; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; transition: 0.2s; }
+.btn-icon-edit:hover { background: #3b82f6; color: white; transform: translateY(-2px); }
+.btn-icon-delete { background: #fef2f2; color: #ef4444; border: none; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; transition: 0.2s; }
+.btn-icon-delete:hover { background: #ef4444; color: white; transform: translateY(-2px); }
+
+/* Edit Form Styles */
+.manage-inv-edit-form { display: flex; flex-direction: column; gap: 15px; }
+.edit-inputs-grid { display: flex; flex-direction: column; gap: 12px; }
+.edit-field { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.edit-field label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+.edit-field input, .edit-field select { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s; background: white; }
+.edit-field input:focus, .edit-field select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.edit-field-row { display: flex; gap: 15px; align-items: center; }
+
+.edit-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; border-top: 1px dashed #cbd5e1; padding-top: 15px; }
+.btn-save-edit { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+.btn-save-edit:hover { background: #059669; }
+.btn-cancel-edit { background: #f1f5f9; color: #475569; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+.btn-cancel-edit:hover { background: #e2e8f0; color: #1e293b; }
+
+.empty-state { text-align: center; padding: 40px 20px; color: #64748b; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; font-weight: 500; }
+
+/* 📱 MOBILE RESPONSIVENESS (THE MAGIC) */
+@media (max-width: 600px) {
+  .manage-inv-container { padding: 15px; }
+  
+  /* Stacks header and search bar */
+  .manage-inv-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+  .manage-inv-header > div { width: 100%; }
+  .search-bar-container { max-width: 100% !important; }
+  
+  /* Stacks item details and makes buttons stretch for thumbs */
+  .manage-inv-display { flex-direction: column; align-items: flex-start; gap: 15px; }
+  .manage-inv-actions { width: 100%; justify-content: flex-end; border-top: 1px dashed #e2e8f0; padding-top: 15px; }
+  .btn-icon-edit, .btn-icon-delete { flex: 1; justify-content: center; padding: 12px; } /* Makes buttons huge for easy tapping */
+  
+  /* Stacks inputs in edit mode */
+  .edit-field-row { flex-direction: column; gap: 12px; }
+  .edit-actions { flex-direction: column-reverse; gap: 10px; } /* Puts save button on top for mobile */
+  .btn-save-edit, .btn-cancel-edit { width: 100%; justify-content: center; padding: 14px; font-size: 16px; }
 }
