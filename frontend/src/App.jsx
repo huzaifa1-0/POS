@@ -5,6 +5,7 @@ import { Routes, Route, NavLink } from 'react-router-dom'; // NEW
 import Inventory from './pages/Inventory'; // NEW
 import Reports from './pages/Reports'; // NEW
 import Expenses from './pages/Expenses'; // NEW
+import ManageInventory from './pages/ManageInventory';
 import axios from 'axios';
 import { usePDF } from 'react-to-pdf';
 
@@ -683,6 +684,8 @@ function App() {
         <Route path="/reports" element={<Reports dailyIncome={dailyIncome} cashIncome={cashIncome} onlineIncome={onlineIncome} completedOrders={completedOrders} />} />
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/expenses" element={<Expenses />} />
+
+        <Route path="/manage-inventory" element={<ManageInventory />} />
         
       </Routes>
     </div>

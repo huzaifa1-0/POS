@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Wallet, Plus, Check, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Package, Wallet, Plus, Check, Search, Settings} from 'lucide-react';
 import axios from 'axios'; // NEW: Imported Axios
 
 // NEW: Point this to your Django API
@@ -7,6 +8,7 @@ const API_URL = 'http://127.0.0.1:8000/api/inventory/';
 
 const Inventory = () => {
   // CHANGED: Starts empty and fetches from the database
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -76,9 +78,24 @@ const Inventory = () => {
   return (
     <div style={{ flex: 1, padding: '20px', background: '#f8fafc', display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px' }}>
-        <Package size={28} color="#ff6b6b" />
-        <h2 style={{ margin: 0, color: '#1e293b' }}>Stock Manager</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Package size={28} color="#ff6b6b" />
+          <h2 style={{ margin: 0, color: '#1e293b' }}>Stock Manager</h2>
+        </div>
+        
+        {/* NEW MANAGE INVENTORY BUTTON */}
+        <button 
+          onClick={() => navigate('/manage-inventory')}
+          style={{ 
+            display: 'flex', alignItems: 'center', gap: '8px', 
+            background: '#3b82f6', color: 'white', border: 'none', 
+            padding: '10px 16px', borderRadius: '8px', 
+            fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}
+        >
+          <Settings size={18} /> Manage Inventory
+        </button>
       </div>
 
       <div className="inventory-summary-card" style={{ flexShrink: 0 }}>
