@@ -70,7 +70,7 @@ function App() {
         });
     }
   }, [token]);
-
+  
   // --- 2. UPDATED AUTHENTICATION HANDLER ---
   // --- UPDATED AUTHENTICATION HANDLER ---
   const handleAuth = async (e) => {
