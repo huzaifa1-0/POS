@@ -76,7 +76,7 @@ const Inventory = () => {
   );
 
   return (
-    <div style={{ flex: 1, padding: '20px', background: '#f8fafc', display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+    <div className="inventory-page-wrapper" style={{ flex: 1, padding: '20px', background: '#f8fafc', display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', overflow: 'hidden' }}>
       
       <div className="inventory-main-header">
         <div className="inventory-title-group">

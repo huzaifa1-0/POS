@@ -1449,3 +1449,45 @@
   .edit-actions { flex-direction: column-reverse; gap: 10px; } /* Puts save button on top for mobile */
   .btn-save-edit, .btn-cancel-edit { width: 100%; justify-content: center; padding: 14px; font-size: 16px; }
 }
+
+
+/* =========================================
+   INDEPENDENT SCROLLING (TABLES ONLY)
+   ========================================= */
+
+/* 1. Force Manage Inventory to keep its header fixed */
+.manage-inv-container { 
+  display: flex !important; 
+  flex-direction: column !important; 
+  overflow: hidden !important; /* Prevents the whole page from scrolling */
+}
+
+/* 2. Tell the Manage Inventory list to take remaining space and scroll */
+.manage-inv-list { 
+  flex: 1 !important; 
+  overflow-y: auto !important; /* Makes ONLY the list scroll */
+  padding-right: 5px;
+  padding-bottom: 20px !important;
+}
+
+/* 3. Add sleek, custom scrollbars to both tables so they look professional */
+.manage-inv-list::-webkit-scrollbar,
+.scrollable-table-container::-webkit-scrollbar { 
+  width: 6px; 
+}
+.manage-inv-list::-webkit-scrollbar-thumb,
+.scrollable-table-container::-webkit-scrollbar-thumb { 
+  background-color: #cbd5e1; 
+  border-radius: 10px; 
+}
+
+/* 4. 📱 MOBILE LOCK: The most important part for phones */
+@media (max-width: 1024px) {
+  .inventory-page-wrapper, 
+  .manage-inv-container {
+    /* Locks the page height to the screen size minus your bottom nav bar (80px) */
+    height: calc(100vh - 80px) !important; 
+    max-height: calc(100vh - 80px) !important;
+    overflow: hidden !important;
+  }
+}
