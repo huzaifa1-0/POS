@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Wallet, Plus, Check, Search, Settings, X} from 'lucide-react';
-import axios from 'axios'; // NEW: Imported Axios
+import { Package, Wallet, Plus, Check, Search, Settings, X, Truck } from 'lucide-react';
+import axios from 'axios'; 
 
-// NEW: Point this to your Django API
 const API_URL = 'http://127.0.0.1:8000/api/inventory/';
 
 const Inventory = () => {
-  // CHANGED: Starts empty and fetches from the database
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // NEW: Fetch items from the database when the page loads
   useEffect(() => {
     fetchInventory();
   }, []);
@@ -27,8 +24,8 @@ const Inventory = () => {
   };
 
   const handleAddNewRow = () => {
-    // Uses a temporary negative ID so it doesn't mess with real database IDs
-    const newRow = { id: -Date.now(), name: '', qty: 0, unit: 'KG', price: 0, isNew: true };
+    // NEW: Added vendor_name to the default state
+    const newRow = { id: -Date.now(), name: '', vendor_name: '', qty: 0, unit: 'KG', price: 0, isNew: true };
     setItems([newRow, ...items]);
     setSearchTerm(''); 
   };
@@ -43,7 +40,6 @@ const Inventory = () => {
     }));
   };
 
-  // NEW: Saves the item directly to the Django database
   const handleSaveNewItem = async (id) => {
     const itemToSave = items.find(i => i.id === id);
     
@@ -53,31 +49,57 @@ const Inventory = () => {
     }
 
     try {
-      // Send the data to your backend
       const response = await axios.post(API_URL, {
         name: itemToSave.name,
+        vendor_name: itemToSave.vendor_name || 'General Vendor', // NEW: Sends vendor to Django
         qty: itemToSave.qty,
         unit: itemToSave.unit,
         price: itemToSave.price
       });
       
-      // Update the table with the real item returned from Django (which includes the real database ID)
-      setItems(items.map(item => item.id === id ? { ...response.data, isNew: false } : item));
+      // We fetch the whole inventory again so the grouping logic recalculates perfectly
+      fetchInventory(); 
     } catch (error) {
       console.error("Error saving item to database:", error);
       alert("Failed to save item. Make sure your Django server is running!");
     }
   };
-  // NEW: Cancels the newly added row before it's saved
+
   const handleCancelNewItem = (id) => {
     setItems(items.filter(item => item.id !== id));
   };
 
   const totalInventoryValue = items.reduce((sum, item) => sum + (item.qty * item.price), 0);
 
-  const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // --- NEW: LOGIC TO GROUP ITEMS BY VENDOR ---
+  // 1. Separate unsaved new items from saved items
+  const newItemsList = items.filter(item => item.isNew);
+  const savedItems = items.filter(item => !item.isNew);
+
+  // 2. Filter saved items by search term (searches BOTH item name and vendor name)
+  const filteredSaved = savedItems.filter(item => 
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (item.vendor_name && item.vendor_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // 3. Group the filtered items together using reduce
+  const aggregatedStock = filteredSaved.reduce((acc, item) => {
+    const key = item.name.toLowerCase();
+    if (!acc[key]) {
+      acc[key] = { name: item.name, totalQty: 0, unit: item.unit, vendors: [] };
+    }
+    acc[key].totalQty += parseFloat(item.qty) || 0;
+    
+    // Add the specific vendor breakdown to the list
+    const vName = item.vendor_name || 'General Vendor';
+    acc[key].vendors.push(`${vName} (${item.qty} ${item.unit})`);
+    
+    return acc;
+  }, {});
+
+  // Convert the grouped object back into an array so we can map over it in the UI
+  const summaryList = Object.values(aggregatedStock);
+
 
   return (
     <div className="inventory-page-wrapper" style={{ flex: 1, padding: '20px', background: '#f8fafc', display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', overflow: 'hidden' }}>
@@ -88,10 +110,7 @@ const Inventory = () => {
           <h2>Stock Manager</h2>
         </div>
         
-        <button 
-          className="manage-inv-nav-btn"
-          onClick={() => navigate('/manage-inventory')}
-        >
+        <button className="manage-inv-nav-btn" onClick={() => navigate('/manage-inventory')}>
           <Settings size={18} /> Manage Inventory
         </button>
       </div>
@@ -112,7 +131,7 @@ const Inventory = () => {
             <Search size={18} className="search-icon-inside" />
             <input 
               type="text" 
-              placeholder="Search items..." 
+              placeholder="Search items or vendors..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="inventory-search-input"
@@ -121,123 +140,93 @@ const Inventory = () => {
 
           <div style={{ display: 'flex', gap: '10px' }}>
             <button className="add-stock-btn" onClick={handleAddNewRow}>
-              <Plus size={18} /> Add New Item
+              <Plus size={18} /> Add Stock
             </button>
           </div>
         </div>
       </div>
 
-      <div className="scrollable-table-container">
-        <div className="fixed-inventory-list">
-          
-          <div className="fixed-inventory-header hide-on-mobile split-header">
-            <span className="inventory-left-side">Item Details</span>
-            <div className="inventory-right-side">
-              <span className="col-price">Unit Price</span>
-              <span className="col-qty">Quantity</span>
-              <span className="col-total">Total Price</span>
-            </div>
-          </div>
-
-          {filteredItems.length === 0 ? (
-            <div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
-              No inventory found in database.
-            </div>
-          ) : (
-            filteredItems.map(item => (
-              <div key={item.id} className="fixed-inventory-row split-row">
-                
+      <div className="scrollable-table-container" style={{ paddingBottom: '50px' }}>
+        
+        {/* --- SECTION 1: ADDING NEW ITEMS (Keeps your table style) --- */}
+        {newItemsList.length > 0 && (
+          <div className="fixed-inventory-list" style={{ marginBottom: '20px' }}>
+            {newItemsList.map(item => (
+              <div key={item.id} className="fixed-inventory-row split-row" style={{ background: '#fffbeb', border: '2px dashed #f59e0b' }}>
                 <div className="inventory-left-side">
-                  {item.isNew ? (
-                    <div className="new-item-inputs">
-                      <input 
-                        type="text" placeholder="Item Name..." 
-                        value={item.name} 
-                        onChange={(e) => handleUpdateField(item.id, 'name', e.target.value)}
-                        className="new-name-input"
-                        autoFocus
-                      />
-                      <select 
-                        value={item.unit} 
-                        onChange={(e) => handleUpdateField(item.id, 'unit', e.target.value)}
-                        className="new-unit-select"
-                      >
-                        <option value="KG">KG</option>
-                        <option value="Litre">Litre</option>
-                        <option value="Dozen">Dozen</option>
-                        <option value="Pcs">Pcs</option>
-                        <option value="Pack">Pack</option>
-                      </select>
-                      <button 
-                        onClick={() => handleSaveNewItem(item.id)} 
-                        className="save-new-item-btn"
-                        title="Save Item"
-                      >
-                        <Check size={18} />
-                      </button>
-                      <button 
-                      onClick={() => handleCancelNewItem(item.id)} 
-                      className="cancel-new-item-btn"
-                      title="Cancel"
+                  <div className="new-item-inputs">
+                    <input 
+                      type="text" placeholder="Item Name (e.g. Flour)..." 
+                      value={item.name} onChange={(e) => handleUpdateField(item.id, 'name', e.target.value)}
+                      className="new-name-input" autoFocus
+                    />
+                    {/* NEW VENDOR INPUT */}
+                    <input 
+                      type="text" placeholder="Vendor Name..." 
+                      value={item.vendor_name} onChange={(e) => handleUpdateField(item.id, 'vendor_name', e.target.value)}
+                      className="new-name-input" style={{ width: '130px', marginLeft: '10px' }}
+                    />
+                    <select 
+                      value={item.unit} onChange={(e) => handleUpdateField(item.id, 'unit', e.target.value)}
+                      className="new-unit-select"
                     >
-                      <X size={18} />
-                    </button>
-                    </div>
-                  ) : (
-                    <div className="item-details-stack">
-                      <strong className="item-title">{item.name}</strong>
-                      <span className="item-unit-badge">{item.unit}</span>
-                    </div>
-                  )}
+                      <option value="KG">KG</option>
+                      <option value="Litre">Litre</option>
+                      <option value="Dozen">Dozen</option>
+                      <option value="Pcs">Pcs</option>
+                    </select>
+                    <button onClick={() => handleSaveNewItem(item.id)} className="save-new-item-btn" title="Save Item"><Check size={18} /></button>
+                    <button onClick={() => handleCancelNewItem(item.id)} className="cancel-new-item-btn" title="Cancel"><X size={18} /></button>
+                  </div>
                 </div>
                 
                 <div className="inventory-right-side">
-                  
                   <div className="col-price">
                     <label className="mobile-label">Price</label>
-                    {item.isNew ? (
-                      <div className="input-with-prefix">
-                        <span>PKR</span>
-                        <input 
-                          type="number" min="0" placeholder="0"
-                          value={item.price === 0 ? '' : item.price} 
-                          onChange={(e) => handleUpdateField(item.id, 'price', e.target.value)}
-                        />
-                      </div>
-                    ) : (
-                      <strong className="static-val">PKR {item.price}</strong>
-                    )}
+                    <div className="input-with-prefix">
+                      <span>PKR</span>
+                      <input type="number" min="0" placeholder="0" value={item.price === 0 ? '' : item.price} onChange={(e) => handleUpdateField(item.id, 'price', e.target.value)} />
+                    </div>
                   </div>
-
                   <div className="col-qty">
                     <label className="mobile-label">Qty</label>
-                    {item.isNew ? (
-                      <div className="qty-update-wrapper">
-                        <button onClick={() => handleUpdateField(item.id, 'qty', Math.max(0, item.qty - 1))}>-</button>
-                        <input 
-                          type="number" min="0" placeholder="0"
-                          value={item.qty === 0 ? '' : item.qty} 
-                          onChange={(e) => handleUpdateField(item.id, 'qty', e.target.value)}
-                        />
-                        <button onClick={() => handleUpdateField(item.id, 'qty', item.qty + 1)}>+</button>
-                      </div>
-                    ) : (
-                      <strong className="static-val">{item.qty}</strong>
-                    )}
+                    <div className="qty-update-wrapper">
+                      <input type="number" min="0" placeholder="0" value={item.qty === 0 ? '' : item.qty} onChange={(e) => handleUpdateField(item.id, 'qty', e.target.value)} />
+                    </div>
                   </div>
-
-                  <div className="col-total">
-                    <label className="mobile-label">Total</label>
-                    <strong className="static-total-val">PKR {(item.qty * item.price).toLocaleString()}</strong>
-                  </div>
-
                 </div>
               </div>
-            ))
-          )}
-        </div>
-      </div>
+            ))}
+          </div>
+        )}
 
+        {/* --- SECTION 2: THE NEW CARD-BASED VENDOR GRID --- */}
+        {summaryList.length === 0 && newItemsList.length === 0 ? (
+          <div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
+            No inventory found matching your search.
+          </div>
+        ) : (
+          <div className="inventory-grid">
+            {summaryList.map((item, index) => (
+              <div className="inventory-card" key={index}>
+                <div className="card-header">
+                  <h3 style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>{item.name}</h3>
+                  <span className="total-badge">{item.totalQty} {item.unit}</span>
+                </div>
+                <div className="card-body">
+                  <p className="vendor-title" style={{ fontSize: '13px', color: '#64748b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Truck size={14}/> Stock Provided By:
+                  </p>
+                  <div className="vendor-tags">
+                     {item.vendors.map((v, i) => <span key={i} className="vendor-tag">{v}</span>)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+      </div>
     </div>
   );
 };

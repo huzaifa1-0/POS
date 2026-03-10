@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Trash2, Edit2, X, Search, DollarSign } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Edit2, X, Search, DollarSign, Truck } from 'lucide-react';
 
 const API_URL = 'http://127.0.0.1:8000/api/inventory/';
 
@@ -10,7 +10,9 @@ const ManageInventory = () => {
   const [items, setItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingId, setEditingId] = useState(null);
-  const [editFormData, setEditFormData] = useState({ name: '', qty: 0, unit: 'KG', price: 0 });
+  
+  // --- UPDATED: Added vendor_name to the form data state ---
+  const [editFormData, setEditFormData] = useState({ name: '', vendor_name: '', qty: 0, unit: 'KG', price: 0 });
 
   useEffect(() => {
     fetchInventory();
@@ -27,7 +29,14 @@ const ManageInventory = () => {
 
   const handleEditClick = (item) => {
     setEditingId(item.id);
-    setEditFormData({ name: item.name, qty: item.qty, unit: item.unit, price: item.price });
+    // --- UPDATED: Load the existing vendor name when clicking edit ---
+    setEditFormData({ 
+      name: item.name, 
+      vendor_name: item.vendor_name || 'General Vendor', 
+      qty: item.qty, 
+      unit: item.unit, 
+      price: item.price 
+    });
   };
 
   const handleCancelEdit = () => {
@@ -41,6 +50,7 @@ const ManageInventory = () => {
 
   const handleSaveEdit = async (id) => {
     try {
+      // Sends the updated vendor_name back to Django
       await axios.put(`${API_URL}${id}/`, editFormData);
       setEditingId(null);
       fetchInventory();
@@ -52,7 +62,7 @@ const ManageInventory = () => {
   };
 
   const handleDeleteItem = async (id) => {
-    if (window.confirm("Are you sure you want to delete this item?")) {
+    if (window.confirm("Are you sure you want to delete this specific stock record?")) {
       try {
         await axios.delete(`${API_URL}${id}/`);
         fetchInventory();
@@ -62,8 +72,10 @@ const ManageInventory = () => {
     }
   };
 
+  // --- UPDATED: Search filters by BOTH Item Name and Vendor Name ---
   const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.vendor_name && item.vendor_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -80,7 +92,7 @@ const ManageInventory = () => {
         <div className="search-bar-container" style={{ margin: 0, maxWidth: '250px' }}>
           <Search size={18} className="search-icon-inside" />
           <input 
-            type="text" placeholder="Search items..." 
+            type="text" placeholder="Search items or vendors..." 
             value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
             className="inventory-search-input"
           />
@@ -92,11 +104,22 @@ const ManageInventory = () => {
           <div key={item.id} className={`manage-inv-card ${editingId === item.id ? 'editing' : ''}`}>
             
             {editingId === item.id ? (
-              // --- EDIT MODE UI (Single Flat Row Structure) ---
-              <div className="manage-inv-edit-form single-row-edit">
+              // --- EDIT MODE UI ---
+              <div className="manage-inv-edit-form single-row-edit" style={{ flexWrap: 'wrap' }}>
                 
                 <input type="text" name="name" value={editFormData.name} onChange={handleFormChange} className="name-input" placeholder="Item Name"/>
                 
+                {/* --- NEW: VENDOR INPUT FIELD --- */}
+                <input 
+                  type="text" 
+                  name="vendor_name" 
+                  value={editFormData.vendor_name} 
+                  onChange={handleFormChange} 
+                  className="name-input" 
+                  placeholder="Vendor Name"
+                  style={{ width: '140px' }}
+                />
+
                 <div className="compact-price-input">
                   <DollarSign size={14} className="prefix-icon"/>
                   <input type="number" name="price" value={editFormData.price} onChange={handleFormChange} className="price-input" placeholder="Price"/>
@@ -112,25 +135,28 @@ const ManageInventory = () => {
                   <option value="Pack">Pack</option>
                 </select>
                 
-                {/* Save/Cancel locked to the right */}
                 <div className="edit-actions right-aligned-actions">
                   <button className="btn-cancel-edit" onClick={handleCancelEdit}><X size={16}/></button>
                   <button className="btn-save-edit" onClick={() => handleSaveEdit(item.id)}><Save size={16}/> <span className="mobile-hide-text">Save</span></button>
                 </div>
               </div>
             ) : (
-              // --- DISPLAY MODE UI (Info on Left, Actions strictly on Right) ---
+              // --- DISPLAY MODE UI ---
               <div className="manage-inv-display">
                 
                 <div className="display-info-section">
                   <h3 className="inv-item-name">{item.name}</h3>
+                  {/* --- NEW: DISPLAYS THE VENDOR NAME --- */}
+                  <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
+                    <Truck size={12}/> {item.vendor_name || 'General Vendor'}
+                  </div>
+
                   <div className="inv-item-details">
                     <span className="inv-price-badge">PKR {item.price}</span>
                     <span className="inv-qty-badge">{item.qty} {item.unit} in stock</span>
                   </div>
                 </div>
                 
-                {/* Edit/Delete strictly locked to the right */}
                 <div className="manage-inv-actions right-aligned-actions">
                   <button className="btn-icon-edit" onClick={() => handleEditClick(item)}><Edit2 size={18}/></button>
                   <button className="btn-icon-delete" onClick={() => handleDeleteItem(item.id)}><Trash2 size={18}/></button>

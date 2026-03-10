@@ -1505,3 +1505,60 @@
   .btn-save-edit span.mobile-hide-text { display: none !important; }
   .btn-save-edit, .btn-cancel-edit { padding: 4px !important; }
 }
+
+
+/* --- NEW VENDOR CARD UI --- */
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.inventory-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+  transition: transform 0.2s;
+}
+
+.inventory-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px rgba(0,0,0,0.05);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed #cbd5e1;
+  padding-bottom: 12px;
+  margin-bottom: 15px;
+}
+
+.total-badge {
+  background: #10b981; /* Nice emerald green */
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.vendor-tags {
+  display: flex;
+  flex-wrap: wrap; 
+  gap: 8px;
+}
+
+.vendor-tag {
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+}
