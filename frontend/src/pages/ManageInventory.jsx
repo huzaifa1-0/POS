@@ -11,11 +11,9 @@ const ManageInventory = () => {
   const [vendors, setVendors] = useState([]);
   const [stockEntries, setStockEntries] = useState([]);
   
-  // States for Adding
   const [formData, setFormData] = useState({ itemName: '', vendorName: '', qty: '', unit: 'KG', price: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // States for Editing
   const [editingId, setEditingId] = useState(null);
   const [editFormData, setEditFormData] = useState({ itemName: '', vendorName: '', qty: '', unit: 'KG', price: '' });
 
@@ -38,7 +36,6 @@ const ManageInventory = () => {
     }
   };
 
-  // --- ADD STOCK LOGIC ---
   const handleFormChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleAddStock = async (e) => {
@@ -72,7 +69,6 @@ const ManageInventory = () => {
     }
   };
 
-  // --- EDIT & DELETE LOGIC ---
   const handleEditClick = (entry) => {
     setEditingId(entry.id);
     setEditFormData({
@@ -88,7 +84,6 @@ const ManageInventory = () => {
 
   const handleSaveEdit = async (id) => {
     try {
-      // Find or create item/vendor just like when adding
       let selectedItem = items.find(i => i.name.toLowerCase() === editFormData.itemName.trim().toLowerCase());
       if (!selectedItem) {
         const itemRes = await axios.post(`${BASE_URL}/items/`, { name: editFormData.itemName.trim(), unit: editFormData.unit });
@@ -101,7 +96,6 @@ const ManageInventory = () => {
         selectedVendor = vendorRes.data;
       }
 
-      // Update the record
       await axios.put(`${BASE_URL}/stock-entries/${id}/`, {
         item_id: selectedItem.id,
         vendor_id: selectedVendor.id,
@@ -132,7 +126,6 @@ const ManageInventory = () => {
   return (
     <div className="inv-page-container">
       
-      {/* Header */}
       <div className="inv-header-row">
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <button onClick={() => navigate('/inventory')} style={{ background: '#fff', border: '1px solid #cbd5e1', padding: '8px', borderRadius: '8px', cursor: 'pointer' }}>
@@ -142,8 +135,8 @@ const ManageInventory = () => {
         </div>
       </div>
 
-      {/* TOP SECTION: Horizontal Full-Width Form */}
-      <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '25px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+      {/* TOP SECTION: Notice the 'manage-form-container' class here */}
+      <div className="manage-form-container" style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '25px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
         <h3 style={{ margin: '0 0 15px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#0ea5e9' }}>
           <PlusCircle size={20}/> New Stock Entry
         </h3>
@@ -178,13 +171,13 @@ const ManageInventory = () => {
             <input type="number" name="price" min="0" step="0.01" value={formData.price} onChange={handleFormChange} required placeholder="0" className="form-input" />
           </div>
 
-          <button type="submit" disabled={isSubmitting} style={{ padding: '10px 20px', height: '42px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button type="submit" className="submit-btn-mobile" disabled={isSubmitting} style={{ padding: '10px 20px', height: '42px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Save size={18}/> {isSubmitting ? 'Saving...' : 'Save'}
           </button>
         </form>
       </div>
 
-      {/* BOTTOM SECTION: Full Width Table with Edit Buttons */}
+      {/* BOTTOM SECTION: Full Width Table */}
       <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
         <h3 style={{ margin: '0 0 20px 0', color: '#475569' }}>Recent Stock Entries (History)</h3>
         
@@ -205,7 +198,6 @@ const ManageInventory = () => {
                 <tr key={entry.id}>
                   <td>{new Date(entry.created_at).toLocaleDateString()}</td>
                   
-                  {/* EDIT MODE vs DISPLAY MODE */}
                   {editingId === entry.id ? (
                     <>
                       <td><input type="text" name="itemName" value={editFormData.itemName} onChange={handleEditChange} className="edit-table-input" /></td>
@@ -218,12 +210,8 @@ const ManageInventory = () => {
                       </td>
                       <td><input type="number" name="price" value={editFormData.price} onChange={handleEditChange} className="edit-table-input" style={{ width: '80px' }} /></td>
                       <td style={{ textAlign: 'right' }}>
-                        <button onClick={() => handleSaveEdit(entry.id)} style={{ background: '#10b981', border: 'none', color: '#fff', padding: '6px', borderRadius: '4px', cursor: 'pointer', marginRight: '5px' }} title="Save">
-                          <Save size={16} />
-                        </button>
-                        <button onClick={() => setEditingId(null)} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#475569', padding: '6px', borderRadius: '4px', cursor: 'pointer' }} title="Cancel">
-                          <X size={16} />
-                        </button>
+                        <button onClick={() => handleSaveEdit(entry.id)} style={{ background: '#10b981', border: 'none', color: '#fff', padding: '6px', borderRadius: '4px', cursor: 'pointer', marginRight: '5px' }} title="Save"><Save size={16} /></button>
+                        <button onClick={() => setEditingId(null)} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#475569', padding: '6px', borderRadius: '4px', cursor: 'pointer' }} title="Cancel"><X size={16} /></button>
                       </td>
                     </>
                   ) : (
@@ -233,12 +221,8 @@ const ManageInventory = () => {
                       <td style={{ color: '#0ea5e9', fontWeight: 'bold' }}>{entry.quantity} {entry.item?.unit}</td>
                       <td>PKR {entry.price}</td>
                       <td style={{ textAlign: 'right' }}>
-                        <button onClick={() => handleEditClick(entry)} style={{ background: 'transparent', border: 'none', color: '#3b82f6', cursor: 'pointer', marginRight: '10px' }} title="Edit">
-                          <Edit2 size={18} />
-                        </button>
-                        <button onClick={() => handleDeleteEntry(entry.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }} title="Delete">
-                          <Trash2 size={18} />
-                        </button>
+                        <button onClick={() => handleEditClick(entry)} style={{ background: 'transparent', border: 'none', color: '#3b82f6', cursor: 'pointer', marginRight: '10px' }} title="Edit"><Edit2 size={18} /></button>
+                        <button onClick={() => handleDeleteEntry(entry.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }} title="Delete"><Trash2 size={18} /></button>
                       </td>
                     </>
                   )}

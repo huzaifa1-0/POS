@@ -1700,3 +1700,57 @@
     align-items: flex-start;
   }
 }
+/* =========================================
+   MOBILE COMPACT ADJUSTMENTS (Manage & Inventory)
+   ========================================= */
+@media (max-width: 768px) {
+  /* 1. Make the Add Stock block smaller and more compact */
+  .manage-form-container {
+    padding: 12px !important;
+    margin-bottom: 15px !important;
+  }
+  .manage-form-container h3 {
+    margin-bottom: 10px !important;
+    font-size: 16px !important;
+  }
+  .horizontal-form-row {
+    gap: 8px !important;
+  }
+  .horizontal-form-row .form-group {
+    min-width: 45% !important; /* Forces 2 inputs per row instead of 1 huge one */
+  }
+  .form-label {
+    font-size: 11px !important;
+    margin-bottom: 2px !important;
+  }
+  .form-input, .form-select {
+    padding: 8px !important;
+    font-size: 13px !important;
+    height: 34px !important;
+  }
+  .submit-btn-mobile {
+    height: 34px !important;
+    padding: 0 15px !important;
+    font-size: 13px !important;
+    width: 100% !important;
+    margin-top: 5px !important;
+    justify-content: center !important;
+  }
+
+  /* 2. Make Tables Vertically AND Horizontally Scrollable */
+  .table-responsive-wrapper,
+  .inventory-table-container {
+    max-height: 45vh !important; /* Locks height to 45% of screen so it scrolls vertically */
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; /* Smooth swiping on phones */
+  }
+
+  /* 3. Make the table text smaller so it fits better */
+  .custom-data-table th, 
+  .custom-data-table td {
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important; /* Forces horizontal scroll instead of squished text */
+  }
+}
