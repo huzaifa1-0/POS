@@ -1,176 +1,179 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Trash2, Edit2, X, Search, DollarSign, Truck } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, PlusCircle, Search } from 'lucide-react';
 
-const API_URL = 'http://127.0.0.1:8000/api/inventory/';
+const BASE_URL = 'http://127.0.0.1:8000/api';
 
 const ManageInventory = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [editingId, setEditingId] = useState(null);
+  const [vendors, setVendors] = useState([]);
+  const [stockEntries, setStockEntries] = useState([]);
   
-  // --- UPDATED: Added vendor_name to the form data state ---
-  const [editFormData, setEditFormData] = useState({ name: '', vendor_name: '', qty: 0, unit: 'KG', price: 0 });
+  const [formData, setFormData] = useState({ itemName: '', vendorName: '', qty: '', unit: 'KG', price: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchInventory();
+    fetchData();
   }, []);
 
-  const fetchInventory = async () => {
+  const fetchData = async () => {
     try {
-      const response = await axios.get(API_URL);
-      setItems(response.data);
+      const [itemsRes, vendorsRes, stockRes] = await Promise.all([
+        axios.get(`${BASE_URL}/items/`),
+        axios.get(`${BASE_URL}/vendors/`),
+        axios.get(`${BASE_URL}/stock-entries/`)
+      ]);
+      setItems(itemsRes.data);
+      setVendors(vendorsRes.data);
+      setStockEntries(stockRes.data);
     } catch (error) {
-      console.error("Error fetching inventory:", error);
+      console.error("Error fetching data:", error);
     }
-  };
-
-  const handleEditClick = (item) => {
-    setEditingId(item.id);
-    // --- UPDATED: Load the existing vendor name when clicking edit ---
-    setEditFormData({ 
-      name: item.name, 
-      vendor_name: item.vendor_name || 'General Vendor', 
-      qty: item.qty, 
-      unit: item.unit, 
-      price: item.price 
-    });
-  };
-
-  const handleCancelEdit = () => {
-    setEditingId(null);
   };
 
   const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setEditFormData({ ...editFormData, [name]: value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSaveEdit = async (id) => {
+  const handleAddStock = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
     try {
-      // Sends the updated vendor_name back to Django
-      await axios.put(`${API_URL}${id}/`, editFormData);
-      setEditingId(null);
-      fetchInventory();
-      alert("Item updated successfully!");
+      // 1. Find or Create Item
+      let selectedItem = items.find(i => i.name.toLowerCase() === formData.itemName.trim().toLowerCase());
+      if (!selectedItem) {
+        const itemRes = await axios.post(`${BASE_URL}/items/`, { name: formData.itemName.trim(), unit: formData.unit });
+        selectedItem = itemRes.data;
+      }
+
+      // 2. Find or Create Vendor
+      let selectedVendor = vendors.find(v => v.name.toLowerCase() === formData.vendorName.trim().toLowerCase());
+      if (!selectedVendor) {
+        const vendorRes = await axios.post(`${BASE_URL}/vendors/`, { name: formData.vendorName.trim() });
+        selectedVendor = vendorRes.data;
+      }
+
+      // 3. Create Stock Entry Transaction
+      await axios.post(`${BASE_URL}/stock-entries/`, {
+        item_id: selectedItem.id,
+        vendor_id: selectedVendor.id,
+        quantity: formData.qty,
+        price: formData.price
+      });
+
+      alert("Stock entry added successfully!");
+      setFormData({ itemName: '', vendorName: '', qty: '', unit: 'KG', price: '' });
+      fetchData(); // Refresh the history list
     } catch (error) {
-      console.error("Error updating item:", error);
-      alert("Failed to update item.");
+      console.error("Error saving stock:", error);
+      alert("Failed to add stock. Please check the network tab.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDeleteItem = async (id) => {
-    if (window.confirm("Are you sure you want to delete this specific stock record?")) {
+  const handleDeleteEntry = async (id) => {
+    if (window.confirm("Are you sure you want to delete this specific stock entry record?")) {
       try {
-        await axios.delete(`${API_URL}${id}/`);
-        fetchInventory();
+        await axios.delete(`${BASE_URL}/stock-entries/${id}/`);
+        fetchData();
       } catch (error) {
-        console.error("Error deleting item:", error);
+        console.error("Error deleting entry:", error);
       }
     }
   };
 
-  // --- UPDATED: Search filters by BOTH Item Name and Vendor Name ---
-  const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.vendor_name && item.vendor_name.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
   return (
-    <div className="manage-inv-container">
+    <div style={{ padding: '20px', background: '#f8fafc', minHeight: '100vh' }}>
       
-      <div className="manage-inv-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <button className="back-btn" onClick={() => navigate('/inventory')}>
-            <ArrowLeft size={20} />
-          </button>
-          <h2>Manage Inventory</h2>
-        </div>
-        
-        <div className="search-bar-container" style={{ margin: 0, maxWidth: '250px' }}>
-          <Search size={18} className="search-icon-inside" />
-          <input 
-            type="text" placeholder="Search items or vendors..." 
-            value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-            className="inventory-search-input"
-          />
-        </div>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
+        <button onClick={() => navigate('/inventory')} style={{ background: '#fff', border: '1px solid #cbd5e1', padding: '8px', borderRadius: '8px', cursor: 'pointer' }}>
+          <ArrowLeft size={20} color="#475569" />
+        </button>
+        <h2 style={{ margin: 0, color: '#1e293b' }}>Manage & Add Stock</h2>
       </div>
 
-      <div className="manage-inv-list">
-        {filteredItems.map((item) => (
-          <div key={item.id} className={`manage-inv-card ${editingId === item.id ? 'editing' : ''}`}>
-            
-            {editingId === item.id ? (
-              // --- EDIT MODE UI ---
-              <div className="manage-inv-edit-form single-row-edit" style={{ flexWrap: 'wrap' }}>
-                
-                <input type="text" name="name" value={editFormData.name} onChange={handleFormChange} className="name-input" placeholder="Item Name"/>
-                
-                {/* --- NEW: VENDOR INPUT FIELD --- */}
-                <input 
-                  type="text" 
-                  name="vendor_name" 
-                  value={editFormData.vendor_name} 
-                  onChange={handleFormChange} 
-                  className="name-input" 
-                  placeholder="Vendor Name"
-                  style={{ width: '140px' }}
-                />
-
-                <div className="compact-price-input">
-                  <DollarSign size={14} className="prefix-icon"/>
-                  <input type="number" name="price" value={editFormData.price} onChange={handleFormChange} className="price-input" placeholder="Price"/>
-                </div>
-
-                <input type="number" name="qty" value={editFormData.qty} onChange={handleFormChange} className="qty-input" placeholder="Qty" />
-                
-                <select name="unit" value={editFormData.unit} onChange={handleFormChange} className="unit-select">
-                  <option value="KG">KG</option>
-                  <option value="Litre">Litre</option>
-                  <option value="Dozen">Dozen</option>
-                  <option value="Pcs">Pcs</option>
-                  <option value="Pack">Pack</option>
-                </select>
-                
-                <div className="edit-actions right-aligned-actions">
-                  <button className="btn-cancel-edit" onClick={handleCancelEdit}><X size={16}/></button>
-                  <button className="btn-save-edit" onClick={() => handleSaveEdit(item.id)}><Save size={16}/> <span className="mobile-hide-text">Save</span></button>
-                </div>
-              </div>
-            ) : (
-              // --- DISPLAY MODE UI ---
-              <div className="manage-inv-display">
-                
-                <div className="display-info-section">
-                  <h3 className="inv-item-name">{item.name}</h3>
-                  {/* --- NEW: DISPLAYS THE VENDOR NAME --- */}
-                  <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
-                    <Truck size={12}/> {item.vendor_name || 'General Vendor'}
-                  </div>
-
-                  <div className="inv-item-details">
-                    <span className="inv-price-badge">PKR {item.price}</span>
-                    <span className="inv-qty-badge">{item.qty} {item.unit} in stock</span>
-                  </div>
-                </div>
-                
-                <div className="manage-inv-actions right-aligned-actions">
-                  <button className="btn-icon-edit" onClick={() => handleEditClick(item)}><Edit2 size={18}/></button>
-                  <button className="btn-icon-delete" onClick={() => handleDeleteItem(item.id)}><Trash2 size={18}/></button>
-                </div>
-
-              </div>
-            )}
-
+      {/* ADD STOCK FORM */}
+      <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '30px' }}>
+        <h3 style={{ margin: '0 0 15px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#0ea5e9' }}>
+          <PlusCircle size={20}/> New Stock Entry
+        </h3>
+        
+        <form onSubmit={handleAddStock} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold' }}>Item Name</label>
+            <input list="items-list" name="itemName" value={formData.itemName} onChange={handleFormChange} required placeholder="e.g. Flour" style={{ padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+            <datalist id="items-list">{items.map(i => <option key={i.id} value={i.name} />)}</datalist>
           </div>
-        ))}
 
-        {filteredItems.length === 0 && (
-          <div className="empty-state">No inventory items found.</div>
-        )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold' }}>Vendor Name</label>
+            <input list="vendors-list" name="vendorName" value={formData.vendorName} onChange={handleFormChange} required placeholder="e.g. Huzaifa" style={{ padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+            <datalist id="vendors-list">{vendors.map(v => <option key={v.id} value={v.name} />)}</datalist>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', width: '80px' }}>
+            <label style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold' }}>Unit</label>
+            <select name="unit" value={formData.unit} onChange={handleFormChange} style={{ padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+              <option value="KG">KG</option><option value="Litre">Litre</option><option value="Dozen">Dozen</option><option value="Pcs">Pcs</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', width: '100px' }}>
+            <label style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold' }}>Quantity</label>
+            <input type="number" name="qty" min="0" step="0.01" value={formData.qty} onChange={handleFormChange} required placeholder="0" style={{ padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', width: '120px' }}>
+            <label style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold' }}>Price (Per Unit)</label>
+            <input type="number" name="price" min="0" step="0.01" value={formData.price} onChange={handleFormChange} required placeholder="PKR 0" style={{ padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+          </div>
+
+          <button type="submit" disabled={isSubmitting} style={{ padding: '10px 20px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', height: '42px' }}>
+            <Save size={18}/> {isSubmitting ? 'Saving...' : 'Save Stock'}
+          </button>
+        </form>
+      </div>
+
+      {/* STOCK HISTORY TABLE */}
+      <h3 style={{ color: '#475569', marginBottom: '10px' }}>Recent Stock Entries (History)</h3>
+      <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <tr>
+              <th style={{ padding: '12px 15px', color: '#64748b', fontSize: '14px' }}>Date</th>
+              <th style={{ padding: '12px 15px', color: '#64748b', fontSize: '14px' }}>Item</th>
+              <th style={{ padding: '12px 15px', color: '#64748b', fontSize: '14px' }}>Vendor</th>
+              <th style={{ padding: '12px 15px', color: '#64748b', fontSize: '14px' }}>Quantity</th>
+              <th style={{ padding: '12px 15px', color: '#64748b', fontSize: '14px' }}>Price</th>
+              <th style={{ padding: '12px 15px', color: '#64748b', fontSize: '14px' }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {stockEntries.map((entry) => (
+              <tr key={entry.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                <td style={{ padding: '12px 15px', fontSize: '14px' }}>{new Date(entry.created_at).toLocaleDateString()}</td>
+                <td style={{ padding: '12px 15px', fontWeight: 'bold' }}>{entry.item?.name}</td>
+                <td style={{ padding: '12px 15px' }}>{entry.vendor?.name}</td>
+                <td style={{ padding: '12px 15px', color: '#0ea5e9', fontWeight: 'bold' }}>{entry.quantity} {entry.item?.unit}</td>
+                <td style={{ padding: '12px 15px' }}>PKR {entry.price}</td>
+                <td style={{ padding: '12px 15px' }}>
+                  <button onClick={() => handleDeleteEntry(entry.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
+                    <Trash2 size={18} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {stockEntries.length === 0 && (
+              <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: '#94a3b8' }}>No stock history found.</td></tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
     </div>
