@@ -72,3 +72,25 @@ class StockEntryViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(entry)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        item_id = request.data.get('item_id')
+        vendor_id = request.data.get('vendor_id')
+        quantity = request.data.get('quantity')
+        price = request.data.get('price')
+
+        if item_id:
+            instance.item = Item.objects.get(id=item_id)
+        if vendor_id:
+            instance.vendor = Vendor.objects.get(id=vendor_id)
+        if quantity is not None:
+            instance.quantity = Decimal(quantity)
+        if price is not None:
+            instance.price = Decimal(price)
+            
+        instance.save()
+        
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)

@@ -1562,3 +1562,128 @@
   border-radius: 6px;
   border: 1px solid #cbd5e1;
 }
+
+/* --- INVENTORY & MANAGE INVENTORY RESPONSIVE STYLES --- */
+
+.inv-page-container {
+  padding: 20px;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.inv-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+/* Manage Inventory Layout (Side by Side on Desktop) */
+/* Horizontal Form Layout */
+.horizontal-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: flex-end; /* Keeps the button aligned with the inputs */
+}
+
+.horizontal-form-row .form-group {
+  flex: 1; /* Makes all inputs stretch equally */
+  min-width: 150px; /* Prevents inputs from getting too small on mobile */
+  margin-bottom: 0;
+}
+
+/* Edit State Table Input Styles */
+.edit-table-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Form Styles */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 15px;
+}
+
+.form-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: bold;
+}
+
+.form-input, .form-select {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  width: 100%;
+  font-size: 14px;
+}
+
+/* Table Styles (Responsive) */
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto; /* Adds scrollbar on mobile */
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.custom-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  min-width: 600px; /* Forces scroll on small screens */
+}
+
+.custom-data-table th {
+  background: #f1f5f9;
+  padding: 12px 15px;
+  color: #64748b;
+  font-size: 14px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.custom-data-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 14px;
+}
+
+/* Mobile Breakpoints */
+@media (max-width: 900px) {
+  /* --- NEW FULL WIDTH HORIZONTAL FORM STYLES --- */
+.horizontal-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: flex-end; /* Aligns the button with the inputs perfectly */
+}
+
+.horizontal-form-row .form-group {
+  flex: 1; /* Makes all inputs stretch equally across the screen */
+  min-width: 150px; /* Prevents inputs from squishing too small */
+  margin-bottom: 0;
+}
+
+/* Edit State Table Input Styles */
+.edit-table-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+}
+}
+
+@media (max-width: 600px) {
+  .inv-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
