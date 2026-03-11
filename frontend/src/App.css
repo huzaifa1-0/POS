@@ -1747,10 +1747,14 @@
   }
 
   /* 3. Make the table text smaller so it fits better */
+  .custom-data-table {
+    min-width: 100% !important; /* Removes the hidden 600px desktop width */
+  }
+
   .custom-data-table th, 
   .custom-data-table td {
-    padding: 8px 10px !important;
-    font-size: 12px !important;
-    white-space: nowrap !important; /* Forces horizontal scroll instead of squished text */
+    padding: 12px 4px !important; /* Drastically reduces left/right spacing between columns */
+    font-size: 11px !important; /* Marginally smaller text for a perfect fit */
+    white-space: normal !important; /* Allows text to safely wrap instead of forcing a scroll */
   }
 }
