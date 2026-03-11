@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Trash2, Edit2, X, PlusCircle } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Edit2, X, PlusCircle, Search } from 'lucide-react';
 
 const BASE_URL = 'http://127.0.0.1:8000/api';
 
@@ -11,11 +11,16 @@ const ManageInventory = () => {
   const [vendors, setVendors] = useState([]);
   const [stockEntries, setStockEntries] = useState([]);
   
+  // States for Adding
   const [formData, setFormData] = useState({ itemName: '', vendorName: '', qty: '', unit: 'KG', price: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // States for Editing
   const [editingId, setEditingId] = useState(null);
   const [editFormData, setEditFormData] = useState({ itemName: '', vendorName: '', qty: '', unit: 'KG', price: '' });
+
+  // State for Searching History
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -36,6 +41,7 @@ const ManageInventory = () => {
     }
   };
 
+  // --- ADD STOCK LOGIC ---
   const handleFormChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleAddStock = async (e) => {
@@ -69,6 +75,7 @@ const ManageInventory = () => {
     }
   };
 
+  // --- EDIT & DELETE LOGIC ---
   const handleEditClick = (entry) => {
     setEditingId(entry.id);
     setEditFormData({
@@ -123,6 +130,14 @@ const ManageInventory = () => {
     }
   };
 
+  // Filter entries based on search term
+  const filteredEntries = stockEntries.filter(entry => {
+    const searchLower = searchTerm.toLowerCase();
+    const itemName = entry.item?.name?.toLowerCase() || '';
+    const vendorName = entry.vendor?.name?.toLowerCase() || '';
+    return itemName.includes(searchLower) || vendorName.includes(searchLower);
+  });
+
   return (
     <div className="inv-page-container">
       
@@ -135,7 +150,7 @@ const ManageInventory = () => {
         </div>
       </div>
 
-      {/* TOP SECTION: Notice the 'manage-form-container' class here */}
+      {/* TOP SECTION: Add Stock Form */}
       <div className="manage-form-container" style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '25px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
         <h3 style={{ margin: '0 0 15px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#0ea5e9' }}>
           <PlusCircle size={20}/> New Stock Entry
@@ -179,7 +194,22 @@ const ManageInventory = () => {
 
       {/* BOTTOM SECTION: Full Width Table */}
       <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-        <h3 style={{ margin: '0 0 20px 0', color: '#475569' }}>Recent Stock Entries (History)</h3>
+        
+        {/* NEW HEADER WITH SEARCH BAR */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+          <h3 style={{ margin: '0', color: '#475569' }}>Recent Stock Entries (History)</h3>
+          
+          <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', padding: '10px 15px', borderRadius: '8px', border: '1px solid #cbd5e1', width: '100%', maxWidth: '300px' }}>
+            <Search size={16} color="#94a3b8" style={{ marginRight: '8px' }} />
+            <input 
+              type="text" 
+              placeholder="Search history..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ border: 'none', outline: 'none', background: 'transparent', width: '100%', fontSize: '14px' }}
+            />
+          </div>
+        </div>
         
         <div className="table-responsive-wrapper">
           <table className="custom-data-table">
@@ -194,7 +224,8 @@ const ManageInventory = () => {
               </tr>
             </thead>
             <tbody>
-              {stockEntries.map((entry) => (
+              {/* Map over filteredEntries instead of stockEntries */}
+              {filteredEntries.map((entry) => (
                 <tr key={entry.id}>
                   <td>{new Date(entry.created_at).toLocaleDateString()}</td>
                   
@@ -228,8 +259,8 @@ const ManageInventory = () => {
                   )}
                 </tr>
               ))}
-              {stockEntries.length === 0 && (
-                <tr><td colSpan="6" style={{ textAlign: 'center', color: '#94a3b8', padding: '20px' }}>No stock history found.</td></tr>
+              {filteredEntries.length === 0 && (
+                <tr><td colSpan="6" style={{ textAlign: 'center', color: '#94a3b8', padding: '20px' }}>No stock history found matching your search.</td></tr>
               )}
             </tbody>
           </table>

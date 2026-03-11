@@ -85,9 +85,10 @@ const Inventory = () => {
         </button>
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '20px', justifyContent: 'space-between', alignItems: 'center' }}>
+        
         {/* Summary Card */}
-        <div style={{ background: '#10b981', color: 'white', padding: '20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px', flex: '1', minWidth: '250px' }}>
+        <div style={{ background: '#10b981', color: 'white', padding: '20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px', flex: '1', minWidth: '250px', maxWidth: '350px' }}>
           <Wallet size={32} />
           <div>
             <p style={{ margin: 0, fontSize: '14px', opacity: 0.9 }}>Total Inventory Value</p>
@@ -95,15 +96,16 @@ const Inventory = () => {
           </div>
         </div>
 
-        {/* Search */}
-        <div style={{ flex: '1', minWidth: '250px', display: 'flex', alignItems: 'center', background: '#fff', padding: '0 15px', borderRadius: '12px', border: '1px solid #cbd5e1' }}>
+        {/* Search Bar - FIXED SIZE */}
+        <div style={{ width: '100%', maxWidth: '350px', display: 'flex', alignItems: 'center', background: '#fff', padding: '0 15px', borderRadius: '12px', border: '1px solid #cbd5e1' }}>
           <Search size={18} color="#94a3b8" style={{ marginRight: '10px' }} />
           <input 
             type="text" placeholder="Search item or vendor..." 
             value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ border: 'none', outline: 'none', width: '100%', fontSize: '15px', height: '100%', padding: '20px 0' }}
+            style={{ border: 'none', outline: 'none', width: '100%', fontSize: '14px', padding: '14px 0', background: 'transparent' }}
           />
         </div>
+
       </div>
 
       {/* Main Inventory Table - Notice the classes added here */}
