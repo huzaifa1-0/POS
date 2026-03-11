@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
-from .models import Category, MenuItem, InventoryItem
-from .serializers import CategorySerializer, MenuItemSerializer, InventoryItemSerializer
+from .models import Category, MenuItem, Vendor, Item, StockEntry
+from .serializers import CategorySerializer, MenuItemSerializer, VendorSerializer, ItemSerializer, StockEntrySerializer
 from decimal import Decimal
 
 # --- NEW: Registration View ---
@@ -40,28 +40,35 @@ class MenuItemViewSet(viewsets.ModelViewSet):
 
 
 
-class InventoryItemViewSet(viewsets.ModelViewSet):
-    queryset = InventoryItem.objects.all().order_by('-created_at')
-    serializer_class = InventoryItemSerializer
+class VendorViewSet(viewsets.ModelViewSet):
+    queryset = Vendor.objects.all()
+    serializer_class = VendorSerializer
 
+class ItemViewSet(viewsets.ModelViewSet):
+    queryset = Item.objects.all()
+    serializer_class = ItemSerializer
+
+class StockEntryViewSet(viewsets.ModelViewSet):
+    queryset = StockEntry.objects.all().order_by('-created_at')
+    serializer_class = StockEntrySerializer
+
+    # We override create to handle the nested data from React
     def create(self, request, *args, **kwargs):
-        name = request.data.get('name')
-        vendor_name = request.data.get('vendor_name', 'General Vendor')
-        incoming_qty = Decimal(request.data.get('qty', 0))
+        item_id = request.data.get('item_id')
+        vendor_id = request.data.get('vendor_id')
+        quantity = request.data.get('quantity')
+        price = request.data.get('price')
 
-        # Check if this exact item from this exact vendor already exists
-        existing_item = InventoryItem.objects.filter(
-            name__iexact=name, 
-            vendor_name__iexact=vendor_name
-        ).first()
-
-        if existing_item:
-            # LOGIC: 150kg + 40kg = 190kg
-            existing_item.qty += incoming_qty
-            # Optional: Update price to the newest price
-            existing_item.price = request.data.get('price', existing_item.price) 
-            existing_item.save()
-            return Response({'message': 'Stock updated successfully', 'qty': existing_item.qty}, status=status.HTTP_200_OK)
+        # Create the stock entry
+        item = Item.objects.get(id=item_id)
+        vendor = Vendor.objects.get(id=vendor_id)
         
-        # If it doesn't exist, create a brand new row normally
-        return super().create(request, *args, **kwargs)
+        entry = StockEntry.objects.create(
+            item=item,
+            vendor=vendor,
+            quantity=Decimal(quantity),
+            price=Decimal(price)
+        )
+        
+        serializer = self.get_serializer(entry)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
