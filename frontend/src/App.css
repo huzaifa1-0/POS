@@ -1565,10 +1565,23 @@
 
 /* --- INVENTORY & MANAGE INVENTORY RESPONSIVE STYLES --- */
 
+/* --- OVERRIDE VITE'S DEFAULT WIDTH RESTRICTIONS --- */
+#root {
+  max-width: 100% !important;
+  width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* --- INVENTORY & MANAGE INVENTORY RESPONSIVE STYLES --- */
 .inv-page-container {
+  flex: 1; /* THE MAGIC FIX: Forces it to stretch and take 100% of the remaining screen width */
   padding: 20px;
   background: #f8fafc;
-  min-height: 100vh;
+  height: 100vh; 
+  overflow-y: auto; /* Keeps the scrollbar inside the page */
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .inv-header-row {
