@@ -1758,3 +1758,19 @@
     white-space: normal !important; /* Allows text to safely wrap instead of forcing a scroll */
   }
 }
+
+/* --- TABLE ACTION BUTTONS (STACK ON MOBILE) --- */
+.action-buttons-wrapper {
+  display: flex;
+  justify-content: flex-end; /* Aligns buttons to the right */
+  align-items: center;
+  gap: 12px; /* Spacing between buttons */
+}
+
+@media (max-width: 768px) {
+  .action-buttons-wrapper {
+    flex-direction: column; /* Stacks the buttons vertically on mobile */
+    gap: 12px; /* Spacing between the stacked buttons */
+    align-items: center; 
+  }
+}

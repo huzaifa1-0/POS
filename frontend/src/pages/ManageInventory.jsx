@@ -240,9 +240,12 @@ const ManageInventory = () => {
                         </select>
                       </td>
                       <td><input type="number" name="price" value={editFormData.price} onChange={handleEditChange} className="edit-table-input" style={{ width: '80px' }} /></td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button onClick={() => handleSaveEdit(entry.id)} style={{ background: '#10b981', border: 'none', color: '#fff', padding: '6px', borderRadius: '4px', cursor: 'pointer', marginRight: '5px' }} title="Save"><Save size={16} /></button>
-                        <button onClick={() => setEditingId(null)} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#475569', padding: '6px', borderRadius: '4px', cursor: 'pointer' }} title="Cancel"><X size={16} /></button>
+                      <td>
+                        {/* EDIT MODE BUTTONS */}
+                        <div className="action-buttons-wrapper">
+                          <button onClick={() => handleSaveEdit(entry.id)} style={{ background: '#10b981', border: 'none', color: '#fff', padding: '6px', borderRadius: '4px', cursor: 'pointer' }} title="Save"><Save size={16} /></button>
+                          <button onClick={() => setEditingId(null)} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#475569', padding: '6px', borderRadius: '4px', cursor: 'pointer' }} title="Cancel"><X size={16} /></button>
+                        </div>
                       </td>
                     </>
                   ) : (
@@ -251,9 +254,12 @@ const ManageInventory = () => {
                       <td>{entry.vendor?.name}</td>
                       <td style={{ color: '#0ea5e9', fontWeight: 'bold' }}>{entry.quantity} {entry.item?.unit}</td>
                       <td>PKR {entry.price}</td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button onClick={() => handleEditClick(entry)} style={{ background: 'transparent', border: 'none', color: '#3b82f6', cursor: 'pointer', marginRight: '10px' }} title="Edit"><Edit2 size={18} /></button>
-                        <button onClick={() => handleDeleteEntry(entry.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }} title="Delete"><Trash2 size={18} /></button>
+                      <td>
+                        {/* DISPLAY MODE BUTTONS */}
+                        <div className="action-buttons-wrapper">
+                          <button onClick={() => handleEditClick(entry)} style={{ background: 'transparent', border: 'none', color: '#3b82f6', cursor: 'pointer' }} title="Edit"><Edit2 size={18} /></button>
+                          <button onClick={() => handleDeleteEntry(entry.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }} title="Delete"><Trash2 size={18} /></button>
+                        </div>
                       </td>
                     </>
                   )}
