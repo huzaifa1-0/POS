@@ -160,7 +160,7 @@ const Vendors = () => {
         <h3 style={{ margin: '0 0 15px 0', color: '#475569', fontSize: '16px' }}>Registered Vendors List</h3>
         
         {/* This wrapper limits the height and adds the vertical scrollbar */}
-        <div className="table-responsive-wrapper" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+        <div className="table-responsive-wrapper" style={{ maxHeight: 'calc(100vh - 350px)', overflowY: 'auto' }}>
           <table className="custom-data-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8fafc' }}>
               <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
