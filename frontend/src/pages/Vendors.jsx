@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Trash2, Users, PlusCircle, Edit, X } from 'lucide-react'; // Added Edit and X icons
+import { ArrowLeft, Save, Trash2, Users, PlusCircle, Edit, X } from 'lucide-react';
 
 const BASE_URL = 'http://127.0.0.1:8000/api';
 
@@ -17,7 +17,7 @@ const Vendors = () => {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingId, setEditingId] = useState(null); // NEW: Tracks which vendor we are editing
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     fetchVendors();
@@ -36,7 +36,6 @@ const Vendors = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // NEW: Triggers when you click the Edit button in the table
   const handleEditClick = (vendor) => {
     setFormData({
       name: vendor.name,
@@ -45,16 +44,14 @@ const Vendors = () => {
       payment_account: vendor.payment_account || ''
     });
     setEditingId(vendor.id);
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scrolls up to the form
+    window.scrollTo({ top: 0, behavior: 'smooth' }); 
   };
 
-  // NEW: Cancels edit mode and clears the form
   const handleCancelEdit = () => {
     setFormData({ name: '', address: '', payment_method: 'Cash', payment_account: '' });
     setEditingId(null);
   };
 
-  // UPDATED: Now handles BOTH saving new vendors and updating existing ones
   const handleSubmitVendor = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
@@ -62,17 +59,14 @@ const Vendors = () => {
     
     try {
       if (editingId) {
-        // If we are editing, send a PUT request to update
         await axios.put(`${BASE_URL}/vendors/${editingId}/`, formData);
         alert("Vendor updated successfully!");
-        setEditingId(null); // Exit edit mode
+        setEditingId(null); 
       } else {
-        // If we are NOT editing, send a POST request to create
         await axios.post(`${BASE_URL}/vendors/`, formData);
         alert("Vendor added successfully!");
       }
       
-      // Reset form on success
       setFormData({ name: '', address: '', payment_method: 'Cash', payment_account: '' });
       fetchVendors();
     } catch (error) {
@@ -87,7 +81,6 @@ const Vendors = () => {
     if (window.confirm(`WARNING: Are you sure you want to delete ${name}? This will also delete ALL stock history associated with this vendor!`)) {
       try {
         await axios.delete(`${BASE_URL}/vendors/${id}/`);
-        // If we delete the vendor we are currently editing, cancel edit mode
         if (editingId === id) handleCancelEdit();
         fetchVendors();
       } catch (error) {
@@ -110,51 +103,51 @@ const Vendors = () => {
         </div>
       </div>
 
-      {/* Add / Edit Vendor Form */}
-      <div className="manage-form-container" style={{ background: editingId ? '#f0fdf4' : '#fff', padding: '20px', borderRadius: '12px', border: editingId ? '2px solid #22c55e' : '1px solid #e2e8f0', marginBottom: '25px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', transition: 'all 0.3s ease' }}>
-        <h3 style={{ margin: '0 0 15px 0', display: 'flex', alignItems: 'center', gap: '8px', color: editingId ? '#16a34a' : '#0ea5e9' }}>
-          {editingId ? <Edit size={20}/> : <PlusCircle size={20}/>} 
+      {/* Add / Edit Vendor Form - ADJUSTED FOR MOBILE COMPACTNESS */}
+      <div className="manage-form-container" style={{ background: editingId ? '#f0fdf4' : '#fff', padding: '15px', borderRadius: '12px', border: editingId ? '2px solid #22c55e' : '1px solid #e2e8f0', marginBottom: '20px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', transition: 'all 0.3s ease' }}>
+        <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: editingId ? '#16a34a' : '#0ea5e9' }}>
+          {editingId ? <Edit size={18}/> : <PlusCircle size={18}/>} 
           {editingId ? 'Edit Vendor Details' : 'Add New Vendor'}
         </h3>
         
-        <form onSubmit={handleSubmitVendor} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-            <div className="form-group" style={{ flex: '1', minWidth: '200px', marginBottom: 0 }}>
-              <label className="form-label">Vendor Name *</label>
-              <input type="text" name="name" value={formData.name} onChange={handleFormChange} required placeholder="e.g. Ali Traders" className="form-input" />
+        {/* Reduced gaps and minWidths so they fit better on mobile screens */}
+        <form onSubmit={handleSubmitVendor} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <div className="form-group" style={{ flex: '1', minWidth: '140px', marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '13px' }}>Vendor Name *</label>
+              <input type="text" name="name" value={formData.name} onChange={handleFormChange} required placeholder="e.g. Ali Traders" className="form-input" style={{ padding: '8px', fontSize: '14px' }} />
             </div>
 
-            <div className="form-group" style={{ flex: '1.5', minWidth: '250px', marginBottom: 0 }}>
-              <label className="form-label">Address</label>
-              <input type="text" name="address" value={formData.address} onChange={handleFormChange} placeholder="e.g. Shop #12, Main Market" className="form-input" />
+            <div className="form-group" style={{ flex: '1.5', minWidth: '160px', marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '13px' }}>Address</label>
+              <input type="text" name="address" value={formData.address} onChange={handleFormChange} placeholder="e.g. Main Market" className="form-input" style={{ padding: '8px', fontSize: '14px' }} />
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            <div className="form-group" style={{ flex: '1', minWidth: '200px', marginBottom: 0 }}>
-              <label className="form-label">Payment Method</label>
-              <select name="payment_method" value={formData.payment_method} onChange={handleFormChange} className="form-input">
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div className="form-group" style={{ flex: '1', minWidth: '140px', marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '13px' }}>Payment Method</label>
+              <select name="payment_method" value={formData.payment_method} onChange={handleFormChange} className="form-input" style={{ padding: '8px', fontSize: '14px' }}>
                 <option value="Cash">Cash</option>
                 <option value="JazzCash">JazzCash</option>
                 <option value="EasyPaisa">EasyPaisa</option>
-                <option value="Bank Account">Bank Account</option>
+                <option value="Bank Account">Bank</option>
               </select>
             </div>
 
-            <div className="form-group" style={{ flex: '1.5', minWidth: '250px', marginBottom: 0 }}>
-              <label className="form-label">Account Details (Phone/IBAN)</label>
-              <input type="text" name="payment_account" value={formData.payment_account} onChange={handleFormChange} placeholder="e.g. 0300-1234567 or PK34MEZN..." className="form-input" />
+            <div className="form-group" style={{ flex: '1.5', minWidth: '160px', marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '13px' }}>Account Details</label>
+              <input type="text" name="payment_account" value={formData.payment_account} onChange={handleFormChange} placeholder="Phone or IBAN" className="form-input" style={{ padding: '8px', fontSize: '14px' }} />
             </div>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button type="submit" disabled={isSubmitting} style={{ padding: '0 20px', height: '42px', background: editingId ? '#3b82f6' : '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Save size={18}/> {isSubmitting ? 'Saving...' : (editingId ? 'Update Vendor' : 'Save Vendor')}
+            <div style={{ display: 'flex', gap: '8px', marginTop: '5px' }}>
+              <button type="submit" disabled={isSubmitting} style={{ padding: '0 15px', height: '36px', background: editingId ? '#3b82f6' : '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px' }}>
+                <Save size={16}/> {isSubmitting ? 'Saving...' : (editingId ? 'Update' : 'Save')}
               </button>
               
-              {/* Show Cancel button only when in Edit Mode */}
               {editingId && (
-                <button type="button" onClick={handleCancelEdit} style={{ padding: '0 15px', height: '42px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <X size={18}/> Cancel
+                <button type="button" onClick={handleCancelEdit} style={{ padding: '0 10px', height: '36px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px' }}>
+                  <X size={16}/> Cancel
                 </button>
               )}
             </div>
@@ -162,38 +155,39 @@ const Vendors = () => {
         </form>
       </div>
 
-      {/* Vendors List */}
-      <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-        <h3 style={{ margin: '0 0 20px 0', color: '#475569' }}>Registered Vendors List</h3>
-        <div className="table-responsive-wrapper">
+      {/* Vendors List - ADDED SCROLLING HERE */}
+      <div style={{ background: '#fff', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+        <h3 style={{ margin: '0 0 15px 0', color: '#475569', fontSize: '16px' }}>Registered Vendors List</h3>
+        
+        {/* This wrapper limits the height and adds the vertical scrollbar */}
+        <div className="table-responsive-wrapper" style={{ maxHeight: '400px', overflowY: 'auto' }}>
           <table className="custom-data-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                <th style={{ padding: '12px' }}>ID</th>
-                <th style={{ padding: '12px' }}>Vendor Name</th>
-                <th style={{ padding: '12px' }}>Address</th>
-                <th style={{ padding: '12px' }}>Payment Info</th>
-                <th style={{ padding: '12px', textAlign: 'right' }}>Actions</th>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8fafc' }}>
+              <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
+                <th style={{ padding: '10px' }}>ID</th>
+                <th style={{ padding: '10px' }}>Vendor Name</th>
+                <th style={{ padding: '10px' }}>Address</th>
+                <th style={{ padding: '10px' }}>Payment Info</th>
+                <th style={{ padding: '10px', textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {vendors.map((vendor) => (
                 <tr key={vendor.id} style={{ borderBottom: '1px solid #f1f5f9', background: editingId === vendor.id ? '#f0fdf4' : 'transparent' }}>
-                  <td style={{ padding: '12px', color: '#64748b' }}>#{vendor.id}</td>
-                  <td style={{ padding: '12px', fontWeight: 'bold', color: '#334155' }}>{vendor.name}</td>
-                  <td style={{ padding: '12px', color: '#64748b' }}>{vendor.address || '-'}</td>
-                  <td style={{ padding: '12px' }}>
-                    <span style={{ fontWeight: '500', color: '#0ea5e9' }}>{vendor.payment_method}</span>
-                    {vendor.payment_account && <div style={{ fontSize: '12px', color: '#64748b' }}>{vendor.payment_account}</div>}
+                  <td style={{ padding: '10px', color: '#64748b', fontSize: '13px' }}>#{vendor.id}</td>
+                  <td style={{ padding: '10px', fontWeight: 'bold', color: '#334155', fontSize: '13px' }}>{vendor.name}</td>
+                  <td style={{ padding: '10px', color: '#64748b', fontSize: '13px' }}>{vendor.address || '-'}</td>
+                  <td style={{ padding: '10px' }}>
+                    <span style={{ fontWeight: '500', color: '#0ea5e9', fontSize: '13px' }}>{vendor.payment_method}</span>
+                    {vendor.payment_account && <div style={{ fontSize: '11px', color: '#64748b' }}>{vendor.payment_account}</div>}
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'right' }}>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                      {/* NEW Edit Button */}
+                  <td style={{ padding: '10px', textAlign: 'right' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                       <button onClick={() => handleEditClick(vendor)} style={{ background: 'transparent', border: 'none', color: '#3b82f6', cursor: 'pointer' }} title="Edit Vendor">
-                        <Edit size={18} />
+                        <Edit size={16} />
                       </button>
                       <button onClick={() => handleDeleteVendor(vendor.id, vendor.name)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }} title="Delete Vendor">
-                        <Trash2 size={18} />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>
