@@ -130,3 +130,38 @@ class ReportDashboardView(APIView):
             'low_stock': list(low_stock),
             'recent_orders': list(recent_orders)
         })
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all().order_by('-created_at')
+    
+    # We create a custom create method to handle the nested JSON from React
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        
+        # 1. Create the Main Order
+        order = Order.objects.create(
+            table_number=data.get('table_number'),
+            order_type=data.get('type', 'Dine-In'),
+            status='Completed', # Automatically mark as completed!
+            payment_method=data.get('paymentMethod', 'Cash'),
+            total_amount=Decimal(data.get('total', 0))
+        )
+
+        # 2. Loop through the cart items and save them
+        items = data.get('items', [])
+        for item in items:
+            menu_item = MenuItem.objects.get(id=item['id'])
+            
+            OrderItem.objects.create(
+                order=order,
+                menu_item=menu_item,
+                quantity=item['qty'],
+                price_at_time=Decimal(item['price'])
+            )
+            
+            # 3. BONUS: Automatically deduct the sold quantity from your stock!
+            menu_item.stock_available -= item['qty']
+            menu_item.save()
+
+        return Response({'id': order.id, 'message': 'Order finalized successfully!'}, status=status.HTTP_201_CREATED)

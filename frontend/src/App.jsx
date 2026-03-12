@@ -227,7 +227,8 @@ function App() {
     setItemToDelete(null); 
   };
 
-  const handleFinalizeBill = () => {
+  // Change to an async function
+  const handleFinalizeBill = async () => {
     if (currentOrderData.items.length === 0) {
       alert("Cart is empty! Please add items before finalizing.");
       return;
@@ -238,31 +239,58 @@ function App() {
       return;
     }
 
-    toPDF();
-    setShowReceiptModal(false); // Closes the receipt pop-up after printing
-    
     const method = currentOrderData.paymentMethod || 'Cash';
-    if (method === 'Cash') {
-      setCashIncome(prev => prev + total);
-    } else {
-      setOnlineIncome(prev => prev + total);
+
+    try {
+      // 1. Build the payload to send to Django
+      const payload = {
+        table_number: activeOrder,
+        type: currentOrderData.type,
+        paymentMethod: method,
+        total: total,
+        items: currentOrderData.items.map(item => ({
+          id: item.id,
+          qty: item.qty,
+          price: item.price
+        }))
+      };
+
+      // 2. Send the POST request to our new endpoint
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const res = await axios.post(`${API_BASE_URL}/orders/`, payload, config);
+
+      // 3. If successful, trigger the PDF download and close modal
+      toPDF();
+      setShowReceiptModal(false); 
+      
+      // 4. Update the local UI stats
+      if (method === 'Cash') {
+        setCashIncome(prev => prev + total);
+      } else {
+        setOnlineIncome(prev => prev + total);
+      }
+      setDailyIncome(prev => prev + total);
+
+      setCompletedOrders(prev => [
+        { id: res.data.id || Date.now(), name: activeOrder, type: currentOrderData.type, total: total, method: method },
+        ...prev
+      ]);
+
+      // 5. Clear the current table/order
+      setOrders(prev => {
+          const remainingOrders = { ...prev };
+          delete remainingOrders[activeOrder];
+          const remainingKeys = Object.keys(remainingOrders);
+          const nextActive = remainingKeys.length > 0 ? remainingKeys[0] : 'Table 1';
+          if (!remainingOrders[nextActive]) remainingOrders['Table 1'] = { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' };
+          setActiveOrder(nextActive);
+          return remainingOrders;
+      });
+
+    } catch (error) {
+      console.error("Error finalizing order:", error);
+      alert("Failed to save the order to the database. Please check your connection.");
     }
-    setDailyIncome(prev => prev + total);
-
-    setCompletedOrders(prev => [
-      { id: Date.now(), name: activeOrder, type: currentOrderData.type, total: total, method: method },
-      ...prev
-    ]);
-
-    setOrders(prev => {
-        const remainingOrders = { ...prev };
-        delete remainingOrders[activeOrder];
-        const remainingKeys = Object.keys(remainingOrders);
-        const nextActive = remainingKeys.length > 0 ? remainingKeys[0] : 'Table 1';
-        if (!remainingOrders[nextActive]) remainingOrders['Table 1'] = { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' };
-        setActiveOrder(nextActive);
-        return remainingOrders;
-    });
   };
 
   // --- 3. CONDITIONAL RENDERING: DYNAMIC LOGIN/SIGNUP FORM ---
