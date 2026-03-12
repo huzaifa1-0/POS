@@ -33,17 +33,30 @@ const Inventory = () => {
     const vendorName = entry.vendor.name;
     const qty = parseFloat(entry.quantity);
     const price = parseFloat(entry.price);
+    
+    // NEW: Extract the date from the backend response
+    const entryDate = new Date(entry.created_at);
 
     if (!acc[itemName]) {
-      acc[itemName] = { name: itemName, unit: entry.item.unit, totalQty: 0, vendors: {} };
+      acc[itemName] = { name: itemName, unit: entry.item.unit, totalQty: 0, vendors: {}, lastUpdated: entryDate };
     }
     acc[itemName].totalQty += qty;
+    
+    // NEW: If this entry's date is newer than the saved one, update it for the item
+    if (entryDate > acc[itemName].lastUpdated) {
+      acc[itemName].lastUpdated = entryDate;
+    }
 
     if (!acc[itemName].vendors[vendorName]) {
-      acc[itemName].vendors[vendorName] = { name: vendorName, stock: 0, prices: new Set() };
+      acc[itemName].vendors[vendorName] = { name: vendorName, stock: 0, prices: new Set(), lastUpdated: entryDate };
     }
     acc[itemName].vendors[vendorName].stock += qty;
     acc[itemName].vendors[vendorName].prices.add(price);
+    
+    // NEW: If this entry's date is newer, update it for the specific vendor too
+    if (entryDate > acc[itemName].vendors[vendorName].lastUpdated) {
+      acc[itemName].vendors[vendorName].lastUpdated = entryDate;
+    }
 
     return acc;
   }, {});
@@ -117,6 +130,7 @@ const Inventory = () => {
       </div>
 
       {/* Main Inventory Table - Notice the classes added here */}
+      {/* Main Inventory Table */}
       <div className="inventory-table-container" style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
         <table className="custom-data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead style={{ background: '#f1f5f9', borderBottom: '2px solid #e2e8f0' }}>
@@ -125,6 +139,8 @@ const Inventory = () => {
               <th style={{ padding: '15px' }}>Total Stock</th>
               <th style={{ padding: '15px' }}>Unit</th>
               <th style={{ padding: '15px' }}>Total Vendors</th>
+              {/* NEW COLUMN */}
+              <th style={{ padding: '15px', textAlign: 'right' }}>Last Updated</th> 
             </tr>
           </thead>
           <tbody>
@@ -139,12 +155,17 @@ const Inventory = () => {
                   <td style={{ padding: '15px', color: '#0ea5e9', fontWeight: 'bold' }}>{item.totalQty}</td>
                   <td style={{ padding: '15px', color: '#64748b' }}>{item.unit}</td>
                   <td style={{ padding: '15px', color: '#64748b' }}>{item.vendors.length} Vendors</td>
+                  {/* NEW DATA CELL */}
+                  <td style={{ padding: '15px', color: '#64748b', textAlign: 'right' }}>
+                    {new Date(item.lastUpdated).toLocaleDateString()}
+                  </td>
                 </tr>
 
                 {/* Level 2: Vendor Breakdown */}
                 {expandedRows[item.name] && (
                   <tr>
-                    <td colSpan="4" style={{ padding: '0', borderBottom: '1px solid #e2e8f0' }}>
+                    {/* CHANGED colSpan FROM 4 TO 5 */}
+                    <td colSpan="5" style={{ padding: '0', borderBottom: '1px solid #e2e8f0' }}> 
                       <div style={{ padding: '15px 20px', background: '#fcfcfc' }}>
                         <table className="custom-data-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                           <thead>
@@ -152,6 +173,8 @@ const Inventory = () => {
                               <th style={{ paddingBottom: '8px', textAlign: 'left' }}>Vendor</th>
                               <th style={{ paddingBottom: '8px', textAlign: 'left' }}>Stock Provided</th>
                               <th style={{ paddingBottom: '8px', textAlign: 'left' }}>Price (PKR)</th>
+                              {/* NEW COLUMN FOR VENDORS */}
+                              <th style={{ paddingBottom: '8px', textAlign: 'right' }}>Last Restocked</th> 
                             </tr>
                           </thead>
                           <tbody>
@@ -160,6 +183,10 @@ const Inventory = () => {
                                 <td style={{ padding: '8px 0', fontWeight: '500' }}>{vendor.name}</td>
                                 <td style={{ padding: '8px 0' }}>{vendor.stock} {item.unit}</td>
                                 <td style={{ padding: '8px 0' }}>{vendor.priceDisplay}</td>
+                                {/* NEW DATA CELL FOR VENDORS */}
+                                <td style={{ padding: '8px 0', textAlign: 'right', color: '#64748b' }}>
+                                  {new Date(vendor.lastUpdated).toLocaleDateString()}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -172,7 +199,8 @@ const Inventory = () => {
             ))}
             {summaryList.length === 0 && (
               <tr>
-                <td colSpan="4" style={{ padding: '30px', textAlign: 'center', color: '#94a3b8' }}>No inventory found.</td>
+                {/* CHANGED colSpan FROM 4 TO 5 */}
+                <td colSpan="5" style={{ padding: '30px', textAlign: 'center', color: '#94a3b8' }}>No inventory found.</td>
               </tr>
             )}
           </tbody>
