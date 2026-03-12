@@ -22,6 +22,9 @@ const ManageInventory = () => {
   // State for Searching History
   const [searchTerm, setSearchTerm] = useState('');
 
+  const [showItemDropdown, setShowItemDropdown] = useState(false);
+  const [showVendorDropdown, setShowVendorDropdown] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -157,16 +160,103 @@ const ManageInventory = () => {
         </h3>
         
         <form onSubmit={handleAddStock} className="horizontal-form-row">
-          <div className="form-group">
+          <div className="form-group" style={{ position: 'relative' }}>
             <label className="form-label">Item Name</label>
-            <input list="items-list" name="itemName" value={formData.itemName} onChange={handleFormChange} required placeholder="e.g. Flour" className="form-input" />
-            <datalist id="items-list">{items.map(i => <option key={i.id} value={i.name} />)}</datalist>
+            <input 
+              type="text" 
+              name="itemName" 
+              value={formData.itemName} 
+              onChange={(e) => {
+                handleFormChange(e);
+                setShowItemDropdown(true);
+              }}
+              onFocus={() => setShowItemDropdown(true)}
+              onBlur={() => setTimeout(() => setShowItemDropdown(false), 200)} // Delay hides so click registers
+              required 
+              placeholder="e.g. Flour" 
+              className="form-input" 
+              autoComplete="off"
+            />
+            {/* Custom Dropdown List */}
+            {showItemDropdown && (
+              <ul style={{
+                position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff',
+                border: '1px solid #cbd5e1', borderRadius: '6px', maxHeight: '200px',
+                overflowY: 'auto', zIndex: 50, listStyle: 'none', padding: 0, margin: '4px 0 0 0',
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+              }}>
+                {items
+                  .filter(i => i.name.toLowerCase().includes(formData.itemName.toLowerCase()))
+                  .map(i => (
+                    <li 
+                      key={i.id} 
+                      onClick={() => {
+                        setFormData({ ...formData, itemName: i.name, unit: i.unit });
+                        setShowItemDropdown(false);
+                      }}
+                      style={{
+                        padding: '10px', display: 'flex', justifyContent: 'space-between',
+                        alignItems: 'center', cursor: 'pointer', borderBottom: '1px solid #f1f5f9'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                    >
+                      <span>{i.name}</span>
+                      {/* Show Item Image on the right side if it exists */}
+                      {i.image ? (
+                        <img src={i.image} alt={i.name} style={{ width: '30px', height: '30px', objectFit: 'cover', borderRadius: '4px' }} />
+                      ) : (
+                        <div style={{ width: '30px', height: '30px', background: '#e2e8f0', borderRadius: '4px', display: 'flex', alignItems:'center', justifyContent:'center', fontSize: '10px' }}>No Img</div>
+                      )}
+                    </li>
+                  ))}
+              </ul>
+            )}
           </div>
 
-          <div className="form-group">
+          {/* Custom Vendor Dropdown */}
+          <div className="form-group" style={{ position: 'relative' }}>
             <label className="form-label">Vendor Name</label>
-            <input list="vendors-list" name="vendorName" value={formData.vendorName} onChange={handleFormChange} required placeholder="e.g. Huzaifa" className="form-input" />
-            <datalist id="vendors-list">{vendors.map(v => <option key={v.id} value={v.name} />)}</datalist>
+            <input 
+              type="text" 
+              name="vendorName" 
+              value={formData.vendorName} 
+              onChange={(e) => {
+                handleFormChange(e);
+                setShowVendorDropdown(true);
+              }}
+              onFocus={() => setShowVendorDropdown(true)}
+              onBlur={() => setTimeout(() => setShowVendorDropdown(false), 200)}
+              required 
+              placeholder="e.g. Ali" 
+              className="form-input" 
+              autoComplete="off"
+            />
+            {showVendorDropdown && (
+              <ul style={{
+                position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff',
+                border: '1px solid #cbd5e1', borderRadius: '6px', maxHeight: '200px',
+                overflowY: 'auto', zIndex: 50, listStyle: 'none', padding: 0, margin: '4px 0 0 0',
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+              }}>
+                {vendors
+                  .filter(v => v.name.toLowerCase().includes(formData.vendorName.toLowerCase()))
+                  .map(v => (
+                    <li 
+                      key={v.id} 
+                      onClick={() => {
+                        setFormData({ ...formData, vendorName: v.name });
+                        setShowVendorDropdown(false);
+                      }}
+                      style={{ padding: '10px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                    >
+                      {v.name}
+                    </li>
+                  ))}
+              </ul>
+            )}
           </div>
 
           <div className="form-group" style={{ flex: '0.5' }}>
