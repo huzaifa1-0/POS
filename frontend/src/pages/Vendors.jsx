@@ -33,7 +33,13 @@ const Vendors = () => {
   };
 
   const handleFormChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    // If the user switches back to Cash, clear the hidden account field
+    if (name === 'payment_method' && value === 'Cash') {
+      setFormData({ ...formData, [name]: value, payment_account: '' });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleEditClick = (vendor) => {
@@ -135,10 +141,13 @@ const Vendors = () => {
               </select>
             </div>
 
-            <div className="form-group" style={{ flex: '1.5', minWidth: '160px', marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: '13px' }}>Account Details</label>
-              <input type="text" name="payment_account" value={formData.payment_account} onChange={handleFormChange} placeholder="Phone or IBAN" className="form-input" style={{ padding: '8px', fontSize: '14px' }} />
-            </div>
+            {/* ONLY SHOW THIS IF PAYMENT METHOD IS NOT CASH */}
+            {formData.payment_method !== 'Cash' && (
+              <div className="form-group" style={{ flex: '1.5', minWidth: '160px', marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '13px' }}>Account Details</label>
+                <input type="text" name="payment_account" value={formData.payment_account} onChange={handleFormChange} placeholder="Phone or IBAN" className="form-input" style={{ padding: '8px', fontSize: '14px' }} required />
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '8px', marginTop: '5px' }}>
               <button type="submit" disabled={isSubmitting} style={{ padding: '0 15px', height: '36px', background: editingId ? '#3b82f6' : '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px' }}>
