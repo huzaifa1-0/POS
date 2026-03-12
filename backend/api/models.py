@@ -34,7 +34,18 @@ class OrderItem(models.Model):
 
 
 class Vendor(models.Model):
+    PAYMENT_CHOICES = (
+        ('Cash', 'Cash'),
+        ('JazzCash', 'JazzCash'),
+        ('EasyPaisa', 'EasyPaisa'),
+        ('Bank Account', 'Bank Account'),
+    )
+    
     name = models.CharField(max_length=200, unique=True)
+    # New Fields:
+    address = models.TextField(blank=True, null=True)
+    payment_method = models.CharField(max_length=50, choices=PAYMENT_CHOICES, default='Cash')
+    payment_account = models.CharField(max_length=200, blank=True, null=True) # E.g., phone number or IBAN
     
     def __str__(self):
         return self.name
