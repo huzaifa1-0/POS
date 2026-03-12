@@ -301,11 +301,13 @@ const ManageInventory = () => {
           </div>
         </div>
         
-        <div className="table-responsive-wrapper">
-          <table className="custom-data-table">
-            <thead>
-              <tr>
-                <th>Date</th>
+        {/* ADDED: maxHeight and overflowY for scrolling */}
+        <div className="table-responsive-wrapper" style={{ maxHeight: 'calc(100vh - 400px)', overflowY: 'auto' }}>
+          <table className="custom-data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            {/* ADDED: sticky positioning to the thead */}
+            <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8fafc' }}>
+              <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
+                <th style={{ padding: '12px' }}>Date</th>
                 <th>Item</th>
                 <th>Vendor</th>
                 <th>Quantity</th>
