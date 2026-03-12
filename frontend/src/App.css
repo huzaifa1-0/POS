@@ -262,6 +262,21 @@
 .custom-data-table td { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
 .edit-table-input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
 
+/* Quantity + Unit edit wrapper */
+.qty-unit-wrapper{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.qty-input{
+  width:60px;
+}
+
+.unit-select{
+  width:70px;
+}
+
 .action-buttons-wrapper { display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
 
 
@@ -306,6 +321,19 @@
   .custom-data-table { min-width: 100% !important; }
   .custom-data-table th, .custom-data-table td { padding: 12px 4px !important; font-size: 11px !important; white-space: normal !important; }
   .action-buttons-wrapper { flex-direction: column; gap: 12px; align-items: center; }
+
+   .qty-unit-wrapper{
+    align-items:center;
+  }
+
+  .qty-input{
+    width:55px;
+  }
+
+  .unit-select{
+    width:65px;
+  }
+  
 }
 
 @media (max-width: 600px) {

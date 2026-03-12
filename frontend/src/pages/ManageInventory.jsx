@@ -233,12 +233,17 @@ const ManageInventory = () => {
                     <>
                       <td><input type="text" name="itemName" value={editFormData.itemName} onChange={handleEditChange} className="edit-table-input" /></td>
                       <td><input type="text" name="vendorName" value={editFormData.vendorName} onChange={handleEditChange} className="edit-table-input" /></td>
-                      <td style={{ display: 'flex', gap: '5px' }}>
-                        <input type="number" name="qty" value={editFormData.qty} onChange={handleEditChange} className="edit-table-input" style={{ width: '60px' }} />
-                        <select name="unit" value={editFormData.unit} onChange={handleEditChange} className="edit-table-input" style={{ width: '70px', padding: '8px 2px' }}>
-                          <option value="KG">KG</option><option value="Litre">Litre</option><option value="Dozen">Dozen</option><option value="Pcs">Pcs</option>
-                        </select>
-                      </td>
+                      <td>
+  <div className="qty-unit-wrapper">
+    <input type="number" name="qty" value={editFormData.qty} onChange={handleEditChange} className="edit-table-input qty-input" />
+    <select name="unit" value={editFormData.unit} onChange={handleEditChange} className="edit-table-input unit-select">
+      <option value="KG">KG</option>
+      <option value="Litre">Litre</option>
+      <option value="Dozen">Dozen</option>
+      <option value="Pcs">Pcs</option>
+    </select>
+  </div>
+</td>
                       <td><input type="number" name="price" value={editFormData.price} onChange={handleEditChange} className="edit-table-input" style={{ width: '80px' }} /></td>
                       <td>
                         {/* EDIT MODE BUTTONS */}
