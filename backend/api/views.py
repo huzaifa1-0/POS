@@ -3,9 +3,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
-from .models import Category, MenuItem, Vendor, Item, StockEntry
+from .models import Category, MenuItem, Vendor, Item, StockEntry, Order, OrderItem
 from .serializers import CategorySerializer, MenuItemSerializer, VendorSerializer, ItemSerializer, StockEntrySerializer
 from decimal import Decimal
+from django.db.models import F, Sum
 
 # --- NEW: Registration View ---
 class RegisterView(APIView):
@@ -94,3 +95,38 @@ class StockEntryViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+    
+class ReportDashboardView(APIView):
+    def get(self, request):
+        # We can add date filtering here later based on request.query_params
+        orders = Order.objects.filter(status='Completed') # Only count finished orders!
+
+        # 1. Income Metrics
+        total_income = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        cash_income = orders.filter(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        online_income = orders.exclude(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        
+        # 2. Top Selling Items (Groups OrderItems by name, sums the quantity)
+        top_items = OrderItem.objects.filter(order__status='Completed').values(
+            name=F('menu_item__name')
+        ).annotate(
+            total_sold=Sum('quantity'),
+            revenue=Sum(F('quantity') * F('price_at_time'))
+        ).order_by('-total_sold')[:5] # Top 5 best sellers
+
+        # 3. Low Stock Alerts (Checks MenuItems below 20 quantity)
+        low_stock = MenuItem.objects.filter(stock_available__lte=20).values('name', 'stock_available')
+
+        # 4. Recent Order History
+        recent_orders = orders.order_by('-created_at')[:100].values(
+            'id', 'order_type', 'status', 'total_amount', 'created_at', 'payment_method'
+        )
+        
+        return Response({
+            'total_income': total_income,
+            'cash_income': cash_income,
+            'online_income': online_income,
+            'top_items': list(top_items),
+            'low_stock': list(low_stock),
+            'recent_orders': list(recent_orders)
+        })
