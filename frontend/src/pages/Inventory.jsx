@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Wallet, Search, Settings, ChevronDown, ChevronRight } from 'lucide-react';
+import { Package, Wallet, Search, Settings, ChevronDown, ChevronRight, Users } from 'lucide-react';
 import axios from 'axios'; 
 
 const API_URL = 'http://127.0.0.1:8000/api/stock-entries/';
@@ -80,9 +80,17 @@ const Inventory = () => {
           <Package size={28} color="#ff6b6b" />
           <h2 style={{ margin: 0, color: '#1e293b' }}>Inventory Dashboard</h2>
         </div>
-        <button onClick={() => navigate('/manage-inventory')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-          <Settings size={18} /> Manage Stock
-        </button>
+        
+        {/* We wrap the buttons in a div with gap to place them side by side */}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={() => navigate('/vendors')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+            <Users size={18} /> Manage Vendors
+          </button>
+          
+          <button onClick={() => navigate('/manage-inventory')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+            <Settings size={18} /> Manage Stock
+          </button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '20px', justifyContent: 'space-between', alignItems: 'center' }}>

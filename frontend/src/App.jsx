@@ -6,6 +6,7 @@ import Inventory from './pages/Inventory'; // NEW
 import Reports from './pages/Reports'; // NEW
 import Expenses from './pages/Expenses'; // NEW
 import ManageInventory from './pages/ManageInventory';
+import Vendors from './pages/Vendors';
 import axios from 'axios';
 import { usePDF } from 'react-to-pdf';
 
@@ -686,6 +687,7 @@ function App() {
         <Route path="/expenses" element={<Expenses />} />
 
         <Route path="/manage-inventory" element={<ManageInventory />} />
+        <Route path="/vendors" element={<Vendors />} />
         
       </Routes>
     </div>
