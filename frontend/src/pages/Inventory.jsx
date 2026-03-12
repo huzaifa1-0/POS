@@ -131,9 +131,10 @@ const Inventory = () => {
 
       {/* Main Inventory Table - Notice the classes added here */}
       {/* Main Inventory Table */}
-      <div className="inventory-table-container" style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+      <div className="inventory-table-container" style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', maxHeight: 'calc(100vh - 250px)', overflowY: 'auto' }}>
         <table className="custom-data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead style={{ background: '#f1f5f9', borderBottom: '2px solid #e2e8f0' }}>
+          {/* ADDED: position: sticky, top: 0, zIndex: 10 so the header doesn't scroll away */}
+          <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f1f5f9', borderBottom: '2px solid #e2e8f0' }}>
             <tr>
               <th style={{ padding: '15px' }}>Item</th>
               <th style={{ padding: '15px' }}>Total Stock</th>
