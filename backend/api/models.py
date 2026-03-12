@@ -22,6 +22,8 @@ class Order(models.Model):
     table_number = models.CharField(max_length=10, blank=True, null=True)
     order_type = models.CharField(max_length=20, choices=ORDER_TYPES, default='Dine-In')
     status = models.CharField(max_length=50, default='Pending')
+
+    payment_method = models.CharField(max_length=50, default='Cash')
     created_at = models.DateTimeField(auto_now_add=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
