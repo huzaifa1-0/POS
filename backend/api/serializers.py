@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, MenuItem, Vendor, Item, StockEntry
+from .models import Category, MenuItem, Recipe, Vendor, Item, StockEntry
 
 class MenuItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -29,3 +29,9 @@ class StockEntrySerializer(serializers.ModelSerializer):
         model = StockEntry
         fields = '__all__'
         depth = 1
+
+
+class RecipeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = '__all__'

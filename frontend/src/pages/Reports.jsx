@@ -6,8 +6,10 @@ const BASE_URL = 'http://127.0.0.1:8000/api';
 
 const Reports = () => {
   const [dateRange, setDateRange] = useState('all'); 
+  
+  // NEW: Added cogs and net_profit to the state
   const [data, setData] = useState({
-    total_income: 0, cash_income: 0, online_income: 0, top_items: [], low_stock: [], recent_orders: []
+    total_income: 0, cogs: 0, net_profit: 0, cash_income: 0, online_income: 0, top_items: [], low_stock: [], recent_orders: []
   });
 
   useEffect(() => {
@@ -16,7 +18,6 @@ const Reports = () => {
 
   const fetchReportData = async () => {
     try {
-      // In the future, we can pass ?range=today or ?range=month to filter data!
       const res = await axios.get(`${BASE_URL}/reports/dashboard/?range=${dateRange}`);
       setData(res.data);
     } catch (error) {
@@ -24,7 +25,6 @@ const Reports = () => {
     }
   };
 
-  // --- CSV EXPORT LOGIC ---
   const handleExportCSV = () => {
     if (data.recent_orders.length === 0) {
       alert("No data available to export.");
@@ -50,7 +50,6 @@ const Reports = () => {
   return (
     <div style={{ flex: 1, padding: '30px', background: '#f8fafc', overflowY: 'auto' }}>
       
-      {/* HEADER & CSV BUTTON */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <BarChart2 size={28} color="#4f46e5" />
@@ -70,26 +69,32 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* TOP KPI CARDS */}
+      {/* NEW: UPGRADED PROFIT METRICS CARDS */}
       <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1', minWidth: '200px', background: 'white', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #10b981', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <p style={{ margin: 0, color: '#64748b', fontWeight: 'bold' }}>Total Revenue</p>
+        <div style={{ flex: '1', minWidth: '200px', background: 'white', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #3b82f6', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <p style={{ margin: 0, color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px' }}>Total Revenue</p>
           <h3 style={{ margin: '10px 0 0 0', fontSize: '24px', color: '#1e293b' }}>PKR {data.total_income}</h3>
         </div>
-        <div style={{ flex: '1', minWidth: '200px', background: 'white', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #22c55e', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <p style={{ margin: 0, color: '#64748b', fontWeight: 'bold', display:'flex', alignItems:'center', gap:'5px' }}><Banknote size={16}/> Cash</p>
-          <h3 style={{ margin: '10px 0 0 0', fontSize: '20px', color: '#1e293b' }}>PKR {data.cash_income}</h3>
+        
+        <div style={{ flex: '1', minWidth: '200px', background: 'white', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #ef4444', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <p style={{ margin: 0, color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px' }}>Cost of Goods (COGS)</p>
+          <h3 style={{ margin: '10px 0 0 0', fontSize: '24px', color: '#1e293b' }}>PKR {data.cogs}</h3>
         </div>
-        <div style={{ flex: '1', minWidth: '200px', background: 'white', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #3b82f6', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <p style={{ margin: 0, color: '#64748b', fontWeight: 'bold', display:'flex', alignItems:'center', gap:'5px' }}><CreditCard size={16}/> Online</p>
-          <h3 style={{ margin: '10px 0 0 0', fontSize: '20px', color: '#1e293b' }}>PKR {data.online_income}</h3>
+
+        <div style={{ flex: '1', minWidth: '200px', background: 'white', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #10b981', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <p style={{ margin: 0, color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px' }}>Net Profit</p>
+          <h3 style={{ margin: '10px 0 0 0', fontSize: '24px', color: '#1e293b' }}>PKR {data.net_profit}</h3>
+        </div>
+
+        <div style={{ flex: '1', minWidth: '200px', background: 'white', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #8b5cf6', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <p style={{ margin: 0, color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px' }}>Profit Margin</p>
+          <h3 style={{ margin: '10px 0 0 0', fontSize: '24px', color: '#1e293b' }}>
+            {data.total_income > 0 ? ((data.net_profit / data.total_income) * 100).toFixed(1) : 0}%
+          </h3>
         </div>
       </div>
 
-      {/* MIDDLE SECTION */}
       <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', flexWrap: 'wrap' }}>
-        
-        {/* TOP SELLING ITEMS */}
         <div style={{ flex: 2, minWidth: '300px', background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
           <h3 style={{ margin: '0 0 15px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6' }}><TrendingUp size={20}/> Top Selling Items</h3>
           {data.top_items.length > 0 ? (
@@ -107,15 +112,16 @@ const Reports = () => {
           ) : (<p style={{ color: '#94a3b8' }}>No sales data yet.</p>)}
         </div>
 
-        {/* LOW STOCK ALERTS */}
+        {/* NEW: UPDATED LOW STOCK MAPPING */}
         <div style={{ flex: 1, minWidth: '250px', background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <h3 style={{ margin: '0 0 15px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#ef4444' }}><AlertTriangle size={20}/> Low Stock Alerts</h3>
+          <h3 style={{ margin: '0 0 15px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#ef4444' }}><AlertTriangle size={20}/> Raw Ingredients Alert</h3>
           {data.low_stock.length > 0 ? (
              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
              {data.low_stock.map((item, idx) => (
                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
                  <span style={{ fontWeight: 'bold', color: '#991b1b' }}>{item.name}</span>
-                 <strong style={{ color: '#dc2626' }}>{item.stock_available} left</strong>
+                 {/* Replaced stock_available with quantity_on_hand and unit */}
+                 <strong style={{ color: '#dc2626' }}>{item.quantity_on_hand} {item.unit} left</strong>
                </div>
              ))}
            </div>
@@ -123,7 +129,6 @@ const Reports = () => {
         </div>
       </div>
       
-      {/* BOTTOM SECTION: Sales Table */}
       <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
          <h3 style={{ margin: '0 0 15px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#475569' }}><Calendar size={20}/> Order History</h3>
          

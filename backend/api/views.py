@@ -6,7 +6,7 @@ from django.contrib.auth.hashers import make_password
 from .models import Category, MenuItem, Vendor, Item, StockEntry, Order, OrderItem, Recipe, InventoryLog
 from django.db import transaction
 from django.core.exceptions import ValidationError
-from .serializers import CategorySerializer, MenuItemSerializer, VendorSerializer, ItemSerializer, StockEntrySerializer
+from .serializers import CategorySerializer, MenuItemSerializer, VendorSerializer, ItemSerializer, StockEntrySerializer, RecipeSerializer
 from decimal import Decimal
 from django.db.models import F, Sum
 
@@ -219,3 +219,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
 
         return Response({'id': order.id, 'message': 'Order finalized successfully!'}, status=status.HTTP_201_CREATED)
+    
+
+class RecipeViewSet(viewsets.ModelViewSet):
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeSerializer

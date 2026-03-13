@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Package, Wallet, Search, Settings, ChevronDown, ChevronRight, Users } from 'lucide-react';
 import axios from 'axios'; 
 
-const API_URL = 'http://127.0.0.1:8000/api/stock-entries/';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
 
 const Inventory = () => {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ const Inventory = () => {
 
   const fetchInventory = async () => {
     try {
-      const response = await axios.get(API_URL);
+      const response = await axios.get(`${BASE_URL}/stock-entries/`);
       setStockEntries(response.data);
     } catch (error) {
       console.error("Error fetching inventory:", error);

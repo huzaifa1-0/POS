@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2 } from 'lucide-react';
+import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2, BookOpen } from 'lucide-react';
 import { Routes, Route, NavLink } from 'react-router-dom'; // NEW
 import Inventory from './pages/Inventory'; // NEW
 import Reports from './pages/Reports'; // NEW
 import Expenses from './pages/Expenses'; // NEW
 import ManageInventory from './pages/ManageInventory';
 import Vendors from './pages/Vendors';
+import RecipeBuilder from './pages/RecipeBuilder';
 import axios from 'axios';
 import { usePDF } from 'react-to-pdf';
 
@@ -490,6 +491,9 @@ function App() {
           <NavLink to="/expenses" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Expenses">
             <FileText size={24} />
           </NavLink>
+          <NavLink to="/recipes" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Recipe Builder">
+            <BookOpen size={24} />
+          </NavLink>
         </div>
         <div className="nav-rail-bottom">
           <button className="rail-btn logout-btn" onClick={handleLogout} title="Logout">
@@ -716,6 +720,7 @@ function App() {
 
         <Route path="/manage-inventory" element={<ManageInventory />} />
         <Route path="/vendors" element={<Vendors />} />
+        <Route path="/recipes" element={<RecipeBuilder />} />
         
       </Routes>
     </div>
