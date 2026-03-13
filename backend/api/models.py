@@ -32,6 +32,8 @@ class OrderItem(models.Model):
     menu_item = models.ForeignKey(MenuItem, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
     price_at_time = models.DecimalField(max_digits=10, decimal_places=2)
+    # NEW FIELD: Store the snapshot of the cost at the time of sale
+    cost_at_time = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
 
 
@@ -57,8 +59,37 @@ class Item(models.Model):
     unit = models.CharField(max_length=50) # e.g., KG, Litre
     image = models.ImageField(upload_to='item_images/', blank=True, null=True)
     
+    # NEW FIELDS: For WAC (Weighted Average Cost), current stock, and alerts
+    cost_per_unit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    quantity_on_hand = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    low_stock_threshold = models.DecimalField(max_digits=10, decimal_places=2, default=5.00)
+    
     def __str__(self):
         return f"{self.name} ({self.unit})"
+    
+
+class Recipe(models.Model):
+    menu_item = models.ForeignKey(MenuItem, related_name='recipe_items', on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Item, on_delete=models.CASCADE)
+    # Use 4 decimal places for precise measurements (e.g., 0.005 kg of masala)
+    quantity_required = models.DecimalField(max_digits=10, decimal_places=4)
+
+    def __str__(self):
+        return f"{self.quantity_required} {self.ingredient.unit} of {self.ingredient.name} for {self.menu_item.name}"
+    
+
+
+class InventoryLog(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    quantity_change = models.DecimalField(max_digits=10, decimal_places=4)
+    reason = models.CharField(max_length=255) # e.g., "Order #15", "Stock Purchase", "Wastage"
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.item.name}: {self.quantity_change} ({self.reason})"
+    
+
+
 
 class StockEntry(models.Model):
     item = models.ForeignKey(Item, related_name='stock_entries', on_delete=models.CASCADE)

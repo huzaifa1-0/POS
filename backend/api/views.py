@@ -3,7 +3,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
-from .models import Category, MenuItem, Vendor, Item, StockEntry, Order, OrderItem
+from .models import Category, MenuItem, Vendor, Item, StockEntry, Order, OrderItem, Recipe, InventoryLog
+from django.db import transaction
+from django.core.exceptions import ValidationError
 from .serializers import CategorySerializer, MenuItemSerializer, VendorSerializer, ItemSerializer, StockEntrySerializer
 from decimal import Decimal
 from django.db.models import F, Sum
@@ -53,22 +55,40 @@ class StockEntryViewSet(viewsets.ModelViewSet):
     queryset = StockEntry.objects.all().order_by('-created_at')
     serializer_class = StockEntrySerializer
 
+    @transaction.atomic
+
     # We override create to handle the nested data from React
     def create(self, request, *args, **kwargs):
         item_id = request.data.get('item_id')
         vendor_id = request.data.get('vendor_id')
-        quantity = request.data.get('quantity')
-        price = request.data.get('price')
+        quantity = Decimal(str(request.data.get('quantity')))
+        price = Decimal(str(request.data.get('price'))) # Price per unit at purchase
 
-        # Create the stock entry
         item = Item.objects.get(id=item_id)
         vendor = Vendor.objects.get(id=vendor_id)
         
+        # --- CALCULATE WEIGHTED AVERAGE COST (WAC) ---
+        total_value_on_hand = item.quantity_on_hand * item.cost_per_unit
+        new_purchase_value = quantity * price
+        new_total_quantity = item.quantity_on_hand + quantity
+        
+        if new_total_quantity > 0:
+             # WAC Formula: (Old Value + New Value) / Total Quantity
+            item.cost_per_unit = (total_value_on_hand + new_purchase_value) / new_total_quantity
+            
+        item.quantity_on_hand = new_total_quantity
+        item.save()
+
+        # Create the stock entry
         entry = StockEntry.objects.create(
+            item=item, vendor=vendor, quantity=quantity, price=price
+        )
+        
+        # --- NEW: LOG THE INVENTORY ADDITION ---
+        InventoryLog.objects.create(
             item=item,
-            vendor=vendor,
-            quantity=Decimal(quantity),
-            price=Decimal(price)
+            quantity_change=quantity,
+            reason=f"Stock Purchase - Entry #{entry.id} from {vendor.name}"
         )
         
         serializer = self.get_serializer(entry)
@@ -98,32 +118,37 @@ class StockEntryViewSet(viewsets.ModelViewSet):
     
 class ReportDashboardView(APIView):
     def get(self, request):
-        # We can add date filtering here later based on request.query_params
-        orders = Order.objects.filter(status='Completed') # Only count finished orders!
+        orders = Order.objects.filter(status='Completed')
+        order_items = OrderItem.objects.filter(order__in=orders)
 
-        # 1. Income Metrics
         total_income = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         cash_income = orders.filter(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         online_income = orders.exclude(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         
-        # 2. Top Selling Items (Groups OrderItems by name, sums the quantity)
+        # --- NEW: Calculate True Profit based on Historical Cost Snapshots ---
+        total_cogs = order_items.aggregate(Sum('cost_at_time'))['cost_at_time__sum'] or 0
+        net_profit = total_income - total_cogs
+        
+        # --- UPDATED: Low Stock Alerts based on raw ingredients, not menu items! ---
+        # Filters where stock is less than or equal to the custom threshold
+        low_stock = Item.objects.filter(quantity_on_hand__lte=F('low_stock_threshold')).values('name', 'quantity_on_hand', 'unit')
+
+        # Top items & Recent orders logic remains the same
         top_items = OrderItem.objects.filter(order__status='Completed').values(
             name=F('menu_item__name')
         ).annotate(
             total_sold=Sum('quantity'),
             revenue=Sum(F('quantity') * F('price_at_time'))
-        ).order_by('-total_sold')[:5] # Top 5 best sellers
+        ).order_by('-total_sold')[:5]
 
-        # 3. Low Stock Alerts (Checks MenuItems below 20 quantity)
-        low_stock = MenuItem.objects.filter(stock_available__lte=20).values('name', 'stock_available')
-
-        # 4. Recent Order History
         recent_orders = orders.order_by('-created_at')[:100].values(
             'id', 'order_type', 'status', 'total_amount', 'created_at', 'payment_method'
         )
         
         return Response({
             'total_income': total_income,
+            'cogs': total_cogs,             # Pass to React
+            'net_profit': net_profit,       # Pass to React
             'cash_income': cash_income,
             'online_income': online_income,
             'top_items': list(top_items),
@@ -135,7 +160,7 @@ class ReportDashboardView(APIView):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by('-created_at')
     
-    # We create a custom create method to handle the nested JSON from React
+    @transaction.atomic  # CRITICAL: Ensures all db operations succeed or fail together
     def create(self, request, *args, **kwargs):
         data = request.data
         
@@ -143,25 +168,54 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = Order.objects.create(
             table_number=data.get('table_number'),
             order_type=data.get('type', 'Dine-In'),
-            status='Completed', # Automatically mark as completed!
+            status='Completed',
             payment_method=data.get('paymentMethod', 'Cash'),
-            total_amount=Decimal(data.get('total', 0))
+            total_amount=Decimal(str(data.get('total', 0)))
         )
 
-        # 2. Loop through the cart items and save them
         items = data.get('items', [])
-        for item in items:
-            menu_item = MenuItem.objects.get(id=item['id'])
+        for item_data in items:
+            menu_item = MenuItem.objects.get(id=item_data['id'])
+            qty_ordered = item_data['qty']
+            recipe_ingredients = Recipe.objects.filter(menu_item=menu_item)
             
+            # --- IMPROVEMENT 3: INVENTORY SAFETY CHECK ---
+            for component in recipe_ingredients:
+                total_needed = component.quantity_required * qty_ordered
+                if component.ingredient.quantity_on_hand < total_needed:
+                    raise ValidationError(
+                        f"Insufficient stock for {menu_item.name}. "
+                        f"Need {total_needed} {component.ingredient.unit} of {component.ingredient.name}, "
+                        f"but only have {component.ingredient.quantity_on_hand}."
+                    )
+
+            # --- IMPROVEMENT 2: CORRECT COST CALCULATION & DEDUCTION ---
+            plate_cost = Decimal('0.00')
+            for component in recipe_ingredients:
+                # Add to the cost of a SINGLE plate
+                plate_cost += (component.quantity_required * component.ingredient.cost_per_unit)
+                
+                # Deduct inventory
+                total_needed = component.quantity_required * qty_ordered
+                component.ingredient.quantity_on_hand -= total_needed
+                component.ingredient.save()
+
+                # --- NEW: LOG THE INVENTORY DEDUCTION ---
+                InventoryLog.objects.create(
+                    item=component.ingredient,
+                    quantity_change=-total_needed,
+                    reason=f"Sale - Order #{order.id}"
+                )
+            
+            # Total cost for this specific OrderItem (plate_cost * quantity)
+            total_cogs_for_item = plate_cost * qty_ordered
+
             OrderItem.objects.create(
                 order=order,
                 menu_item=menu_item,
-                quantity=item['qty'],
-                price_at_time=Decimal(item['price'])
+                quantity=qty_ordered,
+                price_at_time=Decimal(str(item_data['price'])),
+                cost_at_time=total_cogs_for_item # Snapshot saved!
             )
-            
-            # 3. BONUS: Automatically deduct the sold quantity from your stock!
-            menu_item.stock_available -= item['qty']
-            menu_item.save()
 
         return Response({'id': order.id, 'message': 'Order finalized successfully!'}, status=status.HTTP_201_CREATED)
