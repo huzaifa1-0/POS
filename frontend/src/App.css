@@ -530,79 +530,104 @@
 
 @media (max-width: 768px) {
   
-  /* ------------------------------------
-     REPORTS PAGE 
-     ------------------------------------ */
-  /* ------------------------------------
-     REPORTS PAGE (UPDATED FIX)
+ /* ------------------------------------
+     REPORTS PAGE (NO SCROLL + SMALL HEADER)
      ------------------------------------ */
   .reports-page-wrapper {
-    padding: 15px !important;
-    overflow-x: hidden !important; /* Stops the whole page from scrolling horizontally */
+    padding: 10px !important;
+    overflow-x: hidden !important; 
     width: 100% !important;
+    max-width: 100vw !important;
     box-sizing: border-box !important;
   }
-
-  /* Make the title and icon smaller */
-  .reports-page-wrapper h2 {
-    font-size: 20px !important;
-  }
-  .reports-page-wrapper > div:nth-child(1) > div:first-child svg {
-    width: 22px !important;
-    height: 22px !important;
+  
+  /* Force ALL child elements to never exceed screen width */
+  .reports-page-wrapper * {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
   }
 
-  /* Header Section */
+  /* 1. Header Section - Stacked and Compact */
   .reports-page-wrapper > div:nth-child(1) {
     flex-direction: column !important;
     align-items: flex-start !important;
-    gap: 15px !important;
+    gap: 10px !important;
     width: 100% !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 15px !important;
   }
 
-  /* Controls (Select Box & Export Button) */
+  /* MAKE TITLE AND ICON SMALLER */
+  .reports-page-wrapper h2 { 
+    font-size: 16px !important; /* Smaller text */
+  }
+  .reports-page-wrapper > div:nth-child(1) > div:first-child svg {
+    width: 18px !important;     /* Smaller icon */
+    height: 18px !important;
+  }
+
+  /* Controls (Select Box & Export Button) row */
   .reports-page-wrapper > div:nth-child(1) > div:nth-child(2) {
     width: 100% !important;
-    justify-content: space-between !important;
-    flex-wrap: wrap !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
   }
 
+  /* MAKE DROPDOWN SMALLER */
   .reports-page-wrapper > div:nth-child(1) > div:nth-child(2) select {
-    flex: 1;
-    margin-right: 10px;
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+    flex: 1 !important;
+    min-width: 100px !important;
+    height: auto !important;
   }
 
-  /* Profit Metric Cards Row */
-  .reports-page-wrapper > div:nth-child(2) > div {
-    min-width: 100% !important;
-    flex: 1 1 100% !important;
-    margin-bottom: 5px !important;
-    box-sizing: border-box !important;
+  /* MAKE EXPORT CSV BUTTON SMALLER */
+  .reports-page-wrapper > div:nth-child(1) > div:nth-child(2) button {
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    flex: 1 !important;
+    min-width: 100px !important;
+    height: auto !important;
+  }
+  /* Smaller Export Icon inside the button */
+  .reports-page-wrapper > div:nth-child(1) > div:nth-child(2) button svg {
+    width: 14px !important;
+    height: 14px !important;
   }
 
-  /* Top Selling & Low Stock Box Row */
+  /* 2. Override Inline minWidths to stop the horizontal stretching */
+  .reports-page-wrapper > div:nth-child(2),
   .reports-page-wrapper > div:nth-child(3) {
     flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
   }
   
+  .reports-page-wrapper > div:nth-child(2) > div,
   .reports-page-wrapper > div:nth-child(3) > div {
-    min-width: 100% !important;
-    flex: 1 1 100% !important;
-    box-sizing: border-box !important;
+    min-width: 0 !important; /* THIS IS THE MAGIC ANTI-SCROLL FIX */
+    width: 100% !important;
+    flex: none !important;
+    padding: 15px !important;
   }
-  
-  /* Order History Box */
+
+  /* 3. Order History Box */
   .reports-page-wrapper > div:nth-child(4) {
     padding: 15px !important;
     width: 100% !important;
-    box-sizing: border-box !important;
   }
 
-  /* Keep the table itself horizontally scrollable, but restrict its max width */
+  /* 4. Strictly Confine Table Scroll to its own box */
   .reports-page-wrapper .table-responsive-wrapper {
     width: 100% !important;
-    max-width: 100% !important;
     overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important; 
+  }
+  
+  .reports-page-wrapper .custom-data-table {
+    min-width: 500px !important;
   }
 
   /* ------------------------------------
