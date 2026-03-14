@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart2, Banknote, CreditCard, Download, TrendingUp, AlertTriangle, Calendar } from 'lucide-react';
 import axios from 'axios';
 
-const BASE_URL = 'http://127.0.0.1:8000/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
 
 const Reports = () => {
   const [dateRange, setDateRange] = useState('all'); 
