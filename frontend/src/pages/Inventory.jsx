@@ -10,12 +10,11 @@ const formatStockDisplay = (qty, unit) => {
     if (!qty || !unit) return '0';
     const upperUnit = unit.toUpperCase();
     
-    // Convert decimal Dozens to Dozens & Pieces
+    // Convert decimal Dozens to Dozens & Pieces (if you ever use it)
     if (upperUnit === 'DOZEN') {
         const totalPieces = Math.round(qty * 12);
         const dozens = Math.floor(totalPieces / 12);
         const pieces = totalPieces % 12;
-        
         if (dozens === 0) return `${pieces} Piece(s)`;
         if (pieces === 0) return `${dozens} Dozen`;
         return `${dozens} Doz & ${pieces} pc(s)`;
@@ -25,7 +24,6 @@ const formatStockDisplay = (qty, unit) => {
     if (upperUnit === 'KG') {
         const kg = Math.floor(qty);
         const grams = Math.round((qty - kg) * 1000);
-        
         if (kg === 0) return `${grams} Grams`;
         if (grams === 0) return `${kg} KG`;
         return `${kg} KG & ${grams} g`;
@@ -35,10 +33,14 @@ const formatStockDisplay = (qty, unit) => {
     if (upperUnit === 'LITRE' || upperUnit === 'LITER') {
         const l = Math.floor(qty);
         const ml = Math.round((qty - l) * 1000);
-        
         if (l === 0) return `${ml} ml`;
         if (ml === 0) return `${l} Litre`;
         return `${l} L & ${ml} ml`;
+    }
+    
+    // --- NEW: Clean display for Pieces (Removes the .00 decimal) ---
+    if (upperUnit === 'PIECES' || upperUnit === 'PIECE' || upperUnit === 'PCS') {
+         return `${Math.round(qty)} ${unit}`; 
     }
     
     // Default fallback for Packets, Bottles, etc.
