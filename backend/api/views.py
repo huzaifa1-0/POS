@@ -250,3 +250,33 @@ class CreateCashierView(APIView):
         )
 
         return Response({'message': f'Cashier {name} created and assigned to {branch.name}'}, status=status.HTTP_201_CREATED)
+
+class ChangeCashierBranchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Only admin can move cashiers
+        if request.user.profile.role != 'admin':
+            return Response({'error': 'Only admins can change cashier branch'}, status=status.HTTP_403_FORBIDDEN)
+
+        cashier_id = request.data.get('cashier_id')
+        new_branch_id = request.data.get('branch_id')
+
+        if not all([cashier_id, new_branch_id]):
+            return Response({'error': 'Please provide cashier_id and branch_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            profile = UserProfile.objects.get(id=cashier_id, role='cashier')
+        except UserProfile.DoesNotExist:
+            return Response({'error': 'Cashier not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            new_branch = Branch.objects.get(id=new_branch_id)
+        except Branch.DoesNotExist:
+            return Response({'error': 'Branch not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        old_branch = profile.branch.name if profile.branch else 'None'
+        profile.branch = new_branch
+        profile.save()
+
+        return Response({'message': f'Cashier moved from {old_branch} to {new_branch.name}'}, status=status.HTTP_200_OK)

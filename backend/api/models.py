@@ -19,6 +19,7 @@ class MenuItem(models.Model):
 
 class Order(models.Model):
     ORDER_TYPES = (('Dine-In', 'Dine-In'), ('Takeaway', 'Takeaway'), ('Delivery', 'Delivery'))
+    branch = models.ForeignKey('Branch', on_delete=models.SET_NULL, null=True, blank=True)
     table_number = models.CharField(max_length=10, blank=True, null=True)
     order_type = models.CharField(max_length=20, choices=ORDER_TYPES, default='Dine-In')
     status = models.CharField(max_length=50, default='Pending')
