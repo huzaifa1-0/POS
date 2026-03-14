@@ -13,7 +13,7 @@ import { usePDF } from 'react-to-pdf';
 
 function App() {
   // --- 1. UPDATED AUTHENTICATION STATES ---
-  const [token, setToken] = useState(localStorage.getItem('access_token'));
+  const [token, setToken] = useState(sessionStorage.getItem('access_token'));
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
   
   // New state variables for the advanced form
@@ -102,7 +102,7 @@ function App() {
           username: email, 
           password: password 
         });
-        localStorage.setItem('access_token', res.data.access);
+        sessionStorage.setItem('access_token', res.data.access);
         setToken(res.data.access);
       } else {
         await axios.post(`${API_BASE_URL}/auth/register/`, { 
@@ -121,7 +121,7 @@ function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
+    sessionStorage.removeItem('access_token');
     setToken(null);
     setEmail('');
     setPassword('');
