@@ -357,8 +357,8 @@
 
 .recipe-builder-container {
   padding: 30px;
-  max-width: 900px;
-  margin: 0 auto;
+  max-width: 100%; /* ✅ Now utilizes full width */
+  margin: 0;       /* ✅ Removed the auto-centering */
   overflow-y: auto;
   flex: 1;
   background-color: #f8fafc;
@@ -666,5 +666,85 @@
     width: 100% !important;
     justify-content: center !important;
     padding: 12px !important;
+  }
+}
+
+
+/* =========================================
+   RECIPE BUILDER MOBILE RESPONSIVENESS
+   ========================================= */
+@media (max-width: 768px) {
+  /* 1. Reduce overall padding to save screen real estate */
+  .recipe-builder-container {
+    padding: 12px !important;
+  }
+
+  /* 2. Compact the main card */
+  .recipe-card {
+    padding: 15px !important;
+    margin-bottom: 20px !important;
+  }
+
+  /* 3. Stack the Ingredient Dropdown on top of the Qty row */
+  .ingredient-row-wrapper {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    background: #f8fafc !important;
+    padding: 12px !important;
+    border-radius: 8px !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  /* 4. THE MAGIC FIX: Force Qty, Unit, and Delete into ONE horizontal line */
+  .recipe-qty-row {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important; /* Prevents wrapping to next line */
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  /* 5. Shrink Inputs and Selects */
+  .recipe-input {
+    width: 100% !important;
+    padding: 8px 10px !important; /* Tighter padding */
+    font-size: 13px !important;   /* Smaller text */
+    height: 38px !important;      /* Shorter height */
+  }
+
+  /* 6. Fix the Delete button size so it doesn't stretch or squash */
+  .recipe-qty-row .recipe-btn-icon {
+    flex: 0 0 38px !important; /* Hardcode width so it never shrinks */
+    width: 38px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* 7. Stack action buttons (Add Row, Save) and make them full-width */
+  .recipe-action-buttons {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .recipe-btn {
+    width: 100% !important;
+    padding: 10px !important;
+    font-size: 14px !important;
+    height: 40px !important;
+    justify-content: center !important;
+  }
+
+  /* 8. Make titles slightly smaller */
+  .recipe-builder-container h1 { font-size: 20px !important; margin-bottom: 15px !important; }
+  .recipe-builder-container h2, 
+  .recipe-card label { font-size: 14px !important; margin-bottom: 8px !important; }
+
+  /* 9. Allow the table at the bottom to scroll horizontally */
+  .recipe-builder-container table {
+    min-width: 500px !important; 
+    font-size: 13px !important;
   }
 }
