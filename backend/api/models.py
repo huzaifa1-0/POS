@@ -59,10 +59,10 @@ class Item(models.Model):
     unit = models.CharField(max_length=50) # e.g., KG, Litre
     image = models.ImageField(upload_to='item_images/', blank=True, null=True)
     
-    # NEW FIELDS: For WAC (Weighted Average Cost), current stock, and alerts
-    cost_per_unit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    quantity_on_hand = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    low_stock_threshold = models.DecimalField(max_digits=10, decimal_places=2, default=5.00)
+    # --- CHANGE THESE 3 LINES TO decimal_places=4 ---
+    cost_per_unit = models.DecimalField(max_digits=10, decimal_places=4, default=0.0000)
+    quantity_on_hand = models.DecimalField(max_digits=10, decimal_places=4, default=0.0000)
+    low_stock_threshold = models.DecimalField(max_digits=10, decimal_places=4, default=5.0000)
     
     def __str__(self):
         return f"{self.name} ({self.unit})"
