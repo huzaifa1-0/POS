@@ -179,33 +179,18 @@ class OrderViewSet(viewsets.ModelViewSet):
             qty_ordered = item_data['qty']
             recipe_ingredients = Recipe.objects.filter(menu_item=menu_item)
             
-            # --- IMPROVEMENT 3: INVENTORY SAFETY CHECK ---
-            for component in recipe_ingredients:
-                total_needed = component.quantity_required * qty_ordered
-                if component.ingredient.quantity_on_hand < total_needed:
-                    raise ValidationError(
-                        f"Insufficient stock for {menu_item.name}. "
-                        f"Need {total_needed} {component.ingredient.unit} of {component.ingredient.name}, "
-                        f"but only have {component.ingredient.quantity_on_hand}."
-                    )
+            # --- IMPROVEMENT 3: INVENTORY SAFETY CHECK REMOVED ---
+            # (Removed the ValidationError block so bills can finalize regardless of stock)
 
-            # --- IMPROVEMENT 2: CORRECT COST CALCULATION & DEDUCTION ---
+            # --- IMPROVEMENT 2: CORRECT COST CALCULATION (WITHOUT DEDUCTION) ---
             plate_cost = Decimal('0.00')
             for component in recipe_ingredients:
-                # Add to the cost of a SINGLE plate
+                # Add to the cost of a SINGLE plate (Kept this so your profit reports still work)
                 plate_cost += (component.quantity_required * component.ingredient.cost_per_unit)
                 
-                # Deduct inventory
-                total_needed = component.quantity_required * qty_ordered
-                component.ingredient.quantity_on_hand -= total_needed
-                component.ingredient.save()
-
-                # --- NEW: LOG THE INVENTORY DEDUCTION ---
-                InventoryLog.objects.create(
-                    item=component.ingredient,
-                    quantity_change=-total_needed,
-                    reason=f"Sale - Order #{order.id}"
-                )
+                # --- DEDUCTION AND LOGGING REMOVED HERE ---
+                # We no longer subtract from component.ingredient.quantity_on_hand
+                # We no longer create an InventoryLog for the sale
             
             # Total cost for this specific OrderItem (plate_cost * quantity)
             total_cogs_for_item = plate_cost * qty_ordered
@@ -219,7 +204,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
 
         return Response({'id': order.id, 'message': 'Order finalized successfully!'}, status=status.HTTP_201_CREATED)
-    
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
