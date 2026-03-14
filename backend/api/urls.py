@@ -2,7 +2,7 @@ from django import views
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import CategoryViewSet, MenuItemViewSet, OrderViewSet, RegisterView, ReportDashboardView, VendorViewSet, ItemViewSet, StockEntryViewSet, RecipeViewSet
+from .views import CategoryViewSet, MenuItemViewSet, OrderViewSet, RegisterView, ReportDashboardView, VendorViewSet, ItemViewSet, StockEntryViewSet, RecipeViewSet, BranchViewSet
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
@@ -12,6 +12,7 @@ router.register(r'items', ItemViewSet)
 router.register(r'stock-entries', StockEntryViewSet)
 router.register(r'orders', OrderViewSet, basename='order')
 router.register(r'recipes', RecipeViewSet)
+router.register(r'branches', BranchViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

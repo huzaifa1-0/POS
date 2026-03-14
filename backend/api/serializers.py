@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, MenuItem, Recipe, Vendor, Item, StockEntry
+from .models import Category, MenuItem, Recipe, Vendor, Item, StockEntry, Branch
 
 class MenuItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -34,4 +34,9 @@ class StockEntrySerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
+        fields = '__all__'
+
+class BranchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Branch
         fields = '__all__'
