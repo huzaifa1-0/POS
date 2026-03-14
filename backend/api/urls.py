@@ -2,7 +2,7 @@ from django import views
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import CategoryViewSet, MenuItemViewSet, OrderViewSet, RegisterView, ReportDashboardView, VendorViewSet, ItemViewSet, StockEntryViewSet, RecipeViewSet, BranchViewSet
+from .views import CategoryViewSet, MenuItemViewSet, OrderViewSet, RegisterView, ReportDashboardView, VendorViewSet, ItemViewSet, StockEntryViewSet, RecipeViewSet, BranchViewSet, CreateCashierView
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
@@ -23,4 +23,5 @@ urlpatterns = [
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     path('reports/dashboard/', ReportDashboardView.as_view(), name='report-dashboard'),
+    path('auth/create-cashier/', CreateCashierView.as_view(), name='create-cashier'),
 ]
