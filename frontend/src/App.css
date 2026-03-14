@@ -523,3 +523,130 @@
     justify-content: center;
   }
 }
+
+/* =========================================
+   8. REPORTS & RECIPE BUILDER (MOBILE RESPONSIVE)
+   ========================================= */
+
+@media (max-width: 768px) {
+  
+  /* ------------------------------------
+     REPORTS PAGE 
+     ------------------------------------ */
+  /* ------------------------------------
+     REPORTS PAGE (UPDATED FIX)
+     ------------------------------------ */
+  .reports-page-wrapper {
+    padding: 15px !important;
+    overflow-x: hidden !important; /* Stops the whole page from scrolling horizontally */
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Make the title and icon smaller */
+  .reports-page-wrapper h2 {
+    font-size: 20px !important;
+  }
+  .reports-page-wrapper > div:nth-child(1) > div:first-child svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  /* Header Section */
+  .reports-page-wrapper > div:nth-child(1) {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 15px !important;
+    width: 100% !important;
+  }
+
+  /* Controls (Select Box & Export Button) */
+  .reports-page-wrapper > div:nth-child(1) > div:nth-child(2) {
+    width: 100% !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+  }
+
+  .reports-page-wrapper > div:nth-child(1) > div:nth-child(2) select {
+    flex: 1;
+    margin-right: 10px;
+  }
+
+  /* Profit Metric Cards Row */
+  .reports-page-wrapper > div:nth-child(2) > div {
+    min-width: 100% !important;
+    flex: 1 1 100% !important;
+    margin-bottom: 5px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Top Selling & Low Stock Box Row */
+  .reports-page-wrapper > div:nth-child(3) {
+    flex-direction: column !important;
+  }
+  
+  .reports-page-wrapper > div:nth-child(3) > div {
+    min-width: 100% !important;
+    flex: 1 1 100% !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Order History Box */
+  .reports-page-wrapper > div:nth-child(4) {
+    padding: 15px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Keep the table itself horizontally scrollable, but restrict its max width */
+  .reports-page-wrapper .table-responsive-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+  }
+
+  /* ------------------------------------
+     RECIPE BUILDER PAGE 
+     ------------------------------------ */
+  .recipe-builder-container {
+    padding: 15px !important;
+  }
+
+  /* Ingredient Rows (Stacks the Select, Input, and Delete Button) */
+  .recipe-card > div:not(:last-child) {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    background: #f8fafc !important;
+    padding: 15px !important;
+    border-radius: 8px !important;
+    border: 1px solid #e2e8f0 !important;
+    gap: 10px !important;
+  }
+
+  /* Make inputs/selects inside Ingredient Row full width */
+  .recipe-card > div:not(:last-child) > select,
+  .recipe-card > div:not(:last-child) > input {
+    width: 100% !important;
+    padding: 12px !important;
+  }
+
+  /* Delete button */
+  .recipe-card > div:not(:last-child) > button {
+    width: 100% !important;
+    padding: 12px !important;
+    margin-top: 5px !important;
+  }
+
+  /* Action Buttons (Add & Save) Wrapper */
+  .recipe-card > div:last-child {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  /* Action Buttons */
+  .recipe-card > div:last-child > button {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 12px !important;
+  }
+}
