@@ -48,7 +48,7 @@ const Reports = () => {
   };
 
   return (
-    <div style={{ flex: 1, padding: '30px', background: '#f8fafc', overflowY: 'auto' }}>
+    <div className="reports-page-wrapper" style={{ flex: 1, padding: '30px', background: '#f8fafc', overflowY: 'auto' }}>
       
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
