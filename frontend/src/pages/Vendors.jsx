@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Trash2, Users, PlusCircle, Edit, X } from 'lucide-react';
 
-const BASE_URL = 'http://127.0.0.1:8000/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
 
 const Vendors = () => {
   const navigate = useNavigate();
