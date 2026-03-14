@@ -5,20 +5,10 @@ import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
 
-// --- NEW MAGIC FORMATTER FUNCTION ---
+// --- MAGIC FORMATTER ---
 const formatStockDisplay = (qty, unit) => {
     if (!qty || !unit) return '0';
     const upperUnit = unit.toUpperCase();
-    
-    // Convert decimal Dozens to Dozens & Pieces (if you ever use it)
-    if (upperUnit === 'DOZEN') {
-        const totalPieces = Math.round(qty * 12);
-        const dozens = Math.floor(totalPieces / 12);
-        const pieces = totalPieces % 12;
-        if (dozens === 0) return `${pieces} Piece(s)`;
-        if (pieces === 0) return `${dozens} Dozen`;
-        return `${dozens} Doz & ${pieces} pc(s)`;
-    }
     
     // Convert decimal KG to KG & Grams
     if (upperUnit === 'KG') {
@@ -38,12 +28,12 @@ const formatStockDisplay = (qty, unit) => {
         return `${l} L & ${ml} ml`;
     }
     
-    // --- NEW: Clean display for Pieces (Removes the .00 decimal) ---
+    // Clean display for Pieces (Removes the .00 decimal entirely!)
     if (upperUnit === 'PIECES' || upperUnit === 'PIECE' || upperUnit === 'PCS') {
          return `${Math.round(qty)} ${unit}`; 
     }
     
-    // Default fallback for Packets, Bottles, etc.
+    // Default fallback
     return `${qty.toFixed(2)} ${unit}`;
 };
 
@@ -173,7 +163,7 @@ const Inventory = () => {
                     {expandedRows[item.name] ? <ChevronDown size={18}/> : <ChevronRight size={18}/>} 
                     {item.name}
                   </td>
-                  {/* --- APPLIED FORMATTER HERE --- */}
+                  {/* Applied formatting logic here */}
                   <td style={{ padding: '15px', color: item.totalQty <= 5 ? '#ef4444' : '#0ea5e9', fontWeight: 'bold' }}>
                     {formatStockDisplay(item.totalQty, item.unit)}
                   </td>
@@ -201,7 +191,6 @@ const Inventory = () => {
                             {item.vendors.map((vendor, vIdx) => (
                               <tr key={vIdx}>
                                 <td style={{ padding: '8px 0', fontWeight: '500' }}>{vendor.name}</td>
-                                {/* --- APPLIED FORMATTER HERE AS WELL --- */}
                                 <td style={{ padding: '8px 0' }}>{formatStockDisplay(vendor.stockProvided, item.unit)}</td>
                                 <td style={{ padding: '8px 0' }}>{vendor.priceDisplay}</td>
                                 <td style={{ padding: '8px 0', textAlign: 'right', color: '#64748b' }}>
