@@ -539,9 +539,9 @@ function App() {
 
         <div className="nav-rail-bottom">
           {/* --- NEW: SETTINGS GEAR (ADMIN & MANAGER ONLY) --- */}
-          {(activeRole === 'Admin' || activeRole === 'Manager') && (
+         {(activeRole === 'Admin' || activeRole === 'Manager') && (
               <button 
-                className="icon-btn" 
+                className="icon-btn settings-nav-btn" 
                 onClick={() => window.location.href = '/settings'} 
                 title="Settings" 
                 style={{ marginBottom: '10px' }} 
