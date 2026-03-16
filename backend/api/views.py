@@ -380,3 +380,55 @@ def manage_role_permissions(request):
         role.permissions.add(*perms_to_add)
         
         return Response({'message': f'Permissions updated for {role.name}'})
+
+
+
+# --- NEW: STAFF APPROVALS API ---
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def manage_user_roles(request):
+    # 1. Identify who is asking
+    is_admin = request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Admin').exists())
+    is_manager = hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Manager').exists()
+
+    if not (is_admin or is_manager):
+        return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+
+    if request.method == 'GET':
+        if is_admin:
+            # Admins see everyone
+            users = User.objects.all().values('id', 'username', 'first_name', 'email')
+            roles = Role.objects.all().values('id', 'name')
+        elif is_manager:
+            # Managers only see Cashiers and Pending users
+            roles = Role.objects.filter(name='Cashier').values('id', 'name')
+            users = User.objects.exclude(profile__roles__name__in=['Admin', 'Manager']).exclude(is_superuser=True).values('id', 'username', 'first_name', 'email')
+
+        user_profiles = UserProfile.objects.prefetch_related('roles').all()
+        assignments = {}
+        for profile in user_profiles:
+            role = profile.roles.first()
+            assignments[profile.user.id] = role.name if role else "Pending"
+
+        return Response({'users': list(users), 'roles': list(roles), 'assignments': assignments})
+    
+    elif request.method == 'POST':
+        user_id = request.data.get('user_id')
+        role_name = request.data.get('role_name')
+        target_user = User.objects.get(id=user_id)
+        
+        # Security: Prevent managers from modifying admin accounts
+        target_is_admin = target_user.is_superuser or (hasattr(target_user, 'profile') and target_user.profile.roles.filter(name='Admin').exists())
+        if is_manager and target_is_admin:
+             return Response({'error': 'Cannot modify Admin accounts'}, status=status.HTTP_403_FORBIDDEN)
+
+        profile, _ = UserProfile.objects.get_or_create(user=target_user)
+        profile.roles.clear()
+        
+        if role_name != "Pending":
+            if is_manager and role_name in ['Admin', 'Manager']:
+                return Response({'error': 'Managers can only assign Cashier role'}, status=status.HTTP_403_FORBIDDEN)
+            role = Role.objects.get(name=role_name)
+            profile.roles.add(role)
+            
+        return Response({'message': f'Access approved successfully!'})
