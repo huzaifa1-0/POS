@@ -8,10 +8,16 @@ export const PermissionsProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Fetch permissions from the endpoint we created in Step 3
-        // Note: Assuming you are passing the JWT token in headers
+        // Fetch permissions from Django API
+        const token = sessionStorage.getItem('access_token'); // <-- FIXED HERE
+        
+        if (!token) {
+            setLoading(false);
+            return; // Don't even try to fetch if they aren't logged in
+        }
+
         axios.get('http://localhost:8000/api/auth/permissions/', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            headers: { Authorization: `Bearer ${token}` } // <-- FIXED HERE
         })
         .then(res => {
             setPermissions(res.data.permissions);
