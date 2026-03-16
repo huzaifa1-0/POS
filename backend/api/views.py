@@ -13,6 +13,10 @@ from decimal import Decimal
 from django.db.models import F, Sum
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework import serializers
 
 
 
@@ -39,6 +43,35 @@ def get_my_permissions(request):
         return Response({"permissions": []})
     
 
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    # Require the frontend to send the chosen role
+    role = serializers.CharField(write_only=True, required=True)
+
+    def validate(self, attrs):
+        # 1. DRF verifies the email and password first
+        data = super().validate(attrs)
+        
+        user = self.user
+        requested_role = attrs.get('role')
+        
+        # 2. Superuser check: Master admins can always log in as Admin
+        if requested_role == 'Admin' and user.is_superuser:
+            data['role'] = requested_role
+            return data
+            
+        # 3. Security Check: Does this user actually hold this role in the DB?
+        has_role = hasattr(user, 'profile') and user.profile.roles.filter(name=requested_role).exists()
+        
+        if not has_role:
+            # Reject the login with a 401 error if they pick a role they don't own
+            raise AuthenticationFailed(f"Access Denied: You do not have the '{requested_role}' role.")
+            
+        data['role'] = requested_role
+        return data
+
+class CustomTokenLoginView(TokenObtainPairView):
+    """Replaces the default JWT login view to enforce role checks"""
+    serializer_class = CustomTokenObtainPairSerializer
 # --- NEW: Registration View ---
 class RegisterView(APIView):
     def post(self, request):
