@@ -2,7 +2,7 @@ from django import views
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import CategoryViewSet, MenuItemViewSet, OrderViewSet, RegisterView, ReportDashboardView, VendorViewSet, ItemViewSet, StockEntryViewSet, RecipeViewSet, get_my_permissions, CustomTokenLoginView
+from .views import CategoryViewSet, MenuItemViewSet, OrderViewSet, RegisterView, ReportDashboardView, VendorViewSet, ItemViewSet, StockEntryViewSet, RecipeViewSet, get_my_permissions, CustomTokenLoginView, manage_role_permissions
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
@@ -22,5 +22,6 @@ urlpatterns = [
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/permissions/', get_my_permissions, name='get_my_permissions'),
 
+    path('auth/role-permissions/', manage_role_permissions, name='role_permissions'),
     path('reports/dashboard/', ReportDashboardView.as_view(), name='report-dashboard'),
 ]

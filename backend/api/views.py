@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 
 from .permissions import HasRBACPermission
-from .models import Category, MenuItem, Role, UserProfile, Vendor, Item, StockEntry, Order, OrderItem, Recipe, InventoryLog
+from .models import Category, MenuItem, Role, UserProfile, Vendor, Item, StockEntry, Order, OrderItem, Recipe, InventoryLog, Permission, Resource
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from .serializers import CategorySerializer, MenuItemSerializer, VendorSerializer, ItemSerializer, StockEntrySerializer, RecipeSerializer
@@ -317,3 +317,66 @@ class ManageInventoryView(APIView):
     def post(self, request):
         # Code only runs if the user's Role has the 'edit:inventory' permission
         return Response({"message": "Inventory updated successfully"})
+    
+
+# --- NEW: ROLE PERMISSIONS MATRIX API ---
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def manage_role_permissions(request):
+    # 1. Identify who is asking
+    is_admin = request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Admin').exists())
+    is_manager = hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Manager').exists()
+
+    if not (is_admin or is_manager):
+        return Response({'error': 'Not authorized.'}, status=status.HTTP_403_FORBIDDEN)
+        
+    AVAILABLE_SCREENS = [
+        {'key': 'view:pos_home', 'label': 'POS Terminal'},
+        {'key': 'view:reports', 'label': 'Reports Dashboard'},
+        {'key': 'view:inventory', 'label': 'Inventory'},
+        {'key': 'view:expenses', 'label': 'Expenses'},
+        {'key': 'view:recipes', 'label': 'Recipe Builder'},
+        {'key': 'view:vendors', 'label': 'Vendors'},
+    ]
+
+    res, _ = Resource.objects.get_or_create(name='System Apps', slug='system')
+    for screen in AVAILABLE_SCREENS:
+        Permission.objects.get_or_create(resource=res, action='view', permission_key=screen['key'])
+
+    if request.method == 'GET':
+        if is_admin:
+            # Admins manage Managers and Cashiers
+            roles = Role.objects.exclude(name='Admin')
+        elif is_manager:
+            # Managers ONLY manage Cashiers
+            roles = Role.objects.filter(name='Cashier')
+
+        matrix = []
+        for role in roles:
+            role_perms = list(role.permissions.values_list('permission_key', flat=True))
+            matrix.append({
+                'role_id': role.id,
+                'role_name': role.name,
+                'permissions': role_perms
+            })
+
+        return Response({
+            'screens': AVAILABLE_SCREENS,
+            'matrix': matrix
+        })
+
+    elif request.method == 'POST':
+        role_id = request.data.get('role_id')
+        permission_keys = request.data.get('permissions', [])
+        
+        role = Role.objects.get(id=role_id)
+        
+        # 2. Security: Stop a rogue manager from hacking the API to change Admin permissions
+        if is_manager and role.name in ['Admin', 'Manager']:
+            return Response({'error': 'Managers can only modify Cashier permissions.'}, status=status.HTTP_403_FORBIDDEN)
+
+        role.permissions.clear() 
+        perms_to_add = Permission.objects.filter(permission_key__in=permission_keys)
+        role.permissions.add(*perms_to_add)
+        
+        return Response({'message': f'Permissions updated for {role.name}'})
