@@ -7,17 +7,18 @@ export const PermissionsProvider = ({ children }) => {
     const [permissions, setPermissions] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
+
     useEffect(() => {
-        // Fetch permissions from Django API
-        const token = sessionStorage.getItem('access_token'); // <-- FIXED HERE
+        const token = sessionStorage.getItem('access_token');
         
         if (!token) {
             setLoading(false);
-            return; // Don't even try to fetch if they aren't logged in
+            return; 
         }
 
-        axios.get('http://localhost:8000/api/auth/permissions/', {
-            headers: { Authorization: `Bearer ${token}` } // <-- FIXED HERE
+        axios.get(`${API_BASE_URL}/auth/permissions/`, {
+            headers: { Authorization: `Bearer ${token}` } 
         })
         .then(res => {
             setPermissions(res.data.permissions);
