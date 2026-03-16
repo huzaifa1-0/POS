@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2, BookOpen } from 'lucide-react';
-import { Routes, Route, NavLink } from 'react-router-dom'; // NEW
+import {BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'; // NEW
 import Inventory from './pages/Inventory'; // NEW
 import Reports from './pages/Reports'; // NEW
 import Expenses from './pages/Expenses'; // NEW
@@ -10,6 +10,9 @@ import Vendors from './pages/Vendors';
 import RecipeBuilder from './pages/RecipeBuilder';
 import axios from 'axios';
 import { usePDF } from 'react-to-pdf';
+import { PermissionsProvider } from './context/PermissionsContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Can from './components/Can';
 
 function App() {
   // --- 1. UPDATED AUTHENTICATION STATES ---
@@ -395,9 +398,10 @@ function App() {
   };
 
   return (
-    <div className="app-container">
-      
-      {itemToDelete && (
+    <PermissionsProvider> {/* <-- ADD THIS WRAPPER */}
+      <div className="app-container">
+        
+        {itemToDelete && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h3>Remove Item</h3>
@@ -479,21 +483,36 @@ function App() {
       <div className="nav-rail">
         <div className="nav-rail-top">
           <div className="rail-logo">🍳</div>
-          <NavLink to="/" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="POS Home">
-            <Home size={24} />
-          </NavLink>
-          <NavLink to="/reports" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Reports">
-            <BarChart2 size={24} />
-          </NavLink>
-          <NavLink to="/inventory" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Inventory">
-            <Package size={24} />
-          </NavLink>
-          <NavLink to="/expenses" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Expenses">
-            <FileText size={24} />
-          </NavLink>
-          <NavLink to="/recipes" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Recipe Builder">
-            <BookOpen size={24} />
-          </NavLink>
+          
+          <Can permission="view:pos_home">
+            <NavLink to="/" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="POS Home">
+              <Home size={24} />
+            </NavLink>
+          </Can>
+
+          <Can permission="view:reports">
+            <NavLink to="/reports" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Reports">
+              <BarChart2 size={24} />
+            </NavLink>
+          </Can>
+
+          <Can permission="view:inventory">
+            <NavLink to="/inventory" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Inventory">
+              <Package size={24} />
+            </NavLink>
+          </Can>
+
+          <Can permission="view:expenses">
+            <NavLink to="/expenses" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Expenses">
+              <FileText size={24} />
+            </NavLink>
+          </Can>
+
+          <Can permission="view:recipes">
+            <NavLink to="/recipes" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Recipe Builder">
+              <BookOpen size={24} />
+            </NavLink>
+          </Can>
         </div>
         <div className="nav-rail-bottom">
           <button className="rail-btn logout-btn" onClick={handleLogout} title="Logout">
@@ -713,18 +732,66 @@ function App() {
       </>
       } />
         
-        {/* NEW SEPARATE PAGES */}
-        <Route path="/reports" element={<Reports dailyIncome={dailyIncome} cashIncome={cashIncome} onlineIncome={onlineIncome} completedOrders={completedOrders} />} />
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/expenses" element={<Expenses />} />
+        {/* PROTECTED SEPARATE PAGES */}
+        <Route 
+          path="/reports" 
+          element={
+            <ProtectedRoute permission="view:reports">
+              <Reports dailyIncome={dailyIncome} cashIncome={cashIncome} onlineIncome={onlineIncome} completedOrders={completedOrders} />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/inventory" 
+          element={
+            <ProtectedRoute permission="view:inventory">
+              <Inventory />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/expenses" 
+          element={
+            <ProtectedRoute permission="view:expenses">
+              <Expenses />
+            </ProtectedRoute>
+          } 
+        />
 
-        <Route path="/manage-inventory" element={<ManageInventory />} />
-        <Route path="/vendors" element={<Vendors />} />
-        <Route path="/recipes" element={<RecipeBuilder />} />
+        <Route 
+          path="/manage-inventory" 
+          element={
+            <ProtectedRoute permission="edit:inventory"> {/* Notice I used 'edit' here, not just 'view' */}
+              <ManageInventory />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/vendors" 
+          element={
+            <ProtectedRoute permission="view:vendors">
+              <Vendors />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/recipes" 
+          element={
+            <ProtectedRoute permission="view:recipes">
+              <RecipeBuilder />
+            </ProtectedRoute>
+          } 
+        />
         
       </Routes>
     </div>
+    </PermissionsProvider> {/* <-- CLOSE THE WRAPPER HERE */}
   );
 }
+
 
 export default App;

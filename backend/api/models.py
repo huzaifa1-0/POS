@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import User
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -100,5 +101,41 @@ class StockEntry(models.Model):
 
     def __str__(self):
         return f"{self.quantity} {self.item.unit} of {self.item.name} from {self.vendor.name}"
+
+
+
+class Resource(models.Model):
+    """Represents a Module or App section (e.g., Sales, Inventory, Reports)"""
+    name = models.CharField(max_length=100) # e.g., 'POS Sales'
+    slug = models.SlugField(unique=True)    # e.g., 'pos_sales'
+    
+    def __str__(self):
+        return self.name
+
+class Permission(models.Model):
+    """Specific actions allowed on a resource"""
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='permissions')
+    action = models.CharField(max_length=50) # e.g., 'view', 'create', 'edit', 'delete'
+    permission_key = models.CharField(max_length=150, unique=True) # e.g., 'view:pos_sales'
+
+    def __str__(self):
+        return self.permission_key
+
+class Role(models.Model):
+    """Job titles/Roles in the system"""
+    name = models.CharField(max_length=100, unique=True) # e.g., 'Cashier', 'Manager'
+    description = models.TextField(blank=True, null=True)
+    permissions = models.ManyToManyField(Permission, related_name='roles')
+
+    def __str__(self):
+        return self.name
+
+class UserProfile(models.Model):
+    """Links Django's built-in User to our custom Roles"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    roles = models.ManyToManyField(Role, related_name='users')
+
+    def __str__(self):
+        return f"{self.user.username}'s Profile"
     
 

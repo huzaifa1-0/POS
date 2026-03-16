@@ -3,12 +3,41 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
+
+from .permissions import HasRBACPermission
 from .models import Category, MenuItem, Vendor, Item, StockEntry, Order, OrderItem, Recipe, InventoryLog
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from .serializers import CategorySerializer, MenuItemSerializer, VendorSerializer, ItemSerializer, StockEntrySerializer, RecipeSerializer
 from decimal import Decimal
 from django.db.models import F, Sum
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_my_permissions(request):
+    """Returns a flat list of permission keys for the logged-in user."""
+    if request.user.is_superuser:
+        return Response({"permissions": ["*"]}) # Wildcard for admin
+
+    try:
+        # Optimized database query to get all permission keys across all roles
+        permissions = request.user.profile.roles.values_list(
+            'permissions__permission_key', flat=True
+        ).distinct()
+        
+        # Remove any nulls if they exist
+        perm_list = [p for p in permissions if p] 
+        return Response({"permissions": perm_list})
+        
+    except Exception:
+        return Response({"permissions": []})
+    
 
 # --- NEW: Registration View ---
 class RegisterView(APIView):
@@ -208,3 +237,15 @@ class OrderViewSet(viewsets.ModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+
+
+class ManageInventoryView(APIView):
+    # 1. Enforce our custom RBAC middleware
+    permission_classes = [HasRBACPermission] 
+    
+    # 2. Define the exact action + resource required!
+    required_permission = 'edit:inventory' 
+
+    def post(self, request):
+        # Code only runs if the user's Role has the 'edit:inventory' permission
+        return Response({"message": "Inventory updated successfully"})
