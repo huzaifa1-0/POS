@@ -116,14 +116,14 @@ function App() {
         await axios.post(`${API_BASE_URL}/auth/register/`, { 
           name: name,
           email: email, 
-          password: password 
+          password: password,
+          role: selectedRole // <-- NEW: Send the selected role to Django
         });
         
-        // --- UPDATED: PENDING APPROVAL MESSAGE ---
         setAuthMode('login');
-        setAuthError('Sign up successful! Please wait for your Manager to approve your access before logging in.');
-        // -----------------------------------------
-        
+        // --- NEW: Updated success message ---
+        setAuthError(`Sign up successful! You can now log in as an ${selectedRole}.`);
+        // ------------------------------------
         setPassword('');
         setConfirmPassword('');
       }
@@ -333,18 +333,15 @@ function App() {
               />
             )}
 
-            {/* --- NEW: ROLE DROPDOWN FOR LOGIN --- */}
-            {authMode === 'login' && (
-              <select 
-                value={selectedRole} 
-                onChange={e => setSelectedRole(e.target.value)} 
-                style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '15px', background: 'white' }}
-              >
-                <option value="Cashier">Login as Cashier</option>
-                <option value="Manager">Login as Manager</option>
-                <option value="Admin">Login as Admin</option>
-              </select>
-            )}
+            <select 
+              value={selectedRole} 
+              onChange={e => setSelectedRole(e.target.value)} 
+              style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '15px', background: 'white' }}
+            >
+              <option value="Cashier">Sign in/up as Cashier</option>
+              <option value="Manager">Sign in/up as Manager</option>
+              <option value="Admin">Sign in/up as Admin</option>
+            </select>
 
             {/* ALWAYS SHOW EMAIL & PASSWORD */}
             <input 

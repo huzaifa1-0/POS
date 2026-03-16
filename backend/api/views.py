@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 
 from .permissions import HasRBACPermission
-from .models import Category, MenuItem, UserProfile, Vendor, Item, StockEntry, Order, OrderItem, Recipe, InventoryLog
+from .models import Category, MenuItem, Role, UserProfile, Vendor, Item, StockEntry, Order, OrderItem, Recipe, InventoryLog
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from .serializers import CategorySerializer, MenuItemSerializer, VendorSerializer, ItemSerializer, StockEntrySerializer, RecipeSerializer
@@ -17,6 +17,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import serializers
+from rest_framework.permissions import AllowAny
 
 
 
@@ -84,33 +85,51 @@ class CustomTokenLoginView(TokenObtainPairView):
 # from .models import UserProfile 
 
 class RegisterView(APIView):
+    # 1. Tell Django: "Do NOT ask for a JWT token on this route!"
+    permission_classes = [AllowAny] 
+
     def post(self, request):
-        name = request.data.get('name')
-        email = request.data.get('email')
-        password = request.data.get('password')
-        
-        if not email or not password or not name:
-            return Response({'error': 'Please provide name, email, and password'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            name = request.data.get('name')
+            email = request.data.get('email')
+            password = request.data.get('password')
+            role_name = request.data.get('role') 
             
-        if User.objects.filter(username=email).exists():
-            return Response({'error': 'Email is already registered'}, status=status.HTTP_400_BAD_REQUEST)
+            # Check if they missed anything
+            if not email or not password or not name or not role_name:
+                return Response({'error': 'Please provide name, email, password, and role'}, status=status.HTTP_400_BAD_REQUEST)
+                
+            if User.objects.filter(username=email).exists():
+                return Response({'error': 'Email is already registered'}, status=status.HTTP_400_BAD_REQUEST)
+                
+            # 2. Create the user 
+            user = User.objects.create(
+                username=email, 
+                email=email,
+                first_name=name,
+                password=make_password(password)
+            )
+
+            # 3. Create profile and fetch role
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            target_role, _ = Role.objects.get_or_create(name=role_name)
             
-        # Create user (setting username=email so login works smoothly)
-        user = User.objects.create(
-            username=email, 
-            email=email,
-            first_name=name,
-            password=make_password(password)
-        )
+            # 4. Attach the role
+            profile.roles.add(target_role)
 
-        # --- NEW: CREATE PENDING PROFILE ---
-        # This creates their profile so they show up in the Manager Settings,
-        # but assigns NO roles, leaving them in the "Pending Approval" state.
-        UserProfile.objects.get_or_create(user=user)
-        # -----------------------------------
+            # 5. If they chose Admin, give them full master access
+            if role_name == 'Admin':
+                user.is_superuser = True
+                user.is_staff = True
+                user.save()
 
-        return Response({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
-# --- EXISTING POS VIEWS ---
+            return Response({'message': f'User registered successfully as {role_name}'}, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            # --- NEW: CRASH CATCHER ---
+            # If Python crashes, it will send the EXACT error text to React!
+            return Response({'error': f'Server crash: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
