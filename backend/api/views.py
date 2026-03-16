@@ -337,6 +337,7 @@ def manage_role_permissions(request):
         {'key': 'view:expenses', 'label': 'Expenses'},
         {'key': 'view:recipes', 'label': 'Recipe Builder'},
         {'key': 'view:vendors', 'label': 'Vendors'},
+        {'key': 'view:settings', 'label': 'Settings Dashboard'},
     ]
 
     res, _ = Resource.objects.get_or_create(name='System Apps', slug='system')

@@ -540,6 +540,7 @@ function App() {
         <div className="nav-rail-bottom">
           {/* --- NEW: SETTINGS GEAR (ADMIN & MANAGER ONLY) --- */}
          {(activeRole === 'Admin' || activeRole === 'Manager') && (
+              <Can permission="view:settings">
               <button 
                 className="icon-btn settings-nav-btn" 
                 onClick={() => window.location.href = '/settings'} 
@@ -548,6 +549,7 @@ function App() {
               >
                 <Settings size={20} />
               </button>
+          </Can>
           )}
           <button className="rail-btn logout-btn" onClick={handleLogout} title="Logout">
             <LogOut size={24} />
@@ -823,9 +825,9 @@ function App() {
         <Route 
           path="/settings" 
           element={
-            (activeRole === 'Admin' || activeRole === 'Manager') 
-              ? <SettingsPage /> 
-              : <Navigate to="/" replace />
+            <ProtectedRoute permission="view:settings">
+              <SettingsPage />
+            </ProtectedRoute>
           } 
         />
         
