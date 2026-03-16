@@ -670,32 +670,31 @@ function App() {
             </h2>
             
             <div className="order-item-list">
-              {currentOrderData.items.length === 0 ? (
-                 <p style={{color: '#888', fontStyle: 'italic', padding: '10px 0'}}>Empty. Add items below.</p>
-              ) : (
-                currentOrderData.items.map(item => (
-                  <div className="order-item-row redesigned-cart-row" key={item.id}>
-                    <div className="item-left-block">
-                      <span className="item-name">{item.name}</span>
-                    </div>
-                    <div className="item-right-group">
-                      <div className="item-controls-block">
-                        <div className="cancel-wrapper">
-                          <button className="small-cancel-icon-btn" onClick={() => handleRemoveClick(item.id)} title="Delete Completely"><X size={12}/></button>
-                        </div>
-                        <div className="qty-controls-row">
-                          <button className="qty-btn" onClick={() => handleQuantityChange(item.id, -1)}>-</button>
-                          <span className="qty-val">{item.qty}</span>
-                          <button className="qty-btn" onClick={() => handleQuantityChange(item.id, 1)}>+</button>
-                        </div>
-                      </div>
-                      <div className="item-price-block">
-                        <strong className="item-total-price">PKR {(item.price * item.qty).toFixed(2)}</strong>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+              {/* --- Replace the content inside order-item-list in App.jsx --- */}
+{currentOrderData.items.map(item => (
+  <div className="cart-item-row" key={item.id}>
+    <div className="cart-item-info">
+      <span className="cart-item-name">{item.name}</span>
+      <span className="cart-item-details">PKR {item.price.toFixed(0)}</span>
+    </div>
+    
+    <div className="cart-item-controls">
+      <div className="qty-pill">
+        <button className="qty-pill-btn" onClick={() => handleQuantityChange(item.id, -1)}>-</button>
+        <span className="qty-pill-val">{item.qty}</span>
+        <button className="qty-pill-btn" onClick={() => handleQuantityChange(item.id, 1)}>+</button>
+      </div>
+      
+      <div className="cart-item-total">
+        <strong>PKR {(item.price * item.qty).toFixed(0)}</strong>
+      </div>
+
+      <button className="cart-item-delete" onClick={() => handleRemoveClick(item.id)}>
+        <X size={16} />
+      </button>
+    </div>
+  </div>
+))}
             </div>
             
             {/* --- NEW: TOTAL BILL SUMMARY --- */}

@@ -187,9 +187,245 @@
 }
 
 .receipt-modal { width: 95% !important; max-width: 420px !important; padding: 20px !important; }
-.redesigned-cart-row {
-  display: flex !important; justify-content: space-between !important; align-items: center !important;
-  padding: 6px 5px !important; background: transparent !important; border-bottom: 1px solid #e2e8f0 !important; margin-bottom: 0 !important;
+/* --- Add/Replace these styles in App.css --- */
+
+.cart-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+}
+
+.cart-item-row:hover {
+  background-color: #f8fafc;
+}
+
+.cart-item-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.cart-item-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.cart-item-details {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.cart-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* The "Pill" Quantity Selector */
+.qty-pill {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  border-radius: 20px;
+  padding: 2px;
+  border: 1px solid #e2e8f0;
+}
+
+.qty-pill-btn {
+  background: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  font-weight: bold;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.qty-pill-btn:hover {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.qty-pill-val {
+  min-width: 28px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.cart-item-total {
+  min-width: 85px;
+  text-align: right;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.cart-item-delete {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  transition: all 0.2s;
+}
+
+.cart-item-delete:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+/* Fix for the 720px breakpoint you asked for earlier */
+@media (max-width: 720px) {
+  .cart-item-row { padding: 10px 4px; }
+  .qty-pill { transform: scale(0.9); }
+  .cart-item-total { min-width: 70px; font-size: 13px; }
+  .cart-item-controls { gap: 6px; }
+}
+/* --- Add these Responsive Updates to App.css --- */
+
+@media (max-width: 1024px) {
+  /* 1. Stack the main sections vertically */
+  .app-container {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    height: auto !important;
+    min-height: 100vh;
+  }
+
+  /* 2. Adjust Sidebar and Middle Section */
+  .left-sidebar {
+    width: 100% !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+
+  .middle-section {
+    width: 100% !important;
+    flex: none !important;
+  }
+
+  .middle-content {
+    padding: 15px !important;
+    gap: 15px !important;
+  }
+
+  /* 3. Balanced Cart Area on Mobile */
+  .current-order-area {
+    width: 100% !important;
+    margin-bottom: 10px !important;
+  }
+
+  .order-item-list {
+    max-height: 300px !important; /* Fixed height to keep it "equal" and scrollable */
+  }
+
+  /* 4. Responsive Menu Grid */
+  .menu-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  .menu-card {
+    width: 100% !important;
+    padding: 12px !important;
+  }
+}
+
+@media (max-width: 720px) {
+  /* 5. Tighter Cart Rows for Small Screens */
+  .cart-item-row {
+    padding: 10px 4px !important;
+  }
+
+  .cart-item-name {
+    font-size: 14px !important;
+  }
+
+  .cart-item-controls {
+    gap: 8px !important;
+  }
+
+  /* Shrink the "Pill" slightly to save horizontal space */
+  .qty-pill {
+    transform: scale(0.9);
+    transform-origin: right;
+  }
+
+  .cart-item-total {
+    min-width: 70px !important;
+    font-size: 13px !important;
+  }
+
+  /* 6. Footer Adjustments */
+  .running-orders-bar {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 15px !important;
+  }
+
+  .running-orders-bar > div {
+    margin: 0 !important;
+    border: none !important;
+    padding: 0 !important;
+    text-align: center !important;
+  }
+}
+/* --- Update this section in your App.css --- */
+
+@media (max-width: 1024px) {
+  /* 1. Force the menu container into a single horizontal line */
+  .menu-grid {
+    display: flex !important;
+    flex-wrap: nowrap !important; /* CRITICAL: This stops the vertical stacking */
+    overflow-x: auto !important;   /* Enables horizontal swiping */
+    overflow-y: hidden !important;
+    gap: 12px !important;
+    padding: 10px 5px 20px 5px !important;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling for touch screens */
+  }
+
+  /* 2. Hide the scrollbar for a cleaner mobile look */
+  .menu-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 3. Give cards a fixed width so they overflow instead of shrinking */
+  .menu-card {
+    flex: 0 0 130px !important; /* This forces each card to stay 130px wide */
+    width: 130px !important;
+    padding: 12px !important;
+    margin: 0 !important;
+  }
+
+  /* 4. Shrink images to fit the smaller mobile cards */
+  .menu-card img {
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 8px !important;
+    margin-bottom: 5px !important;
+  }
+
+  /* 5. Adjust text size to prevent overcrowding */
+  .menu-card div {
+    font-size: 13px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adds "..." if the name is too long */
+  }
 }
 .item-left-block { flex: 1; padding-right: 15px; }
 .item-name { font-weight: 600; font-size: 14px; color: #1e293b; }
