@@ -232,8 +232,18 @@
 .nav-rail-top, .nav-rail-bottom { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; }
 .rail-logo { font-size: 28px; margin-bottom: 20px; }
 .rail-btn {
-  background: transparent; border: none; color: #94a3b8; width: 50px; height: 50px;
-  border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s ease;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none; /* Ensure NavLinks don't have underlines */
 }
 .rail-btn:hover { background: #334155; color: white; }
 .rail-btn.active { background: #4f46e5; color: white; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4); }
@@ -285,7 +295,9 @@
    ========================================= */
 @media (max-width: 1024px) {
   /* POS Home Structure Changes */
-  .app-container { flex-direction: column; overflow-y: auto; height: auto; min-height: 100vh; padding-bottom: 80px !important; }
+  .app-container {
+    padding-bottom: 70px !important;
+  }
   .left-sidebar { width: 100%; border-right: none; border-bottom: 2px solid #ddd; padding-bottom: 15px; }
   .scrollable-list { max-height: 150px; }
   .middle-section { width: 100%; flex: none; overflow-y: visible; }
@@ -295,13 +307,33 @@
   
   /* Fixed Bottom Nav Rail on Mobile */
   .nav-rail {
-    position: fixed !important; bottom: 0 !important; left: 0 !important; width: 100vw !important; height: 75px !important;
-    flex-direction: row !important; justify-content: space-between !important; align-items: center !important;
-    padding: 0 30px !important; border-top: 1px solid #334155 !important; z-index: 9999 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 70px !important; /* Slightly shorter for better thumb reach */
+    flex-direction: row !important;
+    justify-content: space-around !important; /* Spread icons evenly */
+    align-items: center !important;
+    padding: 0 10px !important;
+    border-top: 1px solid #334155 !important;
+    background: #1e293b;
+    z-index: 9999 !important;
   }
-  .nav-rail-top, .nav-rail-bottom { flex-direction: row !important; width: auto !important; gap: 25px !important; margin: 0 !important; }
-  .rail-logo { display: none !important; }
-  .rail-btn { width: 50px !important; height: 50px !important; margin-bottom: 0 !important; border-radius: 12px !important; }
+  .nav-rail-top, .nav-rail-bottom {
+    flex-direction: row !important;
+    width: auto !important;
+    gap: 10px !important; /* Tighter gap for small screens */
+    margin: 0 !important;
+  }
+  .rail-logo {
+    display: none !important;
+  }
+  .rail-btn {
+    width: 45px !important;
+    height: 45px !important;
+    border-radius: 10px !important;
+  }
 }
 
 @media (max-width: 768px) {
@@ -843,11 +875,7 @@
   transform: scale(1.1);
 }
 
-/* Animation for the Settings Gear in the Nav Bar */
-.settings-nav-btn:hover {
-  transform: rotate(45deg);
-  transition: transform 0.3s ease;
-}
+
 
 /* --- MOBILE MEDIA QUERIES --- */
 @media (max-width: 768px) {

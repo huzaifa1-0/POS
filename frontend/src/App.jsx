@@ -538,23 +538,22 @@ function App() {
         </div>
 
         <div className="nav-rail-bottom">
-          {/* --- NEW: SETTINGS GEAR (ADMIN & MANAGER ONLY) --- */}
-         {(activeRole === 'Admin' || activeRole === 'Manager') && (
-              <Can permission="view:settings">
-              <button 
-                className="icon-btn settings-nav-btn" 
-                onClick={() => window.location.href = '/settings'} 
-                title="Settings" 
-                style={{ marginBottom: '10px' }} 
-              >
-                <Settings size={20} />
-              </button>
-          </Can>
-          )}
-          <button className="rail-btn logout-btn" onClick={handleLogout} title="Logout">
-            <LogOut size={24} />
-          </button>
-        </div>
+  {(activeRole === 'Admin' || activeRole === 'Manager') && (
+    <Can permission="view:settings">
+      {/* Changed from <button> to <NavLink> for consistency */}
+      <NavLink 
+        to="/settings" 
+        className={({ isActive }) => `rail-btn settings-nav-btn ${isActive ? 'active' : ''}`} 
+        title="Settings"
+      >
+        <Settings size={24} />
+      </NavLink>
+    </Can>
+  )}
+  <button className="rail-btn logout-btn" onClick={handleLogout} title="Logout">
+    <LogOut size={24} />
+  </button>
+</div>
       </div>
 
       {/* --- MULTI-PAGE ROUTING --- */}
