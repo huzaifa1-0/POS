@@ -330,6 +330,7 @@ def manage_role_permissions(request):
     if not (is_admin or is_manager):
         return Response({'error': 'Not authorized.'}, status=status.HTTP_403_FORBIDDEN)
         
+    # --- PERFECTED SCREENS LIST (WITH SETTINGS) ---
     AVAILABLE_SCREENS = [
         {'key': 'view:pos_home', 'label': 'POS Terminal'},
         {'key': 'view:reports', 'label': 'Reports Dashboard'},
@@ -337,7 +338,7 @@ def manage_role_permissions(request):
         {'key': 'view:expenses', 'label': 'Expenses'},
         {'key': 'view:recipes', 'label': 'Recipe Builder'},
         {'key': 'view:vendors', 'label': 'Vendors'},
-        {'key': 'view:settings', 'label': 'Settings Dashboard'},
+        {'key': 'view:settings', 'label': 'Settings Dashboard'}, # Added correctly!
     ]
 
     res, _ = Resource.objects.get_or_create(name='System Apps', slug='system')
@@ -346,10 +347,8 @@ def manage_role_permissions(request):
 
     if request.method == 'GET':
         if is_admin:
-            # Admins manage Managers and Cashiers
             roles = Role.objects.exclude(name='Admin')
         elif is_manager:
-            # Managers ONLY manage Cashiers
             roles = Role.objects.filter(name='Cashier')
 
         matrix = []
@@ -372,7 +371,6 @@ def manage_role_permissions(request):
         
         role = Role.objects.get(id=role_id)
         
-        # 2. Security: Stop a rogue manager from hacking the API to change Admin permissions
         if is_manager and role.name in ['Admin', 'Manager']:
             return Response({'error': 'Managers can only modify Cashier permissions.'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -381,7 +379,6 @@ def manage_role_permissions(request):
         role.permissions.add(*perms_to_add)
         
         return Response({'message': f'Permissions updated for {role.name}'})
-
 
 
 # --- NEW: STAFF APPROVALS API ---

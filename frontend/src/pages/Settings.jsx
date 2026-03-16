@@ -2,16 +2,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 function Settings() {
-  // Matrix State
   const [screens, setScreens] = useState([]);
   const [matrix, setMatrix] = useState([]);
-  
-  // Staff Approval State
   const [users, setUsers] = useState([]);
   const [availableRoles, setAvailableRoles] = useState([]);
   const [assignments, setAssignments] = useState({});
-  
   const [message, setMessage] = useState('');
+  
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
 
   useEffect(() => {
@@ -95,7 +92,7 @@ function Settings() {
         </div>
       )}
 
-      {/* --- NEW: STAFF APPROVALS TABLE --- */}
+      {/* --- STAFF APPROVALS TABLE --- */}
       <div className="settings-card" style={{ marginBottom: '30px' }}>
         <h2 style={{ fontSize: '18px', padding: '15px 20px', borderBottom: '1px solid #e2e8f0', margin: 0, color: '#1e293b' }}>
           Staff Approvals
@@ -115,7 +112,7 @@ function Settings() {
                   <td>{user.email || user.username}</td>
                   <td>
                     {assignments[user.id] === 'Pending' ? (
-                      <span style={{ background: '#fef08a', color: '#b45309', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>Pending Approval</span>
+                      <span style={{ background: '#fef08a', color: '#b45309', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>Pending</span>
                     ) : (
                       <span style={{ background: '#dcfce3', color: '#15803d', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>{assignments[user.id]}</span>
                     )}
@@ -139,7 +136,7 @@ function Settings() {
         </div>
       </div>
 
-      {/* --- EXISTING: SCREEN PERMISSIONS MATRIX --- */}
+      {/* --- SCREEN PERMISSIONS MATRIX --- */}
       <div className="settings-card">
         <h2 style={{ fontSize: '18px', padding: '15px 20px', borderBottom: '1px solid #e2e8f0', margin: 0, color: '#1e293b' }}>
           Screen Access Matrix
