@@ -82,7 +82,7 @@ function App() {
   // --- UPDATED AUTHENTICATION HANDLER ---
   const handleAuth = async (e) => {
     e.preventDefault();
-    setAuthError('');
+    setAuthError(''); // Clear old errors
 
     if (authMode === 'signup') {
       // Prevent XSS in username
@@ -112,17 +112,23 @@ function App() {
         sessionStorage.setItem('active_role', selectedRole);
         setToken(res.data.access);
       } else {
+        // SIGN UP
         await axios.post(`${API_BASE_URL}/auth/register/`, { 
           name: name,
           email: email, 
           password: password 
         });
+        
+        // --- UPDATED: PENDING APPROVAL MESSAGE ---
         setAuthMode('login');
-        setAuthError('Registration successful. Please log in.');
+        setAuthError('Sign up successful! Please wait for your Manager to approve your access before logging in.');
+        // -----------------------------------------
+        
         setPassword('');
         setConfirmPassword('');
       }
     } catch (err) {
+      // Your catch block is perfect. It will grab the AuthenticationFailed message from Django!
       setAuthError(err.response?.data?.error || err.response?.data?.detail || 'Authentication failed');
     }
   };

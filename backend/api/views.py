@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 
 from .permissions import HasRBACPermission
-from .models import Category, MenuItem, Vendor, Item, StockEntry, Order, OrderItem, Recipe, InventoryLog
+from .models import Category, MenuItem, UserProfile, Vendor, Item, StockEntry, Order, OrderItem, Recipe, InventoryLog
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from .serializers import CategorySerializer, MenuItemSerializer, VendorSerializer, ItemSerializer, StockEntrySerializer, RecipeSerializer
@@ -80,6 +80,9 @@ class CustomTokenLoginView(TokenObtainPairView):
     """Replaces the default JWT login view to enforce role checks"""
     serializer_class = CustomTokenObtainPairSerializer
 # --- NEW: Registration View ---
+# Make sure to import UserProfile at the top of your views.py!
+# from .models import UserProfile 
+
 class RegisterView(APIView):
     def post(self, request):
         name = request.data.get('name')
@@ -99,8 +102,14 @@ class RegisterView(APIView):
             first_name=name,
             password=make_password(password)
         )
-        return Response({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
 
+        # --- NEW: CREATE PENDING PROFILE ---
+        # This creates their profile so they show up in the Manager Settings,
+        # but assigns NO roles, leaving them in the "Pending Approval" state.
+        UserProfile.objects.get_or_create(user=user)
+        # -----------------------------------
+
+        return Response({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
 # --- EXISTING POS VIEWS ---
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
