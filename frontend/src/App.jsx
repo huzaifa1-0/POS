@@ -22,6 +22,7 @@ function App() {
   // --- NEW: STATE FOR THE DROPDOWN ---
   const [selectedRole, setSelectedRole] = useState('Cashier');
   // New state variables for the advanced form
+  const activeRole = sessionStorage.getItem('active_role');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
