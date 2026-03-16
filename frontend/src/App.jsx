@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2, BookOpen } from 'lucide-react';
-import {BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'; // NEW
+import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2, BookOpen, Settings } from 'lucide-react';
+import {Navigate, Routes, Route, NavLink } from 'react-router-dom'; // NEW
 import Inventory from './pages/Inventory'; // NEW
 import Reports from './pages/Reports'; // NEW
 import Expenses from './pages/Expenses'; // NEW
@@ -13,6 +13,7 @@ import { usePDF } from 'react-to-pdf';
 import { PermissionsProvider } from './context/PermissionsContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Can from './components/Can';
+import SettingsPage from './pages/Settings';
 
 function App() {
   // --- 1. UPDATED AUTHENTICATION STATES ---
@@ -535,7 +536,19 @@ function App() {
             </NavLink>
           </Can>
         </div>
+
         <div className="nav-rail-bottom">
+          {/* --- NEW: SETTINGS GEAR (ADMIN & MANAGER ONLY) --- */}
+          {(activeRole === 'Admin' || activeRole === 'Manager') && (
+              <button 
+                className="icon-btn" 
+                onClick={() => window.location.href = '/settings'} 
+                title="Settings" 
+                style={{ marginBottom: '10px' }} 
+              >
+                <Settings size={20} />
+              </button>
+          )}
           <button className="rail-btn logout-btn" onClick={handleLogout} title="Logout">
             <LogOut size={24} />
           </button>
@@ -805,6 +818,14 @@ function App() {
             <ProtectedRoute permission="view:recipes">
               <RecipeBuilder />
             </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/settings" 
+          element={
+            (activeRole === 'Admin' || activeRole === 'Manager') 
+              ? <SettingsPage /> 
+              : <Navigate to="/" replace />
           } 
         />
         
