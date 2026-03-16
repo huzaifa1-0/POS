@@ -1,6 +1,6 @@
 from rest_framework import permissions
 
-from backend.api.models import UserProfile
+from api.models import UserProfile
 
 class HasRBACPermission(permissions.BasePermission):
     """
