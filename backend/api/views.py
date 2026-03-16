@@ -47,20 +47,23 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     role = serializers.CharField(write_only=True, required=True)
 
     def validate(self, attrs):
-        # 1. DRF verifies the email and password first
         data = super().validate(attrs)
         user = self.user
         requested_role = attrs.get('role')
         
-        # --- NEW: PENDING APPROVAL CHECK ---
-        # Does this user have ANY roles at all?
-        has_any_role = hasattr(user, 'profile') and user.profile.roles.exists()
-        
+        # --- FIXED: Safely check for a profile without crashing ---
+        try:
+            profile = user.profile
+            has_any_role = profile.roles.exists()
+            has_requested_role = profile.roles.filter(name=requested_role).exists()
+        except Exception: # Catches the DoesNotExist error safely
+            has_any_role = False
+            has_requested_role = False
+        # ----------------------------------------------------------
+
+        # 1. Check if they have zero roles (Pending Approval)
         if not has_any_role and not user.is_superuser:
-            # If they have no roles, throw the Pending Approval message!
-            # DRF automatically puts this text inside a "detail" JSON key.
             raise AuthenticationFailed("Account created successfully. Please wait for your Manager to approve your access.")
-        # -----------------------------------
 
         # 2. Superuser check
         if requested_role == 'Admin' and user.is_superuser:
@@ -68,14 +71,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             return data
             
         # 3. Specific Role Check
-        has_requested_role = hasattr(user, 'profile') and user.profile.roles.filter(name=requested_role).exists()
-        
         if not has_requested_role:
             raise AuthenticationFailed(f"Access Denied: You do not have the '{requested_role}' role.")
             
         data['role'] = requested_role
         return data
-
 class CustomTokenLoginView(TokenObtainPairView):
     """Replaces the default JWT login view to enforce role checks"""
     serializer_class = CustomTokenObtainPairSerializer
