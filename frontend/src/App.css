@@ -336,6 +336,59 @@
   }
 }
 
+/* --- Add this to your App.css --- */
+
+@media (max-width: 720px) {
+  /* 1. Refine the Bottom Navigation Rail spacing */
+  .nav-rail {
+    height: 65px !important; /* Slightly more compact than the 1024px version */
+    padding: 0 15px !important;
+    gap: 5px !important;
+  }
+
+  .nav-rail-top, .nav-rail-bottom {
+    gap: 8px !important; /* Tighter spacing for icons on mid-sized screens */
+  }
+
+  /* 2. Standardize Icon Sizes for the Settings & Nav buttons */
+  .rail-btn {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 10px !important;
+  }
+
+  .rail-btn svg {
+    width: 20px !important; /* Slightly smaller icons to prevent crowding */
+    height: 20px !important;
+  }
+
+  /* 3. Settings Icon Specific Polish */
+  .settings-nav-btn:active {
+    background: #334155 !important;
+    transform: scale(0.95); /* Tactile feedback on tap */
+  }
+
+  /* 4. Adjust Main Content Padding */
+  /* Ensures your POS menu and sidebar don't touch the bottom nav */
+  .app-container {
+    padding-bottom: 65px !important;
+  }
+
+  /* 5. Compact the Left Sidebar (Orders list) */
+  /* This prevents the "Dine-In" and "Takeaway" sections from taking too much vertical space */
+  .left-sidebar {
+    padding-bottom: 10px !important;
+  }
+
+  .nav-section {
+    padding: 10px 15px !important;
+  }
+
+  .scrollable-list {
+    max-height: 120px !important;
+  }
+}
+
 @media (max-width: 768px) {
   /* Inventory Form Squeezing */
   .manage-form-container { padding: 12px !important; margin-bottom: 15px !important; }
