@@ -670,34 +670,31 @@ function App() {
               </span>
             </h2>
             
-            <div className="order-item-list">
-              {currentOrderData.items.length === 0 ? (
-                 <p style={{color: '#888', fontStyle: 'italic', padding: '10px 0'}}>Empty. Add items below.</p>
-              ) : (
-                currentOrderData.items.map(item => (
-                  <div className="order-item-row redesigned-cart-row" key={item.id}>
-                    <div className="item-left-block">
-                      <span className="item-name">{item.name}</span>
-                    </div>
-                    <div className="item-right-group">
-                      <div className="item-controls-block">
-                        <div className="cancel-wrapper">
-                          <button className="small-cancel-icon-btn" onClick={() => handleRemoveClick(item.id)} title="Delete Completely"><X size={12}/></button>
-                        </div>
-                        <div className="qty-controls-row">
-                          <button className="qty-btn" onClick={() => handleQuantityChange(item.id, -1)}>-</button>
-                          <span className="qty-val">{item.qty}</span>
-                          <button className="qty-btn" onClick={() => handleQuantityChange(item.id, 1)}>+</button>
-                        </div>
-                      </div>
-                      <div className="item-price-block">
-                        <strong className="item-total-price">PKR {(item.price * item.qty).toFixed(2)}</strong>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+            {/* YOUR ORDER LIST SECTION */}
+<div className="order-list">
+  {currentOrder.map((item, index) => (
+    <div className="order-item" key={index}>
+      
+      {/* LEFT SIDE: Name & Quantity */}
+      <div className="order-item-info">
+        <span className="order-item-name">{item.name}</span>
+        
+        {/* Only show this cool badge if they click it twice or more! */}
+        {item.qty > 1 && (
+          <div className="order-item-qty">
+            Quantity: <span className="qty-badge">{item.qty}x</span>
+          </div>
+        )}
+      </div>
+
+      {/* RIGHT SIDE: Total Price for that row */}
+      <div className="order-item-price">
+        ${(item.price * item.qty).toFixed(2)}
+      </div>
+
+    </div>
+  ))}
+</div>
             
             {/* --- NEW: TOTAL BILL SUMMARY --- */}
             {currentOrderData.items.length > 0 && (

@@ -868,3 +868,71 @@
     padding: 12px;
   }
 }
+/* --- 1. YOUR UPDATED LIST & ROW --- */
+.order-item-list { 
+  margin: 15px 0; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px; /* Changed from 0 to give items a little breathing room! */
+  max-height: 220px; 
+  overflow-y: auto;  
+  padding-right: 5px;
+}
+
+.order-item-row { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  padding: 12px; /* Slightly thicker padding */
+  background: #f9f9f9; 
+  border-radius: 8px; 
+  border: 1px solid #e2e8f0; /* Adds a crisp border outline */
+}
+
+/* --- 2. NEW CLASSES TO STOP UI CRUSHING --- */
+
+/* The left side (Name + Qty) takes all leftover space */
+.order-item-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Pushes the price all the way to the right */
+  padding-right: 15px; 
+  overflow: hidden; /* Prevents long names from breaking the box */
+}
+
+.order-item-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 15px;
+  /* Magic trick: Adds "..." if name is too long! */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.order-item-qty {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The sleek blue pill badge */
+.qty-badge {
+  background: #3b82f6;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* The right side (Price) */
+.order-item-price {
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 15px;
+  white-space: nowrap; /* Forces price to NEVER drop to the next line */
+}
