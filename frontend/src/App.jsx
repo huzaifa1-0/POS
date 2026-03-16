@@ -19,6 +19,8 @@ function App() {
   const [token, setToken] = useState(sessionStorage.getItem('access_token'));
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
   
+  // --- NEW: STATE FOR THE DROPDOWN ---
+  const [selectedRole, setSelectedRole] = useState('Cashier');
   // New state variables for the advanced form
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -103,9 +105,11 @@ function App() {
       if (authMode === 'login') {
         const res = await axios.post(`${API_BASE_URL}/auth/login/`, { 
           username: email, 
-          password: password 
+          password: password,
+          role: selectedRole
         });
         sessionStorage.setItem('access_token', res.data.access);
+        sessionStorage.setItem('active_role', selectedRole);
         setToken(res.data.access);
       } else {
         await axios.post(`${API_BASE_URL}/auth/register/`, { 
@@ -321,6 +325,19 @@ function App() {
                 onChange={e => setName(e.target.value)} 
                 required 
               />
+            )}
+
+            {/* --- NEW: ROLE DROPDOWN FOR LOGIN --- */}
+            {authMode === 'login' && (
+              <select 
+                value={selectedRole} 
+                onChange={e => setSelectedRole(e.target.value)} 
+                style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '15px', background: 'white' }}
+              >
+                <option value="Cashier">Login as Cashier</option>
+                <option value="Manager">Login as Manager</option>
+                <option value="Admin">Login as Admin</option>
+              </select>
             )}
 
             {/* ALWAYS SHOW EMAIL & PASSWORD */}
