@@ -44,26 +44,33 @@ def get_my_permissions(request):
     
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    # Require the frontend to send the chosen role
     role = serializers.CharField(write_only=True, required=True)
 
     def validate(self, attrs):
         # 1. DRF verifies the email and password first
         data = super().validate(attrs)
-        
         user = self.user
         requested_role = attrs.get('role')
         
-        # 2. Superuser check: Master admins can always log in as Admin
+        # --- NEW: PENDING APPROVAL CHECK ---
+        # Does this user have ANY roles at all?
+        has_any_role = hasattr(user, 'profile') and user.profile.roles.exists()
+        
+        if not has_any_role and not user.is_superuser:
+            # If they have no roles, throw the Pending Approval message!
+            # DRF automatically puts this text inside a "detail" JSON key.
+            raise AuthenticationFailed("Account created successfully. Please wait for your Manager to approve your access.")
+        # -----------------------------------
+
+        # 2. Superuser check
         if requested_role == 'Admin' and user.is_superuser:
             data['role'] = requested_role
             return data
             
-        # 3. Security Check: Does this user actually hold this role in the DB?
-        has_role = hasattr(user, 'profile') and user.profile.roles.filter(name=requested_role).exists()
+        # 3. Specific Role Check
+        has_requested_role = hasattr(user, 'profile') and user.profile.roles.filter(name=requested_role).exists()
         
-        if not has_role:
-            # Reject the login with a 401 error if they pick a role they don't own
+        if not has_requested_role:
             raise AuthenticationFailed(f"Access Denied: You do not have the '{requested_role}' role.")
             
         data['role'] = requested_role
