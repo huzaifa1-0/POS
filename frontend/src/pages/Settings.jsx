@@ -85,8 +85,7 @@ function Settings() {
   };
 
   return (
-    // Added maxWidth: '100%' to ensure it uses the full desktop width
-    <div className="settings-container" style={{ maxWidth: '100%', padding: '20px' }}>
+    <div className="settings-container">
       <h1 className="settings-header">Admin & Staff Settings</h1>
       <p className="settings-description">
         Approve new staff accounts and manage which screens they are allowed to access.
@@ -99,13 +98,13 @@ function Settings() {
       )}
 
       {/* --- SIDE-BY-SIDE LAYOUT WRAPPER --- */}
-      <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', flexWrap: 'wrap', width: '100%' }}>
+      <div className="settings-layout-wrapper">
         
         {/* --- 1. SCREEN PERMISSIONS MATRIX (LEFT SIDE) --- */}
-        <div className="settings-card" style={{ flex: '1 1 55%', minWidth: '400px', margin: 0 }}>
-          <h2 style={{ fontSize: '18px', padding: '15px 20px', borderBottom: '1px solid #e2e8f0', margin: 0, color: '#1e293b' }}>
-            Screen Access Matrix
-          </h2>
+        <div className="settings-card matrix-card">
+          <div className="settings-card-header">
+            <h2>Screen Access Matrix</h2>
+          </div>
           <div className="table-responsive-wrapper">
             <table className="settings-table">
               <thead>
@@ -138,14 +137,14 @@ function Settings() {
         </div>
 
         {/* --- 2. STAFF APPROVALS TABLE (RIGHT SIDE) --- */}
-        <div className="settings-card" style={{ flex: '1 1 40%', minWidth: '350px', margin: 0 }}>
-          <h2 style={{ fontSize: '18px', padding: '15px 20px', borderBottom: '1px solid #e2e8f0', margin: 0, color: '#1e293b' }}>
-            Staff Approvals
-          </h2>
+        <div className="settings-card approvals-card">
+          <div className="settings-card-header">
+            <h2>Staff Approvals</h2>
+          </div>
           {/* SCROLLABLE WRAPPER */}
-          <div className="table-responsive-wrapper" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+          <div className="table-responsive-wrapper scrollable-table">
             <table className="settings-table">
-              <thead style={{ position: 'sticky', top: 0, zIndex: 1, backgroundColor: '#f8fafc' }}>
+              <thead>
                 <tr>
                   <th>Email / Name</th>
                   <th>Current Status</th>
@@ -158,16 +157,16 @@ function Settings() {
                     <td>{user.email || user.username}</td>
                     <td>
                       {assignments[user.id] === 'Pending' ? (
-                        <span style={{ background: '#fef08a', color: '#b45309', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>Pending</span>
+                        <span className="status-badge pending">Pending</span>
                       ) : (
-                        <span style={{ background: '#dcfce3', color: '#15803d', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>{assignments[user.id]}</span>
+                        <span className="status-badge approved">{assignments[user.id]}</span>
                       )}
                     </td>
                     <td>
                       <select 
+                        className="role-select"
                         value={assignments[user.id]} 
                         onChange={(e) => handleRoleAssignment(user.id, e.target.value)}
-                        style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', cursor: 'pointer', background: 'white', width: '100%' }}
                       >
                         <option value="Pending">Revoke Access</option>
                         {availableRoles.map(role => (
