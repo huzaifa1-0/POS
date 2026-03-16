@@ -48,6 +48,10 @@ function Settings() {
     if (isChecked) newPermissions.push(permissionKey);
     else newPermissions = newPermissions.filter(key => key !== permissionKey);
 
+    setMatrix(prevMatrix => prevMatrix.map(role => 
+      role.role_id === roleId ? { ...role, permissions: newPermissions } : role
+    ));
+
     try {
       await axios.post(`${API_BASE_URL}/auth/role-permissions/`, {
         role_id: roleId,
@@ -55,11 +59,16 @@ function Settings() {
       }, {
         headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` }
       });
+      
       setMessage('Screen permissions saved instantly!');
       setTimeout(() => setMessage(''), 2000);
-      fetchMatrix(); 
+      
+      // We don't necessarily need to fetchMatrix() here anymore since the UI is already updated,
+      // but you can keep it if you want absolute sync with the DB.
     } catch (err) {
-      alert("Failed to save changes.");
+      // 4. Rollback if the server fails
+      alert("Failed to save changes. Reverting...");
+      fetchMatrix(); 
     }
   };
 
