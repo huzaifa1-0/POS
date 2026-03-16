@@ -789,7 +789,7 @@ function App() {
         
       </Routes>
     </div>
-    </PermissionsProvider> {/* <-- CLOSE THE WRAPPER HERE */}
+    </PermissionsProvider>
   );
 }
 
