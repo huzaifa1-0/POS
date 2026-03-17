@@ -1588,3 +1588,63 @@
     justify-content: center;
   }
 }
+
+/* =========================================
+   SETTINGS PAGE - MOBILE SQUEEZE (NO SCROLL)
+   ========================================= */
+@media (max-width: 768px) {
+  /* 1. Remove minimum widths from the cards so they don't push off-screen */
+  .settings-card.matrix-card,
+  .settings-card.approvals-card {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* 2. Disable horizontal scrolling on the table wrappers */
+  .settings-card .table-responsive-wrapper {
+    overflow-x: hidden !important; 
+  }
+
+  /* 3. Force table to fit exactly inside container width using fixed layout */
+  .settings-table {
+    min-width: 100% !important;
+    width: 100% !important;
+    table-layout: fixed !important; 
+  }
+
+  /* 4. Drastically reduce padding and text sizes */
+  .settings-table th, 
+  .settings-table td {
+    padding: 6px 2px !important;
+    font-size: 11px !important;
+    word-wrap: break-word !important; /* Forces text to wrap instead of expanding */
+    white-space: normal !important;
+  }
+
+  /* 5. Give the first column (App Screen name) slightly more space */
+  .matrix-card .settings-table th:first-child,
+  .matrix-card .settings-table td:first-child {
+    width: 35% !important; 
+  }
+
+  /* 6. Shrink the checkboxes so they fit in the narrow columns */
+  .settings-checkbox {
+    width: 14px !important;
+    height: 14px !important;
+    transform: scale(0.8) !important;
+    margin: 0 !important;
+  }
+
+  /* 7. Shrink Staff Approvals Dropdowns and Badges */
+  .role-select {
+    padding: 4px !important;
+    font-size: 10px !important;
+    height: auto !important;
+    width: 100% !important;
+  }
+
+  .status-badge {
+    padding: 3px 4px !important;
+    font-size: 9px !important;
+  }
+}
