@@ -5,10 +5,10 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 
 from .permissions import HasRBACPermission
-from .models import Category, MenuItem, Role, UserProfile, Vendor, Item, StockEntry, Order, OrderItem, Recipe, InventoryLog, Permission, Resource
+from .models import Category, Expense, MenuItem, Role, UserProfile, Vendor, Item, StockEntry, Order, OrderItem, Recipe, InventoryLog, Permission, Resource
 from django.db import transaction
 from django.core.exceptions import ValidationError
-from .serializers import CategorySerializer, MenuItemSerializer, VendorSerializer, ItemSerializer, StockEntrySerializer, RecipeSerializer
+from .serializers import CategorySerializer, ExpenseSerializer, MenuItemSerializer, VendorSerializer, ItemSerializer, StockEntrySerializer, RecipeSerializer
 from decimal import Decimal
 from django.db.models import F, Sum
 from rest_framework.decorators import api_view, permission_classes
@@ -20,7 +20,9 @@ from rest_framework import serializers
 from rest_framework.permissions import AllowAny
 
 
-
+class ExpenseViewSet(viewsets.ModelViewSet):
+    queryset = Expense.objects.all().order_by('-date')
+    serializer_class = ExpenseSerializer
 
 
 @api_view(['GET'])
