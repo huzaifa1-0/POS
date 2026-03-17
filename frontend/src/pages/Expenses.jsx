@@ -82,14 +82,14 @@ const Expenses = () => {
   return (
     <div className="expenses-container">
       {/* Header Section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ background: '#fef3c7', padding: '10px', borderRadius: '12px' }}>
-            <FileText size={32} color="#f59e0b" />
+      <div className="expenses-header">
+        <div className="expenses-header-left">
+          <div className="expenses-icon-wrapper">
+            <FileText size={28} color="#f59e0b" className="header-icon" />
           </div>
           <div>
-            <h2 style={{ margin: 0, color: '#1e293b', fontSize: '24px' }}>Shop Expenses</h2>
-            <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Manage utilities, staff, and daily costs</p>
+            <h2 className="expenses-title">Shop Expenses</h2>
+            <p className="expenses-subtitle">Manage utilities, staff, and daily costs</p>
           </div>
         </div>
         <Can perform="add:expenses">
@@ -97,7 +97,7 @@ const Expenses = () => {
             onClick={() => setShowModal(true)}
             className="add-expense-btn"
           >
-            <Plus size={20} /> Add New Expense
+            <Plus size={18} /> <span className="add-btn-text">Add New Expense</span>
           </button>
         </Can>
       </div>

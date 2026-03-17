@@ -1477,49 +1477,114 @@
 }
 
 /* --- MOBILE RESPONSIVENESS FOR EXPENSES --- */
-@media (max-width: 1024px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+/* --- DESKTOP HEADER STYLES FOR EXPENSES --- */
+.expenses-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
 }
+.expenses-header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.expenses-icon-wrapper {
+  background: #fef3c7;
+  padding: 10px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.expenses-title { margin: 0; color: #1e293b; font-size: 24px; }
+.expenses-subtitle { margin: 0; color: #64748b; font-size: 14px; }
 
+/* --- MOBILE RESPONSIVENESS FOR EXPENSES --- */
 @media (max-width: 768px) {
   .expenses-container {
     padding: 15px;
     padding-bottom: 90px; /* Space for bottom nav */
   }
 
+  /* 1. Header & Add Button Scaling */
+  .expenses-header {
+    margin-bottom: 20px;
+  }
+  .expenses-header-left {
+    gap: 10px;
+  }
+  .expenses-icon-wrapper {
+    padding: 8px;
+    border-radius: 8px;
+  }
+  .header-icon {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  .expenses-title {
+    font-size: 16px; /* Smaller title */
+  }
+  .expenses-subtitle {
+    font-size: 11px; /* Smaller subtitle */
+  }
+  .add-expense-btn {
+    padding: 8px 12px !important; /* Smaller button */
+    font-size: 12px !important;
+    border-radius: 8px !important;
+    gap: 4px !important;
+  }
+
+  /* 2. Stats Grid */
   .stats-grid {
     grid-template-columns: 1fr;
     gap: 12px;
     margin-bottom: 20px;
   }
-
   .search-wrapper {
     width: 100% !important;
   }
-
   .expenses-table th, .expenses-table td {
-    padding: 12px 10px;
+    padding: 12px 6px;
     font-size: 12px;
   }
 
-  /* Make actions stack slightly or ensure they are tappable */
+  /* 3. Action Buttons (Edit/Delete) - Same Row & Small */
   .expense-actions {
-    flex-direction: column;
-    gap: 5px;
+    flex-direction: row !important; /* Force them on the same line */
+    flex-wrap: nowrap;
+    gap: 6px !important;
+    justify-content: center;
   }
   
   .action-btn {
-    padding: 10px; /* Larger hit area for thumbs */
-    width: 100%;
+    padding: 6px !important; /* Smaller hit area */
+    width: 28px !important;
+    height: 28px !important;
+    display: flex;
+    align-items: center;
     justify-content: center;
+  }
+
+  .action-btn svg {
+    width: 14px !important; /* Smaller icons inside the buttons */
+    height: 14px !important;
   }
 }
 
+/* Extra small screens (like old iPhones) */
 @media (max-width: 480px) {
   .expenses-table th:nth-child(3), 
   .expenses-table td:nth-child(3) {
-    display: none; /* Hide description on very small screens to prevent overflow */
+    display: none; /* Hide description on very small screens to prevent squeezing */
+  }
+  
+  /* Hide the text "Add New Expense" and just show the + icon to save space */
+  .add-btn-text {
+    display: none;
+  }
+  .add-expense-btn {
+    padding: 10px !important;
+    justify-content: center;
   }
 }
