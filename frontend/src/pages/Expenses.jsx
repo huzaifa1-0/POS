@@ -1,6 +1,6 @@
 // frontend/src/pages/Expenses.jsx
 import React, { useState, useEffect } from 'react';
-import { FileText, Plus, Trash2, Search, Filter, IndianRupee, Lightbulb, Users, Package } from 'lucide-react';
+import { FileText, Plus, Trash2, Search, Edit, IndianRupee, Lightbulb, Users, Package } from 'lucide-react';
 import axios from 'axios';
 import { usePermissions } from '../context/PermissionsContext';
 import Can from '../components/Can';
@@ -10,6 +10,7 @@ const Expenses = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null); // Track if we are editing
   const [formData, setFormData] = useState({
     category: 'Utility',
     amount: '',
@@ -27,12 +28,48 @@ const Expenses = () => {
 
   useEffect(() => { fetchData(); }, []);
 
+  const handleEdit = (exp) => {
+    setEditingId(exp.id);
+    setFormData({
+      category: exp.category,
+      amount: exp.amount,
+      description: exp.description,
+      date: exp.date
+    });
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this expense?")) {
+      try {
+        await axios.delete(`http://localhost:8000/api/expenses/${id}/`);
+        fetchData();
+      } catch (err) { console.error(err); }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await axios.post('http://localhost:8000/api/expenses/', formData);
+    try {
+      if (editingId) {
+        await axios.put(`http://localhost:8000/api/expenses/${editingId}/`, formData);
+      } else {
+        await axios.post('http://localhost:8000/api/expenses/', formData);
+      }
+      closeModal();
+      fetchData();
+    } catch (err) { console.error(err); }
+  };
+
+  const closeModal = () => {
     setShowModal(false);
-    fetchData();
-    setFormData({ ...formData, amount: '', description: '' });
+    setEditingId(null);
+    setFormData({ 
+      category: 'Utility', 
+      amount: '', 
+      description: '', 
+      date: new Date().toISOString().split('T')[0] 
+    });
   };
 
   const totals = {
@@ -43,7 +80,7 @@ const Expenses = () => {
   };
 
   return (
-    <div style={{ flex: 1, padding: '30px', background: '#f8fafc', height: '100vh', overflowY: 'auto' }}>
+    <div className="expenses-container">
       {/* Header Section */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -58,7 +95,7 @@ const Expenses = () => {
         <Can perform="add:expenses">
           <button 
             onClick={() => setShowModal(true)}
-            style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: '600', boxShadow: '0 4px 6px -1px rgba(245, 158, 11, 0.2)' }}
+            className="add-expense-btn"
           >
             <Plus size={20} /> Add New Expense
           </button>
@@ -66,7 +103,7 @@ const Expenses = () => {
       </div>
 
       {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '30px' }}>
+      <div className="stats-grid">
         <StatCard title="Total Expenses" value={totals.all} icon={<IndianRupee color="#f59e0b"/>} bg="#fff" />
         <StatCard title="Utility Bills" value={totals.utility} icon={<Lightbulb color="#3b82f6"/>} bg="#fff" />
         <StatCard title="Staff Salaries" value={totals.staff} icon={<Users color="#10b981"/>} bg="#fff" />
@@ -74,9 +111,9 @@ const Expenses = () => {
       </div>
 
       {/* Main Table Container */}
-      <div style={{ background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+      <div className="table-card">
         <div style={{ padding: '20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between' }}>
-          <div style={{ position: 'relative', width: '300px' }}>
+          <div style={{ position: 'relative', width: '300px' }} className="search-wrapper">
             <Search style={{ position: 'absolute', left: '12px', top: '10px', color: '#94a3b8' }} size={18} />
             <input 
               type="text" placeholder="Search description..." 
@@ -86,35 +123,44 @@ const Expenses = () => {
           </div>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead style={{ background: '#f8fafc' }}>
-            <tr>
-              <th style={thStyle}>DATE</th>
-              <th style={thStyle}>CATEGORY</th>
-              <th style={thStyle}>DESCRIPTION</th>
-              <th style={{ ...thStyle, textAlign: 'right' }}>AMOUNT</th>
-            </tr>
-          </thead>
-          <tbody>
-            {expenses.filter(e => e.description.toLowerCase().includes(searchTerm.toLowerCase())).map((exp) => (
-              <tr key={exp.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={tdStyle}>{exp.date}</td>
-                <td style={tdStyle}>
-                  <span style={getBadgeStyle(exp.category)}>{exp.category}</span>
-                </td>
-                <td style={tdStyle}>{exp.description}</td>
-                <td style={{ ...tdStyle, textAlign: 'right', fontWeight: '700', color: '#1e293b' }}>Rs. {parseFloat(exp.amount).toLocaleString()}</td>
+        <div className="table-responsive-wrapper">
+          <table className="expenses-table">
+            <thead>
+              <tr>
+                <th>DATE</th>
+                <th>CATEGORY</th>
+                <th>DESCRIPTION</th>
+                <th style={{ textAlign: 'right' }}>AMOUNT</th>
+                <th style={{ textAlign: 'center' }}>ACTIONS</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {expenses.filter(e => e.description.toLowerCase().includes(searchTerm.toLowerCase())).map((exp) => (
+                <tr key={exp.id}>
+                  <td>{exp.date}</td>
+                  <td>
+                    <span style={getBadgeStyle(exp.category)}>{exp.category}</span>
+                  </td>
+                  <td>{exp.description}</td>
+                  <td style={{ textAlign: 'right', fontWeight: '700', color: '#1e293b' }}>Rs. {parseFloat(exp.amount).toLocaleString()}</td>
+                  <td>
+                    <div className="expense-actions">
+                      <button onClick={() => handleEdit(exp)} className="action-btn edit"><Edit size={16} /></button>
+                      <button onClick={() => handleDelete(exp.id)} className="action-btn delete"><Trash2 size={16} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Simple Modal Overlay */}
+      {/* Modal Overlay */}
       {showModal && (
         <div style={modalOverlayStyle}>
           <div style={modalContentStyle}>
-            <h3>Add Expense</h3>
+            <h3>{editingId ? 'Edit Expense' : 'Add Expense'}</h3>
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: '15px' }}>
                 <label style={labelStyle}>Category</label>
@@ -137,8 +183,10 @@ const Expenses = () => {
                 <input type="date" style={inputStyle} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button type="button" onClick={() => setShowModal(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>Cancel</button>
-                <button type="submit" style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', background: '#f59e0b', color: 'white', fontWeight: '600', cursor: 'pointer' }}>Save Expense</button>
+                <button type="button" onClick={closeModal} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>Cancel</button>
+                <button type="submit" style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', background: '#f59e0b', color: 'white', fontWeight: '600', cursor: 'pointer' }}>
+                  {editingId ? 'Update Expense' : 'Save Expense'}
+                </button>
               </div>
             </form>
           </div>
@@ -148,7 +196,6 @@ const Expenses = () => {
   );
 };
 
-// Sub-components and Styles
 const StatCard = ({ title, value, icon, bg }) => (
   <div style={{ background: bg, padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '15px' }}>
     <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px' }}>{icon}</div>
@@ -159,8 +206,7 @@ const StatCard = ({ title, value, icon, bg }) => (
   </div>
 );
 
-const thStyle = { padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.05em' };
-const tdStyle = { padding: '18px 20px', fontSize: '14px', color: '#1e293b' };
+// Styles and modal configurations
 const inputStyle = { width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '5px' };
 const labelStyle = { fontSize: '14px', fontWeight: '600', color: '#475569' };
 const modalOverlayStyle = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
