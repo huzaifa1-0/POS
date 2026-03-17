@@ -37,10 +37,10 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-#
+# backend/api/serializers.py
 class ExpenseSerializer(serializers.ModelSerializer):
     staff_name = serializers.CharField(source='staff_member.first_name', read_only=True)
-    
+
     class Meta:
         model = Expense
         fields = ['id', 'category', 'amount', 'description', 'date', 'staff_member', 'staff_name', 'created_at']

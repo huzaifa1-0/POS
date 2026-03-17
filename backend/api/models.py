@@ -142,6 +142,7 @@ class UserProfile(models.Model):
 
 
 #
+# backend/api/models.py
 class Expense(models.Model):
     EXPENSE_CATEGORIES = (
         ('Utility', 'Utility Bill'),
@@ -152,7 +153,7 @@ class Expense(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField()
     date = models.DateField()
-    # NEW FIELD: Reference to a staff member (User)
+    # NEW: Link to staff
     staff_member = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='expenses')
     created_at = models.DateTimeField(auto_now_add=True)
 
