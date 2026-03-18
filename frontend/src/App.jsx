@@ -110,6 +110,11 @@ function App() {
           password: password,
           role: selectedRole
         });
+        
+        if (res.data.role === 'Pending' || res.data.is_approved === false) {
+           setAuthError('Your account is pending Admin approval. Please wait.');
+           return; // Stop the login process
+        }
         sessionStorage.setItem('access_token', res.data.access);
         sessionStorage.setItem('active_role', selectedRole);
         setToken(res.data.access);
