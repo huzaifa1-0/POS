@@ -214,6 +214,42 @@ class StockEntryViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        entry = self.get_object()
+        item = entry.item
+        
+        # 1. Reverse the inventory quantity and value
+        current_total_value = item.quantity_on_hand * item.cost_per_unit
+        deleted_value = entry.quantity * entry.price
+        
+        new_quantity = item.quantity_on_hand - entry.quantity
+        
+        # 2. Recalculate Average Cost safely
+        if new_quantity > 0:
+            new_total_value = current_total_value - deleted_value
+            # max() ensures cost doesn't drop below 0 due to decimal rounding
+            item.cost_per_unit = max(Decimal('0.0000'), new_total_value / new_quantity)
+        else:
+            # If no stock is left, reset quantity and cost to 0
+            new_quantity = Decimal('0.0000')
+            item.cost_per_unit = Decimal('0.0000')
+            
+        item.quantity_on_hand = new_quantity
+        item.save()
+
+        # 3. Log the deletion in the InventoryLog
+        InventoryLog.objects.create(
+            item=item,
+            quantity_change=-entry.quantity,  # Negative quantity to show removal
+            reason=f"Deleted Stock Entry #{entry.id} (Reversed {entry.quantity} {item.unit} from {entry.vendor.name})"
+        )
+
+        # 4. Finally, delete the record
+        entry.delete()
+        
+        return Response({"message": "Stock entry deleted and inventory reversed."}, status=status.HTTP_204_NO_CONTENT)
     
 class ReportDashboardView(APIView):
     def get(self, request):
