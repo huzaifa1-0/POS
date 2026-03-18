@@ -50,7 +50,7 @@ const Inventory = () => {
 
   const fetchInventory = async () => {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = sessionStorage.getItem('access_token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
       const [itemsRes, entriesRes] = await Promise.all([
