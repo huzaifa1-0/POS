@@ -113,18 +113,21 @@ class RegisterView(APIView):
                 password=make_password(password)
             )
 
-            # 3. Create profile and fetch role
+            # 3. Create profile (but DO NOT attach a role yet for standard staff!)
             profile, _ = UserProfile.objects.get_or_create(user=user)
-            target_role, _ = Role.objects.get_or_create(name=role_name)
             
-            # 4. Attach the role
-            profile.roles.add(target_role)
-
-            # 5. If they chose Admin, give them full master access
+            # 4 & 5. Secure Role Assignment
             if role_name == 'Admin':
+                # ONLY if they are an Admin, give them the role instantly so they can setup the system
+                target_role, _ = Role.objects.get_or_create(name='Admin')
+                profile.roles.add(target_role)
                 user.is_superuser = True
                 user.is_staff = True
                 user.save()
+            else:
+                # FIX: For 'Cashier' and 'Manager', we DO NOT attach the role.
+                # Leaving their profile empty makes them "Pending" in your Settings page!
+                pass
 
             return Response({'message': f'User registered successfully as {role_name}'}, status=status.HTTP_201_CREATED)
             
