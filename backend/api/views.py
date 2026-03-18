@@ -18,6 +18,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import serializers
 from rest_framework.permissions import AllowAny
+from django.db.models.functions import Coalesce
 
 
 class ExpenseViewSet(viewsets.ModelViewSet):
@@ -219,7 +220,7 @@ class StockEntryViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
     
-    
+
     @transaction.atomic
     def destroy(self, request, *args, **kwargs):
         entry = self.get_object()
@@ -257,6 +258,9 @@ class StockEntryViewSet(viewsets.ModelViewSet):
         return Response({"message": "Stock entry deleted and inventory reversed."}, status=status.HTTP_204_NO_CONTENT)
     
 class ReportDashboardView(APIView):
+    from django.db.models.functions import Coalesce  # Add this import at the top of the file if it's missing
+
+class ReportDashboardView(APIView):
     def get(self, request):
         orders = Order.objects.filter(status='Completed')
         order_items = OrderItem.objects.filter(order__in=orders)
@@ -265,15 +269,27 @@ class ReportDashboardView(APIView):
         cash_income = orders.filter(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         online_income = orders.exclude(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         
-        # --- NEW: Calculate True Profit based on Historical Cost Snapshots ---
         total_cogs = order_items.aggregate(Sum('cost_at_time'))['cost_at_time__sum'] or 0
         net_profit = total_income - total_cogs
         
-        # --- UPDATED: Low Stock Alerts based on raw ingredients, not menu items! ---
-        # Filters where stock is less than or equal to the custom threshold
-        low_stock = Item.objects.filter(quantity_on_hand__lte=F('low_stock_threshold')).values('name', 'quantity_on_hand', 'unit')
+        # --- BULLETPROOF LOW STOCK FIX ---
+        # Calculate the exact stock dynamically from history entries instead of trusting the old database field
+        items_with_stock = Item.objects.annotate(
+            true_stock=Coalesce(Sum('stock_entries__quantity'), Decimal('0.00'))
+        )
+        
+        low_stock_query = items_with_stock.filter(true_stock__lte=F('low_stock_threshold'))
+        
+        low_stock = [
+            {
+                'name': item.name,
+                'quantity_on_hand': item.true_stock,
+                'unit': item.unit
+            }
+            for item in low_stock_query
+        ]
+        # -----------------------------------
 
-        # Top items & Recent orders logic remains the same
         top_items = OrderItem.objects.filter(order__status='Completed').values(
             name=F('menu_item__name')
         ).annotate(
@@ -287,15 +303,14 @@ class ReportDashboardView(APIView):
         
         return Response({
             'total_income': total_income,
-            'cogs': total_cogs,             # Pass to React
-            'net_profit': net_profit,       # Pass to React
+            'cogs': total_cogs,             
+            'net_profit': net_profit,       
             'cash_income': cash_income,
             'online_income': online_income,
             'top_items': list(top_items),
-            'low_stock': list(low_stock),
+            'low_stock': low_stock, # Notice we pass 'low_stock' directly now without list() because it's already an array
             'recent_orders': list(recent_orders)
         })
-
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by('-created_at')
