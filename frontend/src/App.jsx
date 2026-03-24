@@ -15,6 +15,19 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Can from './components/Can';
 import SettingsPage from './pages/Settings';
 import { jwtDecode } from "jwt-decode";
+import axios from 'axios';
+import { jwtDecode } from "jwt-decode";
+// ... your other imports ...
+
+// 🚨 NEW: Global Axios Interceptor
+// This secretly attaches the selected Branch ID to EVERY request sent to Django
+axios.interceptors.request.use((config) => {
+  const branchId = sessionStorage.getItem('branch_id');
+  if (branchId) {
+    config.headers['X-Branch-Id'] = branchId;
+  }
+  return config;
+});
 
 function App() {
   // --- 1. UPDATED AUTHENTICATION STATES ---
@@ -44,6 +57,12 @@ function App() {
   const [itemToDelete, setItemToDelete] = useState(null); 
   const [showReceiptModal, setShowReceiptModal] = useState(false); /* NEW: Controls the receipt modal */
   const { toPDF, targetRef } = usePDF({ filename: `${activeOrder}_Receipt.pdf` });
+
+  // --- NEW: ADMIN LOBBY STATES ---
+  const [showAdminSetup, setShowAdminSetup] = useState(false);
+  const [adminBranches, setAdminBranches] = useState([]);
+  const [selectedSimBranch, setSelectedSimBranch] = useState('');
+  const [selectedSimRole, setSelectedSimRole] = useState('Cashier');
 
   // Replace your existing orders state with this
   const [orders, setOrders] = useState(() => {
