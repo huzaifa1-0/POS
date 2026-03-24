@@ -18,7 +18,10 @@ const Reports = () => {
 
   const fetchReportData = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/reports/dashboard/?range=${dateRange}`);
+      const res = await axios.get(`${BASE_URL}/reports/dashboard/?range=${dateRange}`, {
+        // ADD THIS HEADER LINE TO SEND THE TOKEN!
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` }
+      });
       setData(res.data);
     } catch (error) {
       console.error("Error fetching report data:", error);

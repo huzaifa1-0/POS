@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
+from django.db.models import Sum, Count
 
 
 from .permissions import HasRBACPermission
@@ -266,8 +267,27 @@ class ReportDashboardView(APIView):
     from django.db.models.functions import Coalesce  # Add this import at the top of the file if it's missing
 
 class ReportDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        orders = Order.objects.filter(status='Completed')
+        user = request.user
+        
+        # --- 🚨 1. THE SECURITY BLOCK (Branch Isolation) ---
+        is_admin = user.is_superuser or (hasattr(user, 'profile') and user.profile.roles.filter(name='Admin').exists())
+        
+        # Create a safe base query
+        if is_admin:
+            safe_orders = Order.objects.all() # Admin sees all branches
+        elif hasattr(user, 'profile') and user.profile.branch:
+            safe_orders = Order.objects.filter(branch=user.profile.branch) # Cashier sees ONLY their branch
+        else:
+            safe_orders = Order.objects.none() # Unknown user sees nothing
+        # ----------------------------------------------------
+
+        # --- 2. APPLY THE SAFE ORDERS TO YOUR EXISTING LOGIC ---
+        
+        # We replace Order.objects with safe_orders right here!
+        orders = safe_orders.filter(status='Completed') 
         order_items = OrderItem.objects.filter(order__in=orders)
 
         total_income = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
@@ -278,7 +298,6 @@ class ReportDashboardView(APIView):
         net_profit = total_income - total_cogs
         
         # --- BULLETPROOF LOW STOCK FIX ---
-        # Calculate the exact stock dynamically from history entries instead of trusting the old database field
         items_with_stock = Item.objects.annotate(
             true_stock=Coalesce(Sum('stock_entries__quantity'), Decimal('0.00'))
         )
@@ -295,7 +314,8 @@ class ReportDashboardView(APIView):
         ]
         # -----------------------------------
 
-        top_items = OrderItem.objects.filter(order__status='Completed').values(
+        # --- 🚨 FIX: Top Items now safely uses the isolated 'order_items' instead of global list! ---
+        top_items = order_items.values(
             name=F('menu_item__name')
         ).annotate(
             total_sold=Sum('quantity'),
@@ -313,17 +333,40 @@ class ReportDashboardView(APIView):
             'cash_income': cash_income,
             'online_income': online_income,
             'top_items': list(top_items),
-            'low_stock': low_stock, # Notice we pass 'low_stock' directly now without list() because it's already an array
+            'low_stock': low_stock,
             'recent_orders': list(recent_orders)
         })
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all().order_by('-created_at')
+    # 🚨 FIX 1: Lock down the API! No token = No order allowed.
+    permission_classes = [IsAuthenticated] 
+
+    # 🚨 FIX 2: Filter the data so Cashiers only see their own branch
+    def get_queryset(self):
+        user = self.request.user
+        
+        # Admins get to see everything
+        is_admin = user.is_superuser or (hasattr(user, 'profile') and user.profile.roles.filter(name='Admin').exists())
+        if is_admin:
+            return Order.objects.all().order_by('-created_at')
+            
+        # Cashiers ONLY get to see orders made at their branch
+        if hasattr(user, 'profile') and user.profile.branch:
+            return Order.objects.filter(branch=user.profile.branch).order_by('-created_at')
+            
+        return Order.objects.none()
     
     @transaction.atomic  # CRITICAL: Ensures all db operations succeed or fail together
     def create(self, request, *args, **kwargs):
         data = request.data
         
+        cashier_branch = None
+        try:
+            # Force Django to check the database right now to see where this user is assigned
+            profile = UserProfile.objects.select_related('branch').get(user=request.user)
+            cashier_branch = profile.branch
+        except UserProfile.DoesNotExist:
+            pass
         # 1. Create the Main Order
         order = Order.objects.create(
             table_number=data.get('table_number'),
@@ -568,3 +611,49 @@ class ChangeCashierBranchView(APIView):
         profile.save()
 
         return Response({'message': f'Cashier moved from {old_branch} to {new_branch.name}'}, status=status.HTTP_200_OK)
+    
+
+
+
+class BranchSalesReportView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # 1. Security Check
+        is_admin = request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Admin').exists())
+        if not is_admin:
+            return Response({'error': 'Only admins can view sales reports'}, status=status.HTTP_403_FORBIDDEN)
+
+        # 2. Get ALL branches (even if they have 0 sales!)
+        branches = Branch.objects.filter(is_active=True)
+        formatted_report = []
+        
+        for branch in branches:
+            # Calculate totals specifically for this branch
+            totals = Order.objects.filter(branch=branch, status='Completed').aggregate(
+                total_orders=Count('id'),
+                total_revenue=Sum('total_amount')
+            )
+            
+            formatted_report.append({
+                'branch_name': branch.name,
+                'total_orders': totals['total_orders'] or 0,
+                'total_revenue': totals['total_revenue'] or 0
+            })
+            
+        # 3. Add Unassigned/Admin orders (if any exist)
+        unassigned_totals = Order.objects.filter(branch__isnull=True, status='Completed').aggregate(
+            total_orders=Count('id'),
+            total_revenue=Sum('total_amount')
+        )
+        if unassigned_totals['total_orders'] > 0:
+             formatted_report.append({
+                'branch_name': 'Admin / Unassigned',
+                'total_orders': unassigned_totals['total_orders'],
+                'total_revenue': unassigned_totals['total_revenue'] or 0
+            })
+
+        # Sort by highest revenue
+        formatted_report.sort(key=lambda x: x['total_revenue'], reverse=True)
+
+        return Response(formatted_report, status=status.HTTP_200_OK)

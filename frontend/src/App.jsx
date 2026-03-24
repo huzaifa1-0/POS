@@ -296,9 +296,10 @@ function App() {
         }))
       };
 
-      // 2. Send the POST request to our new endpoint
-      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-      const res = await axios.post(`${API_BASE_URL}/orders/`, payload, config);
+      // 2. Send the POST request to our endpoint using the 'payload' variable AND the token!
+      const res = await axios.post(`${API_BASE_URL}/orders/`, payload, {
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` }
+      });
 
       // 3. If successful, trigger the PDF download and close modal
       toPDF();
@@ -329,8 +330,10 @@ function App() {
       });
 
     } catch (error) {
-      console.error("Error finalizing order:", error);
-      alert("Failed to save the order to the database. Please check your connection.");
+      // 6. Detailed Error Catching!
+      const backendError = error.response?.data;
+      console.error("Backend Rejected Order:", backendError || error);
+      alert(`Checkout Failed: ${JSON.stringify(backendError) || error.message}`);
     }
   };
 

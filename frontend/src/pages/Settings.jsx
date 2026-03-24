@@ -19,13 +19,24 @@ function Settings() {
   const [cashierEmail, setCashierEmail] = useState('');
   const [cashierPassword, setCashierPassword] = useState('');
   const [selectedBranchId, setSelectedBranchId] = useState('');
+  const [branchSales, setBranchSales] = useState([]);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
-
+  const fetchBranchSales = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/reports/branch-sales/`, { 
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } 
+      });
+      setBranchSales(res.data);
+    } catch (err) { 
+      console.error("Failed to load branch sales reports"); 
+    }
+  };
   useEffect(() => {
     fetchMatrix();
     fetchUsers();
     fetchBranches();
+    fetchBranchSales();
   }, []);
 
   const fetchMatrix = async () => {
@@ -76,6 +87,24 @@ function Settings() {
     } catch (err) { alert("Failed to update staff access."); }
   };
 
+  // --- NEW FUNCTION: Reassign Cashier Branch ---
+  const handleBranchReassignment = async (userId, branchId) => {
+    try {
+      await axios.post(`${API_BASE_URL}/auth/change-cashier-branch/`, 
+      { 
+        cashier_id: userId, 
+        branch_id: branchId 
+      }, 
+      { headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } });
+      
+      setMessage('Staff branch reassigned successfully!');
+      setTimeout(() => setMessage(''), 2000);
+      fetchUsers();
+    } catch (err) { 
+      alert(err.response?.data?.error || "Failed to reassign branch. Ensure you are an Admin."); 
+    }
+  };
+
   const handleCreateBranch = async (e) => {
     e.preventDefault();
     try {
@@ -106,6 +135,9 @@ function Settings() {
         </button>
         <button className={`tab-btn ${activeTab === 'branches' ? 'active' : ''}`} onClick={() => setActiveTab('branches')}>
           Branch Management
+        </button>
+        <button className={`tab-btn ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
+          Branch Sales Reports
         </button>
       </div>
 
@@ -141,11 +173,12 @@ function Settings() {
           </div>
 
           <div className="settings-card approvals-card">
-             <div className="settings-card-header"><h2>Staff Approvals</h2></div>
+             <div className="settings-card-header"><h2>Staff Approvals & Routing</h2></div>
              <div className="table-responsive-wrapper scrollable-table">
               <table className="settings-table">
                 <thead>
-                  <tr><th>Email</th><th>Status</th><th>Action</th></tr>
+                  {/* Added Branch column header */}
+                  <tr><th>Email</th><th>Status</th><th>Role Assignment</th><th>Branch Reassignment</th></tr>
                 </thead>
                 <tbody>
                   {users.map(user => (
@@ -160,6 +193,19 @@ function Settings() {
                         <select className="role-select" value={assignments[user.id]} onChange={(e) => handleRoleAssignment(user.id, e.target.value)}>
                           <option value="Pending">Revoke Access</option>
                           {availableRoles.map(role => <option key={role.id} value={role.name}>Approve as {role.name}</option>)}
+                        </select>
+                      </td>
+                      {/* --- NEW: Branch Assignment Dropdown --- */}
+                      <td>
+                        <select 
+                          className="role-select" 
+                          defaultValue="" 
+                          onChange={(e) => handleBranchReassignment(user.id, e.target.value)}
+                        >
+                          <option value="" disabled>Move to Branch...</option>
+                          {branches.map(b => (
+                            <option key={b.id} value={b.id}>{b.name}</option>
+                          ))}
                         </select>
                       </td>
                     </tr>
@@ -213,6 +259,47 @@ function Settings() {
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* --- TAB 3: BRANCH SALES REPORTS --- */}
+      {activeTab === 'reports' && (
+        <div className="settings-layout-wrapper">
+          <div className="settings-card form-card" style={{ flex: 1, minWidth: '100%' }}>
+            <div className="settings-card-header">
+              <h2>Total Revenue by Branch</h2>
+            </div>
+            <div className="table-responsive-wrapper scrollable-table">
+              <table className="settings-table">
+                <thead>
+                  <tr>
+                    <th>Branch Name</th>
+                    <th className="center-text">Total Orders Completed</th>
+                    <th className="center-text">Total Revenue Generated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {branchSales.length > 0 ? (
+                    branchSales.map((report, index) => (
+                      <tr key={index}>
+                        <td><strong style={{ color: '#0f172a' }}>{report.branch_name}</strong></td>
+                        <td className="center-text">{report.total_orders}</td>
+                        <td className="center-text" style={{ color: '#10b981', fontWeight: '900', fontSize: '16px' }}>
+                          Rs. {Number(report.total_revenue).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="3" className="center-text" style={{ padding: '30px', color: '#64748b' }}>
+                        No sales data available yet. Start making sales!
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 

@@ -1585,3 +1585,38 @@
     font-size: 9px !important;
   }
 }
+
+/* --- 2. MOBILE & TABLET VIEW (OVERRIDES DESKTOP) --- */
+@media (max-width: 1024px) {
+  .settings-layout-wrapper { flex-direction: column; gap: 20px; }
+  .settings-card { width: 100%; min-width: 100%; flex: none; }
+  .settings-container { padding-bottom: 90px; }
+}
+
+@media (max-width: 600px) {
+  .settings-container { padding: 12px; padding-bottom: 90px; }
+  .settings-header { font-size: 20px; margin-bottom: 15px; }
+
+  /* FIX: Squeeze tabs perfectly into mobile screen without horizontal scroll */
+  .settings-tabs { 
+    gap: 5px;             /* Bring buttons closer together */
+    margin-bottom: 15px; 
+    padding-bottom: 8px;
+    width: 100%;
+  }
+  
+  .tab-btn { 
+    flex: 1;              /* Force all 3 buttons to share the width exactly */
+    padding: 8px 4px;     /* Much smaller padding */
+    font-size: 10px;      /* Smaller text */
+    text-align: center;   /* Center the text */
+    white-space: normal;  /* ALLOW text to stack inside the button! */
+    line-height: 1.2;     /* Keep stacked text tight */
+    border-radius: 6px;
+  }
+
+  /* Shrink tables so they fit better on mobile */
+  .settings-table th, .settings-table td { padding: 10px 6px; font-size: 11px; }
+  .settings-checkbox { width: 16px; height: 16px; }
+  .role-select { padding: 6px; font-size: 11px; }
+}
