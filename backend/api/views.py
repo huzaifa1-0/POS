@@ -629,17 +629,7 @@ class BranchSalesReportView(APIView):
                 'total_revenue': totals['total_revenue'] or 0
             })
             
-        # 3. Add Unassigned/Admin orders (if any exist)
-        unassigned_totals = Order.objects.filter(branch__isnull=True, status='Completed').aggregate(
-            total_orders=Count('id'),
-            total_revenue=Sum('total_amount')
-        )
-        if unassigned_totals['total_orders'] > 0:
-             formatted_report.append({
-                'branch_name': 'Admin / Unassigned',
-                'total_orders': unassigned_totals['total_orders'],
-                'total_revenue': unassigned_totals['total_revenue'] or 0
-            })
+    
 
         # Sort by highest revenue
         formatted_report.sort(key=lambda x: x['total_revenue'], reverse=True)
