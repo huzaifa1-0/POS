@@ -32,14 +32,16 @@ function App() {
   const [token, setToken] = useState(sessionStorage.getItem('access_token'));
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
   
-  // --- NEW: EXTRACT REAL ROLE FROM TOKEN ---
+  // --- NEW: ADMIN SETUP STATES ---
   let realRole = null;
   if (token) {
-    try {
-      realRole = jwtDecode(token).role;
-    } catch(e) {}
+    try { realRole = jwtDecode(token).role; } catch(e) {}
   }
-  
+  const [showAdminSetup, setShowAdminSetup] = useState(false);
+  const [adminBranches, setAdminBranches] = useState([]);
+  const [selectedSimBranch, setSelectedSimBranch] = useState('');
+  const [selectedSimRole, setSelectedSimRole] = useState('Admin');
+
   // --- NEW: STATE FOR THE DROPDOWN ---
   const [selectedRole, setSelectedRole] = useState('Cashier');
   // New state variables for the advanced form
@@ -64,11 +66,7 @@ function App() {
   const [showReceiptModal, setShowReceiptModal] = useState(false); /* NEW: Controls the receipt modal */
   const { toPDF, targetRef } = usePDF({ filename: `${activeOrder}_Receipt.pdf` });
 
-  // --- NEW: ADMIN LOBBY STATES ---
-  const [showAdminSetup, setShowAdminSetup] = useState(false);
-  const [adminBranches, setAdminBranches] = useState([]);
-  const [selectedSimBranch, setSelectedSimBranch] = useState('');
-  const [selectedSimRole, setSelectedSimRole] = useState('Cashier');
+
 
   // Replace your existing orders state with this
   const [orders, setOrders] = useState(() => {
