@@ -1186,213 +1186,150 @@
   }
 }
 /* =========================================
-   ROLE & SETTINGS PAGE STYLES
+   ROLE, SETTINGS & BRANCH PAGE STYLES
    ========================================= */
+
+/* --- 1. DESKTOP VIEW (BASE STYLES) --- */
+/* --- 1. DESKTOP VIEW (BASE STYLES) --- */
 .settings-container {
-  flex: 1; /* Instructs it to take the full remaining width next to the nav rail */
+  flex: 1; 
   padding: 30px;
-  width: 100%;
-  max-width: 100%; /* Removes the old hardcoded 900px limit */
+  width: 100% !important;        /* Forces full width */
+  max-width: 100% !important;    /* Kills any leftover 900px limits */
   height: 100vh;
   overflow-y: auto;
   background-color: #f8fafc;
   box-sizing: border-box;
-  animation: fadeIn 0.3s ease-out;
 }
 
-.settings-header {
-  font-size: 26px;
-  color: #0f172a;
-  margin-bottom: 8px;
-  font-weight: 700;
+.settings-header { 
+  font-size: 26px; 
+  color: #0f172a; 
+  margin-bottom: 20px; 
+  font-weight: 800; 
 }
 
-.settings-description {
-  color: #64748b;
-  margin-bottom: 25px;
-  line-height: 1.5;
-  font-size: 15px;
+/* Tabs */
+.settings-tabs { 
+  display: flex; 
+  gap: 15px; 
+  margin-bottom: 25px; 
+  border-bottom: 2px solid #e2e8f0; 
+  padding-bottom: 12px; 
+  overflow-x: auto; 
+  width: 100%; /* Ensure tabs span full width */
 }
 
-.settings-success-alert {
-  padding: 12px 16px;
-  background: #dcfce3;
-  color: #15803d;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  border: 1px solid #bbf7d0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* Desktop Side-by-Side Layout Grid */
+.settings-layout-wrapper { 
+  display: flex; 
+  flex-direction: row; 
+  gap: 24px; 
+  align-items: flex-start; 
+  width: 100%;   /* Forces the wrapper to take 100% width */
 }
 
-/* Flexbox layout for Side-by-Side */
-.settings-layout-wrapper {
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-  flex-wrap: wrap; /* Allows wrapping on smaller screens */
-  width: 100%;
+/* Make sure cards dynamically stretch to fill that 100% space */
+.settings-card { 
+  background: white; 
+  border-radius: 12px; 
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
+  border: 1px solid #e2e8f0; 
+  overflow: hidden; 
+  display: flex; 
+  flex-direction: column; 
+  flex: 1 1 0%; /* This tells flexbox to stretch them evenly! */
 }
 
-.settings-card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
+/* Proportions: Matrix gets 60% of the screen, Approvals gets 40% */
+.matrix-card { flex: 1.5 1 0%; min-width: 400px; }
+.approvals-card { flex: 1 1 0%; min-width: 350px; }
+.form-card { flex: 1 1 0%; min-width: 350px; }
+
+/* --- Tabs & Buttons --- */
+.settings-tabs { 
+  display: flex; 
+  gap: 15px; 
+  margin-bottom: 25px; 
+  border-bottom: 2px solid #e2e8f0; 
+  padding-bottom: 12px; 
+  overflow-x: auto; 
+  width: 100%; 
 }
 
-/* Card Proportions */
-.settings-card.matrix-card {
-  flex: 1 1 55%;
-  min-width: 400px;
+.tab-btn { 
+  padding: 10px 20px; 
+  font-weight: 700; 
+  background: #f1f5f9; 
+  color: #475569; 
+  border: none; 
+  border-radius: 8px; 
+  cursor: pointer; 
+  transition: 0.2s; 
+  white-space: nowrap; 
 }
 
-.settings-card.approvals-card {
-  flex: 1 1 40%;
-  min-width: 350px;
+.tab-btn:hover { 
+  background: #e2e8f0; 
 }
 
-.settings-card-header {
-  padding: 15px 20px;
-  border-bottom: 1px solid #e2e8f0;
-  background-color: #ffffff;
+.tab-btn.active { 
+  background: #3b82f6; 
+  color: white; 
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); 
 }
+.settings-card-header { padding: 18px 20px; border-bottom: 1px solid #e2e8f0; background-color: #ffffff; }
+.settings-card-header h2 { font-size: 18px; margin: 0; color: #1e293b; font-weight: 800;}
+.card-body { padding: 20px; }
 
-.settings-card-header h2 {
-  font-size: 18px;
-  margin: 0;
-  color: #1e293b;
-}
+/* Tables */
+.table-responsive-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scrollable-table { max-height: 400px; overflow-y: auto; }
+.settings-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 500px; }
+.settings-table th { padding: 16px; border-bottom: 2px solid #e2e8f0; color: #475569; font-weight: 700; font-size: 13px; text-transform: uppercase; background: #f8fafc; position: sticky; top: 0; z-index: 1;}
+.settings-table td { padding: 16px; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 14px; font-weight: 500; }
+.center-text { text-align: center !important; }
 
-/* Table Wrappers & Scrolling */
-.table-responsive-wrapper {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
+/* Forms & Buttons */
+.settings-form { display: flex; flex-direction: column; gap: 15px; }
+.form-input, .form-select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white; outline: none; }
+.form-input:focus, .form-select:focus { border-color: #3b82f6; }
+.btn-primary { padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s;}
+.btn-primary:hover { background: #2563eb; }
+.btn-success { padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s;}
+.btn-success:hover { background: #059669; }
 
-.scrollable-table {
-  max-height: 500px;
-  overflow-y: auto;
-}
+/* Branch List */
+.sub-header { margin-top: 30px; margin-bottom: 15px; font-size: 16px; color: #1e293b; font-weight: 800; }
+.branch-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.branch-list li { background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 15px; color: #0f172a;}
+.branch-address { font-size: 13px; color: #64748b; margin-top: 4px; display: block;}
 
-/* Sticky Header inside the Scrollable Table */
-.scrollable-table thead {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
+/* Badges & Checkboxes */
+.status-badge { padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; display: inline-block; }
+.status-badge.pending { background: #fef08a; color: #b45309; }
+.status-badge.approved { background: #dcfce3; color: #15803d; }
+.settings-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #3b82f6; }
+.role-select { width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #cbd5e1; cursor: pointer; background: white; font-size: 13px;}
 
-.scrollable-table th {
-  background-color: #f8fafc; /* Ensure background isn't transparent over scrolling content */
-}
 
-/* Base Table Styles */
-.settings-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-  min-width: 500px;
-}
-
-.settings-table th {
-  padding: 16px;
-  border-bottom: 2px solid #e2e8f0;
-  color: #475569;
-  font-weight: 600;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.settings-table td {
-  padding: 16px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #334155;
-  font-weight: 500;
-}
-
-.settings-table tbody tr:hover {
-  background-color: #f8fafc;
-  transition: background-color 0.2s ease;
-}
-
-/* Status Badges */
-.status-badge {
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  display: inline-block;
-}
-
-.status-badge.pending {
-  background: #fef08a;
-  color: #b45309;
-}
-
-.status-badge.approved {
-  background: #dcfce3;
-  color: #15803d;
-}
-
-/* Controls */
-.settings-checkbox {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  accent-color: #3b82f6;
-  transform: scale(1.1);
-}
-
-.role-select {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  cursor: pointer;
-  background: white;
-  color: #1e293b;
-  font-weight: 500;
-}
-
-/* --- RESPONSIVE MEDIA QUERIES --- */
+/* --- 2. MOBILE & TABLET VIEW (OVERRIDES DESKTOP) --- */
+/* When the screen size drops below 1024px, the side-by-side cards stack vertically */
 @media (max-width: 1024px) {
-  .settings-container {
-    padding-bottom: 90px; /* Gives room for the bottom nav rail on tablets/mobile */
-  }
+  .settings-layout-wrapper { flex-direction: column; gap: 20px; }
+  .settings-card { width: 100%; min-width: 100%; flex: none; }
+  .settings-container { padding-bottom: 90px; /* Space for bottom nav */ }
 }
 
-@media (max-width: 850px) {
-  /* Force tables to stack vertically on smaller screens instead of shrinking */
-  .settings-card.matrix-card,
-  .settings-card.approvals-card {
-    flex: 1 1 100%;
-    min-width: 100%;
-  }
-}
-
+/* When the screen gets to mobile phone size, shrink paddings and text to fit */
 @media (max-width: 600px) {
-  .settings-container {
-    padding: 15px;
-    padding-bottom: 90px;
-  }
-  
-  .settings-header {
-    font-size: 22px;
-  }
-
-  .settings-table th, 
-  .settings-table td {
-    padding: 12px;
-    font-size: 13px;
-  }
-}
-
-/* =========================================
+  .settings-container { padding: 15px; padding-bottom: 90px; }
+  .settings-header { font-size: 22px; }
+  .tab-btn { padding: 8px 12px; font-size: 13px; }
+  .settings-table th, .settings-table td { padding: 12px 8px; font-size: 12px; }
+  .settings-checkbox { width: 15px; height: 15px; }
+  .role-select { padding: 6px; font-size: 11px; }
+}/* =========================================
    EXPENSES PAGE STYLES (MATCHING YOUR REPO)
    ========================================= */
 
