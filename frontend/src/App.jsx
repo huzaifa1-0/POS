@@ -32,6 +32,14 @@ function App() {
   const [token, setToken] = useState(sessionStorage.getItem('access_token'));
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
   
+  // --- NEW: EXTRACT REAL ROLE FROM TOKEN ---
+  let realRole = null;
+  if (token) {
+    try {
+      realRole = jwtDecode(token).role;
+    } catch(e) {}
+  }
+  
   // --- NEW: STATE FOR THE DROPDOWN ---
   const [selectedRole, setSelectedRole] = useState('Cashier');
   // New state variables for the advanced form
@@ -597,22 +605,29 @@ function App() {
         </div>
 
         <div className="nav-rail-bottom">
-  {(activeRole === 'Admin' || activeRole === 'Manager' || showAdminSetup) && (
-    <Can permission="view:settings">
-      {/* Changed from <button> to <NavLink> for consistency */}
-      <NavLink 
-        to="/settings" 
-        className={({ isActive }) => `rail-btn settings-nav-btn ${isActive ? 'active' : ''}`} 
-        title="Settings"
-      >
-        <Settings size={24} />
-      </NavLink>
-    </Can>
-  )}
-  <button className="rail-btn logout-btn" onClick={handleLogout} title="Logout">
-    <LogOut size={24} />
-  </button>
-</div>
+          {realRole === 'Admin' ? (
+            <NavLink
+              to="/settings"
+              className={({ isActive }) => `rail-btn settings-nav-btn ${isActive ? 'active' : ''}`}
+              title="Settings"
+            >
+              <Settings size={24} />
+            </NavLink>
+          ) : (
+            <Can permission="view:settings">
+              <NavLink
+                to="/settings"
+                className={({ isActive }) => `rail-btn settings-nav-btn ${isActive ? 'active' : ''}`}
+                title="Settings"
+              >
+                <Settings size={24} />
+              </NavLink>
+            </Can>
+          )}
+          <button className="rail-btn logout-btn" onClick={handleLogout} title="Logout">
+            <LogOut size={24} />
+          </button>
+        </div>
       </div>
 
       {/* --- MULTI-PAGE ROUTING --- */}
@@ -928,13 +943,17 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        <Route 
-          path="/settings" 
+        <Route
+          path="/settings"
           element={
-            <ProtectedRoute permission="view:settings">
+            realRole === 'Admin' ? (
               <SettingsPage />
-            </ProtectedRoute>
-          } 
+            ) : (
+              <ProtectedRoute permission="view:settings">
+                <SettingsPage />
+              </ProtectedRoute>
+            )
+          }
         />
         
       </Routes>
