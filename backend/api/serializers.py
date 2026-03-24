@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Category, MenuItem, Recipe, Vendor, Item, StockEntry, Expense
-from .models import Category, MenuItem, Recipe, Vendor, Item, StockEntry, Branch
+from .models import Category, MenuItem, Recipe, Vendor, Item, StockEntry, Branch, Order
 
 
 class MenuItemSerializer(serializers.ModelSerializer):
@@ -52,3 +52,7 @@ class BranchSerializer(serializers.ModelSerializer):
         model = Branch
         fields = '__all__'
 
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = '__all__'
