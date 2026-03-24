@@ -23,9 +23,14 @@ const Vendors = () => {
     fetchVendors();
   }, []);
 
+  const getConfig = () => ({
+    headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` }
+  });
+
   const fetchVendors = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/vendors/`);
+      // Added getConfig()
+      const res = await axios.get(`${BASE_URL}/vendors/`, getConfig());
       setVendors(res.data);
     } catch (error) {
       console.error("Error fetching vendors:", error);
@@ -65,11 +70,13 @@ const Vendors = () => {
     
     try {
       if (editingId) {
-        await axios.put(`${BASE_URL}/vendors/${editingId}/`, formData);
+        // Added getConfig()
+        await axios.put(`${BASE_URL}/vendors/${editingId}/`, formData, getConfig());
         alert("Vendor updated successfully!");
         setEditingId(null); 
       } else {
-        await axios.post(`${BASE_URL}/vendors/`, formData);
+        // Added getConfig()
+        await axios.post(`${BASE_URL}/vendors/`, formData, getConfig());
         alert("Vendor added successfully!");
       }
       
@@ -86,7 +93,8 @@ const Vendors = () => {
   const handleDeleteVendor = async (id, name) => {
     if (window.confirm(`WARNING: Are you sure you want to delete ${name}? This will also delete ALL stock history associated with this vendor!`)) {
       try {
-        await axios.delete(`${BASE_URL}/vendors/${id}/`);
+        // Added getConfig()
+        await axios.delete(`${BASE_URL}/vendors/${id}/`, getConfig());
         if (editingId === id) handleCancelEdit();
         fetchVendors();
       } catch (error) {
