@@ -123,40 +123,47 @@ function App() {
 
     try {
       if (authMode === 'login') {
-        // 1. Send the login request (No role needed anymore!)
         const res = await axios.post(`${API_BASE_URL}/auth/login/`, { 
           username: email, 
           password: password
         });
         
-        const token = res.data.access;
+        const newToken = res.data.access;
+        const decodedToken = jwtDecode(newToken);
 
-        // 2. Decode the token to get our custom backend data
-        const decodedToken = jwtDecode(token);
-
-        // 3. Check if they are pending approval
         if (decodedToken.role === 'Pending') {
            setAuthError('Your account is pending Admin approval. Please wait.');
            return; 
         }
 
-        // 4. Save the Tokens
-        sessionStorage.setItem('access_token', token);
+        // Save tokens immediately
+        sessionStorage.setItem('access_token', newToken);
         if (res.data.refresh) {
             sessionStorage.setItem('refresh_token', res.data.refresh);
         }
-        
-        // 5. Save the Auto-Detected Role and Branch
-        sessionStorage.setItem('active_role', decodedToken.role);
-        
-        if (decodedToken.branch_id) {
-          sessionStorage.setItem('branch_id', decodedToken.branch_id);
-        } else {
-          sessionStorage.removeItem('branch_id'); // Admins might not have a branch
-        }
 
-        // 6. Log the user in by updating the React state
-        setToken(token);
+        // --- NEW LOGIC: CHECK IF ADMIN ---
+        if (decodedToken.role === 'Admin') {
+          setToken(newToken);
+          setShowAdminSetup(true);
+
+          try {
+             // Fetch branches for the lobby dropdown
+             const branchRes = await axios.get(`${API_BASE_URL}/branches/`, {
+                headers: { Authorization: `Bearer ${newToken}` }
+             });
+             setAdminBranches(branchRes.data);
+          } catch (err) {
+             console.error("Could not fetch branches", err);
+          }
+        } else {
+          // Normal Cashier/Manager: Bypass lobby
+          sessionStorage.setItem('active_role', decodedToken.role);
+          if (decodedToken.branch_id) {
+            sessionStorage.setItem('branch_id', decodedToken.branch_id);
+          }
+          setToken(newToken);
+        }
 
       } else {
         // SIGN UP
@@ -179,9 +186,13 @@ function App() {
 
   const handleLogout = () => {
     sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('active_role');
+    sessionStorage.removeItem('branch_id');
     setToken(null);
     setEmail('');
     setPassword('');
+    setShowAdminSetup(false);
   };
 
   // --- EXISTING HANDLERS ---
@@ -444,6 +455,54 @@ function App() {
           >
             {authMode === 'login' ? "Don't have an account? Sign up" : "Already have an account? Login"}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // --- NEW: ADMIN WORKSPACE LOBBY ---
+  if (token && showAdminSetup) {
+    return (
+      <div className="auth-container">
+        <div className="auth-card" style={{ maxWidth: '400px' }}>
+          <h2>Admin Workspace Setup</h2>
+          <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '14px' }}>
+            Please select the physical branch and the role you wish to simulate for this session.
+          </p>
+
+          <select 
+            value={selectedSimBranch} 
+            onChange={(e) => setSelectedSimBranch(e.target.value)} 
+            style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '15px', background: 'white' }}
+          >
+            <option value="" disabled>Select a Branch...</option>
+            {adminBranches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+
+          <select 
+            value={selectedSimRole} 
+            onChange={(e) => setSelectedSimRole(e.target.value)} 
+            style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '15px', background: 'white' }}
+          >
+            <option value="Cashier">Login as Cashier</option>
+            <option value="Manager">Login as Manager</option>
+            <option value="Admin">Login as Full Admin</option>
+          </select>
+
+          <button 
+            className="auth-btn" 
+            onClick={() => {
+              if (!selectedSimBranch) return alert("You must select a branch to continue!");
+              
+              sessionStorage.setItem('active_role', selectedSimRole);
+              sessionStorage.setItem('branch_id', selectedSimBranch);
+              
+              setShowAdminSetup(false);
+              window.location.reload(); 
+            }}
+          >
+            Enter Workspace
+          </button>
         </div>
       </div>
     );

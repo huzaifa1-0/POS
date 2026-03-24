@@ -39,22 +39,33 @@ class ExpenseViewSet(viewsets.ModelViewSet):
 @permission_classes([IsAuthenticated])
 def get_my_permissions(request):
     """Returns a flat list of permission keys for the logged-in user."""
-    if request.user.is_superuser:
-        return Response({"permissions": ["*"]}) # Wildcard for admin
+    
+    # --- NEW: Check if Admin is simulating a role ---
+    simulated_role = request.headers.get('X-Simulated-Role')
+    
+    if simulated_role and simulated_role != 'Admin' and request.user.is_superuser:
+        try:
+            role = Role.objects.get(name=simulated_role)
+            perm_list = list(role.permissions.values_list('permission_key', flat=True))
+            return Response({"permissions": perm_list})
+        except Role.DoesNotExist:
+            pass # Fallback to normal admin logic if role isn't found
 
+    # Standard Admin Wildcard
+    if request.user.is_superuser:
+        return Response({"permissions": ["*"]})
+
+    # Standard Staff Logic
     try:
-        # Optimized database query to get all permission keys across all roles
         permissions = request.user.profile.roles.values_list(
             'permissions__permission_key', flat=True
         ).distinct()
         
-        # Remove any nulls if they exist
         perm_list = [p for p in permissions if p] 
         return Response({"permissions": perm_list})
         
     except Exception:
-        return Response({"permissions": []})
-    
+        return Response({"permissions": []})    
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod

@@ -11,6 +11,7 @@ export const PermissionsProvider = ({ children }) => {
 
     useEffect(() => {
         const token = sessionStorage.getItem('access_token');
+        const activeRole = sessionStorage.getItem('active_role'); // GET SIMULATED ROLE
         
         if (!token) {
             setLoading(false);
@@ -18,7 +19,10 @@ export const PermissionsProvider = ({ children }) => {
         }
 
         axios.get(`${API_BASE_URL}/auth/permissions/`, {
-            headers: { Authorization: `Bearer ${token}` } 
+            headers: { 
+                Authorization: `Bearer ${token}`,
+                'X-Simulated-Role': activeRole || '' // PASS IT TO BACKEND
+            } 
         })
         .then(res => {
             setPermissions(res.data.permissions);
