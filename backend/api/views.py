@@ -1,14 +1,22 @@
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 
+
 from .permissions import HasRBACPermission
 from .models import Category, Expense, MenuItem, Role, UserProfile, Vendor, Item, StockEntry, Order, OrderItem, Recipe, InventoryLog, Permission, Resource
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from .serializers import CategorySerializer, ExpenseSerializer, MenuItemSerializer, VendorSerializer, ItemSerializer, StockEntrySerializer, RecipeSerializer
+
+from .models import Category, MenuItem, Vendor, Item, StockEntry, Order, OrderItem, Recipe, InventoryLog, Branch, UserProfile
+from django.db import transaction
+from django.core.exceptions import ValidationError
+from .serializers import CategorySerializer, MenuItemSerializer, VendorSerializer, ItemSerializer, StockEntrySerializer, RecipeSerializer,BranchSerializer
+
 from decimal import Decimal
 from django.db.models import F, Sum
 from rest_framework.decorators import api_view, permission_classes
@@ -368,6 +376,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
 
 
+
 class ManageInventoryView(APIView):
     # 1. Enforce our custom RBAC middleware
     permission_classes = [HasRBACPermission] 
@@ -491,3 +500,75 @@ def manage_user_roles(request):
             profile.roles.add(role)
             
         return Response({'message': f'Access approved successfully!'})
+
+class BranchViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = Branch.objects.all()
+    serializer_class = BranchSerializer
+
+class CreateCashierView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Only admin can create cashiers
+        if request.user.profile.role != 'admin':
+            return Response({'error': 'Only admins can create cashiers'}, status=status.HTTP_403_FORBIDDEN)
+
+        name = request.data.get('name')
+        email = request.data.get('email')
+        password = request.data.get('password')
+        branch_id = request.data.get('branch_id')
+
+        if not all([name, email, password, branch_id]):
+            return Response({'error': 'Please provide name, email, password and branch_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(username=email).exists():
+            return Response({'error': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+
+        branch = Branch.objects.get(id=branch_id)
+
+        user = User.objects.create(
+            username=email,
+            email=email,
+            first_name=name,
+            password=make_password(password)
+        )
+
+        UserProfile.objects.create(
+            user=user,
+            role='cashier',
+            branch=branch
+        )
+
+        return Response({'message': f'Cashier {name} created and assigned to {branch.name}'}, status=status.HTTP_201_CREATED)
+
+class ChangeCashierBranchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Only admin can move cashiers
+        if request.user.profile.role != 'admin':
+            return Response({'error': 'Only admins can change cashier branch'}, status=status.HTTP_403_FORBIDDEN)
+
+        cashier_id = request.data.get('cashier_id')
+        new_branch_id = request.data.get('branch_id')
+
+        if not all([cashier_id, new_branch_id]):
+            return Response({'error': 'Please provide cashier_id and branch_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            profile = UserProfile.objects.get(id=cashier_id, role='cashier')
+        except UserProfile.DoesNotExist:
+            return Response({'error': 'Cashier not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            new_branch = Branch.objects.get(id=new_branch_id)
+        except Branch.DoesNotExist:
+            return Response({'error': 'Branch not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        old_branch = profile.branch.name if profile.branch else 'None'
+        profile.branch = new_branch
+        profile.save()
+
+        return Response({'message': f'Cashier moved from {old_branch} to {new_branch.name}'}, status=status.HTTP_200_OK)
+

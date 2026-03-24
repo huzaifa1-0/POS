@@ -1,6 +1,10 @@
 from django.db import models
+
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import User
+
+from django.contrib.auth.models import AbstractUser,User
+
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -20,6 +24,7 @@ class MenuItem(models.Model):
 
 class Order(models.Model):
     ORDER_TYPES = (('Dine-In', 'Dine-In'), ('Takeaway', 'Takeaway'), ('Delivery', 'Delivery'))
+    branch = models.ForeignKey('Branch', on_delete=models.SET_NULL, null=True, blank=True)
     table_number = models.CharField(max_length=10, blank=True, null=True)
     order_type = models.CharField(max_length=20, choices=ORDER_TYPES, default='Dine-In')
     status = models.CharField(max_length=50, default='Pending')
@@ -104,6 +109,7 @@ class StockEntry(models.Model):
 
 
 
+
 class Resource(models.Model):
     """Represents a Module or App section (e.g., Sales, Inventory, Reports)"""
     name = models.CharField(max_length=100) # e.g., 'POS Sales'
@@ -159,3 +165,27 @@ class Expense(models.Model):
 
     def __str__(self):
         return f"{self.category}: {self.amount} on {self.date}"
+
+
+class Branch(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+    address = models.TextField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+    
+class UserProfile(models.Model):
+    ROLE_CHOICES = (
+        ('admin', 'Admin'),
+        ('cashier', 'Cashier'),
+    )
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='cashier')
+    branch = models.ForeignKey(Branch, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.role}"
+

@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import Category, MenuItem, Recipe, Vendor, Item, StockEntry, Expense
+from .models import Category, MenuItem, Recipe, Vendor, Item, StockEntry, Branch
+
 
 class MenuItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,6 +39,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+
 # backend/api/serializers.py
 class ExpenseSerializer(serializers.ModelSerializer):
     staff_name = serializers.CharField(source='staff_member.first_name', read_only=True)
@@ -44,3 +47,8 @@ class ExpenseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Expense
         fields = ['id', 'category', 'amount', 'description', 'date', 'staff_member', 'staff_name', 'created_at']
+class BranchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Branch
+        fields = '__all__'
+
