@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2, BookOpen, Settings } from 'lucide-react';
-import {Navigate, Routes, Route, NavLink } from 'react-router-dom'; // NEW
-import Inventory from './pages/Inventory'; // NEW
-import Reports from './pages/Reports'; // NEW
-import Expenses from './pages/Expenses'; // NEW
+import {Navigate, Routes, Route, NavLink } from 'react-router-dom'; 
+import Inventory from './pages/Inventory'; 
+import Reports from './pages/Reports'; 
+import Expenses from './pages/Expenses'; 
 import ManageInventory from './pages/ManageInventory';
 import Vendors from './pages/Vendors';
 import RecipeBuilder from './pages/RecipeBuilder';
@@ -14,8 +14,6 @@ import { PermissionsProvider } from './context/PermissionsContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Can from './components/Can';
 import SettingsPage from './pages/Settings';
-import { jwtDecode } from "jwt-decode";
-import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
 // ... your other imports ...
 
