@@ -568,39 +568,43 @@ function App() {
       )}
 
       <div className="nav-rail">
-        <div className="nav-rail-top">
-          <div className="rail-logo">🍳</div>
-          
-          <Can permission="view:pos_home">
-            <NavLink to="/" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="POS Home">
-              <Home size={24} />
-            </NavLink>
-          </Can>
+        <div className="nav-rail-top">
+          <div className="rail-logo">🍳</div>
+          
+          {/* 1. REMOVED THE <Can> WRAPPER SO HOME IS ALWAYS VISIBLE */}
+          <NavLink to="/" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="POS Home">
+            <Home size={24} />
+          </NavLink>
 
-          <Can permission="view:reports">
-            <NavLink to="/reports" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Reports">
-              <BarChart2 size={24} />
-            </NavLink>
-          </Can>
+          {/* 2. HIDE THESE ICONS UNTIL ADMIN FINISHES SETUP */}
+          {!showAdminSetup && (
+            <>
+                <Can permission="view:reports">
+                  <NavLink to="/reports" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Reports">
+                    <BarChart2 size={24} />
+                  </NavLink>
+                </Can>
 
-          <Can permission="view:inventory">
-            <NavLink to="/inventory" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Inventory">
-              <Package size={24} />
-            </NavLink>
-          </Can>
+                <Can permission="view:inventory">
+                  <NavLink to="/inventory" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Inventory">
+                    <Package size={24} />
+                  </NavLink>
+                </Can>
 
-          <Can permission="view:expenses">
-            <NavLink to="/expenses" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Expenses">
-              <FileText size={24} />
-            </NavLink>
-          </Can>
+                <Can permission="view:expenses">
+                  <NavLink to="/expenses" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Expenses">
+                    <FileText size={24} />
+                  </NavLink>
+                </Can>
 
-          <Can permission="view:recipes">
-            <NavLink to="/recipes" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Recipe Builder">
-              <BookOpen size={24} />
-            </NavLink>
-          </Can>
-        </div>
+                <Can permission="view:recipes">
+                  <NavLink to="/recipes" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Recipe Builder">
+                    <BookOpen size={24} />
+                  </NavLink>
+                </Can>
+            </>
+          )}
+        </div>
 
         <div className="nav-rail-bottom">
           {realRole === 'Admin' ? (
