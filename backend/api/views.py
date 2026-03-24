@@ -510,8 +510,10 @@ class CreateCashierView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # RBAC Check: Is the user an Admin?
-        if not request.user.profile.roles.filter(name='Admin').exists():
+        # --- FIXED: Safe RBAC Check ---
+        is_admin = request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Admin').exists())
+        
+        if not is_admin:
             return Response({'error': 'Only admins can create cashiers'}, status=status.HTTP_403_FORBIDDEN)
 
         name = request.data.get('name')
@@ -545,8 +547,10 @@ class ChangeCashierBranchView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # RBAC Check: Is the user an Admin?
-        if not request.user.profile.roles.filter(name='Admin').exists():
+        # --- FIXED: Safe RBAC Check ---
+        is_admin = request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Admin').exists())
+        
+        if not is_admin:
             return Response({'error': 'Only admins can change cashier branch'}, status=status.HTTP_403_FORBIDDEN)
 
         cashier_id = request.data.get('cashier_id')
