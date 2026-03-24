@@ -14,6 +14,7 @@ import { PermissionsProvider } from './context/PermissionsContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Can from './components/Can';
 import SettingsPage from './pages/Settings';
+import { jwtDecode } from "jwt-decode";
 
 function App() {
   // --- 1. UPDATED AUTHENTICATION STATES ---
@@ -105,37 +106,56 @@ function App() {
 
     try {
       if (authMode === 'login') {
+        // 1. Send the login request (No role needed anymore!)
         const res = await axios.post(`${API_BASE_URL}/auth/login/`, { 
           username: email, 
-          password: password,
-          role: selectedRole
+          password: password
         });
         
-        if (res.data.role === 'Pending' || res.data.is_approved === false) {
+        const token = res.data.access;
+
+        // 2. Decode the token to get our custom backend data
+        const decodedToken = jwtDecode(token);
+
+        // 3. Check if they are pending approval
+        if (decodedToken.role === 'Pending') {
            setAuthError('Your account is pending Admin approval. Please wait.');
-           return; // Stop the login process
+           return; 
         }
-        sessionStorage.setItem('access_token', res.data.access);
-        sessionStorage.setItem('active_role', selectedRole);
-        setToken(res.data.access);
+
+        // 4. Save the Tokens
+        sessionStorage.setItem('access_token', token);
+        if (res.data.refresh) {
+            sessionStorage.setItem('refresh_token', res.data.refresh);
+        }
+        
+        // 5. Save the Auto-Detected Role and Branch
+        sessionStorage.setItem('active_role', decodedToken.role);
+        
+        if (decodedToken.branch_id) {
+          sessionStorage.setItem('branch_id', decodedToken.branch_id);
+        } else {
+          sessionStorage.removeItem('branch_id'); // Admins might not have a branch
+        }
+
+        // 6. Log the user in by updating the React state
+        setToken(token);
+
       } else {
         // SIGN UP
         await axios.post(`${API_BASE_URL}/auth/register/`, { 
           name: name,
           email: email, 
           password: password,
-          role: selectedRole // <-- NEW: Send the selected role to Django
+          role: selectedRole
         });
         
         setAuthMode('login');
-        // --- NEW: Updated success message ---
-        setAuthError(`Sign up successful! You can now log in as an ${selectedRole}.`);
-        // ------------------------------------
+        setAuthError(`Sign up successful! You can now log in.`);
         setPassword('');
         setConfirmPassword('');
       }
     } catch (err) {
-      // Your catch block is perfect. It will grab the AuthenticationFailed message from Django!
       setAuthError(err.response?.data?.error || err.response?.data?.detail || 'Authentication failed');
     }
   };

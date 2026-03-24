@@ -56,38 +56,32 @@ def get_my_permissions(request):
     
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    role = serializers.CharField(write_only=True, required=True)
+    @classmethod
+    def get_token(cls, user):
+        # Get the standard token
+        token = super().get_token(user)
 
-    def validate(self, attrs):
-        data = super().validate(attrs)
-        user = self.user
-        requested_role = attrs.get('role')
-        
-        # --- FIXED: Safely check for a profile without crashing ---
+        # 1. Superuser Auto-Detect
+        if user.is_superuser:
+            token['role'] = 'Admin'
+            token['branch_id'] = None
+            return token
+            
+        # 2. Staff Auto-Detect
         try:
             profile = user.profile
-            has_any_role = profile.roles.exists()
-            has_requested_role = profile.roles.filter(name=requested_role).exists()
-        except Exception: # Catches the DoesNotExist error safely
-            has_any_role = False
-            has_requested_role = False
-        # ----------------------------------------------------------
-
-        # 1. Check if they have zero roles (Pending Approval)
-        if not has_any_role and not user.is_superuser:
-            raise AuthenticationFailed("Account created successfully. Please wait for your Manager to approve your access.")
-
-        # 2. Superuser check
-        if requested_role == 'Admin' and user.is_superuser:
-            data['role'] = requested_role
-            return data
+            role = profile.roles.first() # Get their assigned role
             
-        # 3. Specific Role Check
-        if not has_requested_role:
-            raise AuthenticationFailed(f"Access Denied: You do not have the '{requested_role}' role.")
+            # Inject custom claims directly into the token
+            token['role'] = role.name if role else 'Pending'
+            token['branch_id'] = profile.branch.id if profile.branch else None
             
-        data['role'] = requested_role
-        return data
+        except Exception:
+            # If they don't have a profile setup yet
+            token['role'] = 'Pending'
+            token['branch_id'] = None
+            
+        return token
 class CustomTokenLoginView(TokenObtainPairView):
     """Replaces the default JWT login view to enforce role checks"""
     serializer_class = CustomTokenObtainPairSerializer
