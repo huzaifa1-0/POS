@@ -629,57 +629,56 @@ function App() {
       </div>
 
       {/* --- MULTI-PAGE ROUTING --- */}
-      {showAdminSetup ? (
-        
-        /* --- THIS RENDERS IN THE MIDDLE INSTEAD OF THE POS PAGES --- */
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' }}>
-          <div className="auth-card" style={{ maxWidth: '400px', width: '100%' }}>
-            <h2>Admin Workspace Setup</h2>
-            <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '14px' }}>
-              Please select the physical branch and the role you wish to simulate for this session.
-            </p>
+      <Routes>
+        <Route path="/" element={
+          showAdminSetup ? (
+            
+            /* --- RENDER ADMIN LOBBY ON THE HOME PAGE --- */
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc', width: '100%' }}>
+              <div className="auth-card" style={{ maxWidth: '400px', width: '100%' }}>
+                <h2>Admin Workspace Setup</h2>
+                <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '14px' }}>
+                  Please select the physical branch and the role you wish to simulate for this session.
+                </p>
 
-            <select 
-              value={selectedSimBranch} 
-              onChange={(e) => setSelectedSimBranch(e.target.value)} 
-              style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '15px' }}
-            >
-              <option value="" disabled>Select a Branch...</option>
-              {adminBranches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
+                <select 
+                  value={selectedSimBranch} 
+                  onChange={(e) => setSelectedSimBranch(e.target.value)} 
+                  style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '15px' }}
+                >
+                  <option value="" disabled>Select a Branch...</option>
+                  {adminBranches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
 
-            <select 
-              value={selectedSimRole} 
-              onChange={(e) => setSelectedSimRole(e.target.value)} 
-              style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '15px' }}
-            >
-              <option value="Cashier">Login as Cashier</option>
-              <option value="Manager">Login as Manager</option>
-              <option value="Admin">Login as Full Admin</option>
-            </select>
+                <select 
+                  value={selectedSimRole} 
+                  onChange={(e) => setSelectedSimRole(e.target.value)} 
+                  style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '15px' }}
+                >
+                  <option value="Cashier">Login as Cashier</option>
+                  <option value="Manager">Login as Manager</option>
+                  <option value="Admin">Login as Full Admin</option>
+                </select>
 
-            <button 
-              className="auth-btn" 
-              onClick={() => {
-                if (!selectedSimBranch) return alert("You must select a branch to continue!");
-                
-                sessionStorage.setItem('active_role', selectedSimRole);
-                sessionStorage.setItem('branch_id', selectedSimBranch);
-                
-                setShowAdminSetup(false);
-                window.location.reload(); 
-              }}
-            >
-              Enter Workspace
-            </button>
-          </div>
-        </div>
+                <button 
+                  className="auth-btn" 
+                  onClick={() => {
+                    if (!selectedSimBranch) return alert("You must select a branch to continue!");
+                    
+                    sessionStorage.setItem('active_role', selectedSimRole);
+                    sessionStorage.setItem('branch_id', selectedSimBranch);
+                    
+                    setShowAdminSetup(false);
+                    window.location.reload(); 
+                  }}
+                >
+                  Enter Workspace
+                </button>
+              </div>
+            </div>
 
-      ) : (
+          ) : (
 
-        /* --- THE NORMAL APP PAGES LOAD IF SETUP IS DONE --- */
-        <Routes>
-          <Route path="/" element={
             <>
               {/* LEFT SIDEBAR (Orders) */}
             <div className="left-sidebar">
@@ -885,7 +884,7 @@ function App() {
 
       
       </>
-      } />
+      )} />
         
         {/* PROTECTED SEPARATE PAGES */}
         <Route 
@@ -955,8 +954,6 @@ function App() {
         />
         
       </Routes>
-
-      )} {/* <--- THIS IS THE CLOSING BRACKET YOU NEED! */}
 
     </div>
     </PermissionsProvider>
