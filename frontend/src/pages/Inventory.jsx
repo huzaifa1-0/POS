@@ -50,7 +50,7 @@ const Inventory = () => {
 
   const fetchInventory = async () => {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = sessionStorage.getItem('access_token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
       const [itemsRes, entriesRes] = await Promise.all([
@@ -67,6 +67,7 @@ const Inventory = () => {
 
   let summaryList = items.map(item => {
     const itemEntries = stockEntries.filter(entry => entry.item.id === item.id);
+    const calculatedTotalQty = itemEntries.reduce((sum, entry) => sum + parseFloat(entry.quantity), 0);
     
     const vendorsObj = itemEntries.reduce((acc, entry) => {
         const vendorName = entry.vendor.name;
@@ -80,7 +81,7 @@ const Inventory = () => {
     return {
         id: item.id,
         name: item.name,
-        totalQty: parseFloat(item.quantity_on_hand), 
+        totalQty: calculatedTotalQty, 
         costPerUnit: parseFloat(item.cost_per_unit),
         unit: item.unit,
         lastUpdated: itemEntries.length > 0 ? new Date(Math.max(...itemEntries.map(e => new Date(e.created_at)))) : new Date(),

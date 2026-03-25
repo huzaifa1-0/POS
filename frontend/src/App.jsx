@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2, BookOpen } from 'lucide-react';
-import { Routes, Route, NavLink } from 'react-router-dom'; // NEW
+import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2, BookOpen, Settings } from 'lucide-react';
+import {Navigate, Routes, Route, NavLink } from 'react-router-dom'; // NEW
 import Inventory from './pages/Inventory'; // NEW
 import Reports from './pages/Reports'; // NEW
 import Expenses from './pages/Expenses'; // NEW
@@ -10,13 +10,20 @@ import Vendors from './pages/Vendors';
 import RecipeBuilder from './pages/RecipeBuilder';
 import axios from 'axios';
 import { usePDF } from 'react-to-pdf';
+import { PermissionsProvider } from './context/PermissionsContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Can from './components/Can';
+import SettingsPage from './pages/Settings';
 
 function App() {
   // --- 1. UPDATED AUTHENTICATION STATES ---
   const [token, setToken] = useState(sessionStorage.getItem('access_token'));
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
   
+  // --- NEW: STATE FOR THE DROPDOWN ---
+  const [selectedRole, setSelectedRole] = useState('Cashier');
   // New state variables for the advanced form
+  const activeRole = sessionStorage.getItem('active_role');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -77,7 +84,7 @@ function App() {
   // --- UPDATED AUTHENTICATION HANDLER ---
   const handleAuth = async (e) => {
     e.preventDefault();
-    setAuthError('');
+    setAuthError(''); // Clear old errors
 
     if (authMode === 'signup') {
       // Prevent XSS in username
@@ -100,22 +107,35 @@ function App() {
       if (authMode === 'login') {
         const res = await axios.post(`${API_BASE_URL}/auth/login/`, { 
           username: email, 
-          password: password 
+          password: password,
+          role: selectedRole
         });
+        
+        if (res.data.role === 'Pending' || res.data.is_approved === false) {
+           setAuthError('Your account is pending Admin approval. Please wait.');
+           return; // Stop the login process
+        }
         sessionStorage.setItem('access_token', res.data.access);
+        sessionStorage.setItem('active_role', selectedRole);
         setToken(res.data.access);
       } else {
+        // SIGN UP
         await axios.post(`${API_BASE_URL}/auth/register/`, { 
           name: name,
           email: email, 
-          password: password 
+          password: password,
+          role: selectedRole // <-- NEW: Send the selected role to Django
         });
+        
         setAuthMode('login');
-        setAuthError('Registration successful. Please log in.');
+        // --- NEW: Updated success message ---
+        setAuthError(`Sign up successful! You can now log in as an ${selectedRole}.`);
+        // ------------------------------------
         setPassword('');
         setConfirmPassword('');
       }
     } catch (err) {
+      // Your catch block is perfect. It will grab the AuthenticationFailed message from Django!
       setAuthError(err.response?.data?.error || err.response?.data?.detail || 'Authentication failed');
     }
   };
@@ -320,6 +340,16 @@ function App() {
               />
             )}
 
+            <select 
+              value={selectedRole} 
+              onChange={e => setSelectedRole(e.target.value)} 
+              style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '15px', background: 'white' }}
+            >
+              <option value="Cashier">Sign in/up as Cashier</option>
+              <option value="Manager">Sign in/up as Manager</option>
+              <option value="Admin">Sign in/up as Admin</option>
+            </select>
+
             {/* ALWAYS SHOW EMAIL & PASSWORD */}
             <input 
               type="email" 
@@ -395,9 +425,10 @@ function App() {
   };
 
   return (
-    <div className="app-container">
-      
-      {itemToDelete && (
+    <PermissionsProvider> {/* <-- ADD THIS WRAPPER */}
+      <div className="app-container">
+        
+        {itemToDelete && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h3>Remove Item</h3>
@@ -479,27 +510,55 @@ function App() {
       <div className="nav-rail">
         <div className="nav-rail-top">
           <div className="rail-logo">🍳</div>
-          <NavLink to="/" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="POS Home">
-            <Home size={24} />
-          </NavLink>
-          <NavLink to="/reports" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Reports">
-            <BarChart2 size={24} />
-          </NavLink>
-          <NavLink to="/inventory" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Inventory">
-            <Package size={24} />
-          </NavLink>
-          <NavLink to="/expenses" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Expenses">
-            <FileText size={24} />
-          </NavLink>
-          <NavLink to="/recipes" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Recipe Builder">
-            <BookOpen size={24} />
-          </NavLink>
+          
+          <Can permission="view:pos_home">
+            <NavLink to="/" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="POS Home">
+              <Home size={24} />
+            </NavLink>
+          </Can>
+
+          <Can permission="view:reports">
+            <NavLink to="/reports" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Reports">
+              <BarChart2 size={24} />
+            </NavLink>
+          </Can>
+
+          <Can permission="view:inventory">
+            <NavLink to="/inventory" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Inventory">
+              <Package size={24} />
+            </NavLink>
+          </Can>
+
+          <Can permission="view:expenses">
+            <NavLink to="/expenses" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Expenses">
+              <FileText size={24} />
+            </NavLink>
+          </Can>
+
+          <Can permission="view:recipes">
+            <NavLink to="/recipes" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Recipe Builder">
+              <BookOpen size={24} />
+            </NavLink>
+          </Can>
         </div>
+
         <div className="nav-rail-bottom">
-          <button className="rail-btn logout-btn" onClick={handleLogout} title="Logout">
-            <LogOut size={24} />
-          </button>
-        </div>
+  {(activeRole === 'Admin' || activeRole === 'Manager') && (
+    <Can permission="view:settings">
+      {/* Changed from <button> to <NavLink> for consistency */}
+      <NavLink 
+        to="/settings" 
+        className={({ isActive }) => `rail-btn settings-nav-btn ${isActive ? 'active' : ''}`} 
+        title="Settings"
+      >
+        <Settings size={24} />
+      </NavLink>
+    </Can>
+  )}
+  <button className="rail-btn logout-btn" onClick={handleLogout} title="Logout">
+    <LogOut size={24} />
+  </button>
+</div>
       </div>
 
       {/* --- MULTI-PAGE ROUTING --- */}
@@ -616,32 +675,31 @@ function App() {
             </h2>
             
             <div className="order-item-list">
-              {currentOrderData.items.length === 0 ? (
-                 <p style={{color: '#888', fontStyle: 'italic', padding: '10px 0'}}>Empty. Add items below.</p>
-              ) : (
-                currentOrderData.items.map(item => (
-                  <div className="order-item-row redesigned-cart-row" key={item.id}>
-                    <div className="item-left-block">
-                      <span className="item-name">{item.name}</span>
-                    </div>
-                    <div className="item-right-group">
-                      <div className="item-controls-block">
-                        <div className="cancel-wrapper">
-                          <button className="small-cancel-icon-btn" onClick={() => handleRemoveClick(item.id)} title="Delete Completely"><X size={12}/></button>
-                        </div>
-                        <div className="qty-controls-row">
-                          <button className="qty-btn" onClick={() => handleQuantityChange(item.id, -1)}>-</button>
-                          <span className="qty-val">{item.qty}</span>
-                          <button className="qty-btn" onClick={() => handleQuantityChange(item.id, 1)}>+</button>
-                        </div>
-                      </div>
-                      <div className="item-price-block">
-                        <strong className="item-total-price">PKR {(item.price * item.qty).toFixed(2)}</strong>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+              {/* --- Replace the content inside order-item-list in App.jsx --- */}
+{currentOrderData.items.map(item => (
+  <div className="cart-item-row" key={item.id}>
+    <div className="cart-item-info">
+      <span className="cart-item-name">{item.name}</span>
+      <span className="cart-item-details">PKR {item.price.toFixed(0)}</span>
+    </div>
+    
+    <div className="cart-item-controls">
+      <div className="qty-pill">
+        <button className="qty-pill-btn" onClick={() => handleQuantityChange(item.id, -1)}>-</button>
+        <span className="qty-pill-val">{item.qty}</span>
+        <button className="qty-pill-btn" onClick={() => handleQuantityChange(item.id, 1)}>+</button>
+      </div>
+      
+      <div className="cart-item-total">
+        <strong>PKR {(item.price * item.qty).toFixed(0)}</strong>
+      </div>
+
+      <button className="cart-item-delete" onClick={() => handleRemoveClick(item.id)}>
+        <X size={16} />
+      </button>
+    </div>
+  </div>
+))}
             </div>
             
             {/* --- NEW: TOTAL BILL SUMMARY --- */}
@@ -713,18 +771,74 @@ function App() {
       </>
       } />
         
-        {/* NEW SEPARATE PAGES */}
-        <Route path="/reports" element={<Reports dailyIncome={dailyIncome} cashIncome={cashIncome} onlineIncome={onlineIncome} completedOrders={completedOrders} />} />
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/expenses" element={<Expenses />} />
+        {/* PROTECTED SEPARATE PAGES */}
+        <Route 
+          path="/reports" 
+          element={
+            <ProtectedRoute permission="view:reports">
+              <Reports dailyIncome={dailyIncome} cashIncome={cashIncome} onlineIncome={onlineIncome} completedOrders={completedOrders} />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/inventory" 
+          element={
+            <ProtectedRoute permission="view:inventory">
+              <Inventory />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/expenses" 
+          element={
+            <ProtectedRoute permission="view:expenses">
+              <Expenses />
+            </ProtectedRoute>
+          } 
+        />
 
-        <Route path="/manage-inventory" element={<ManageInventory />} />
-        <Route path="/vendors" element={<Vendors />} />
-        <Route path="/recipes" element={<RecipeBuilder />} />
+        <Route 
+          path="/manage-inventory" 
+          element={
+            <ProtectedRoute permission="edit:inventory"> {/* Notice I used 'edit' here, not just 'view' */}
+              <ManageInventory />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/vendors" 
+          element={
+            <ProtectedRoute permission="view:vendors">
+              <Vendors />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/recipes" 
+          element={
+            <ProtectedRoute permission="view:recipes">
+              <RecipeBuilder />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/settings" 
+          element={
+            <ProtectedRoute permission="view:settings">
+              <SettingsPage />
+            </ProtectedRoute>
+          } 
+        />
         
       </Routes>
     </div>
+    </PermissionsProvider>
   );
 }
+
 
 export default App;
