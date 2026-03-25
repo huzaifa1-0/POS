@@ -14,6 +14,47 @@ function Settings() {
   const [branches, setBranches] = useState([]);
   const [branchName, setBranchName] = useState('');
   const [branchAddress, setBranchAddress] = useState('');
+
+  // --- NEW: Edit Branch States ---
+  const [editingBranchId, setEditingBranchId] = useState(null);
+  const [editBranchName, setEditBranchName] = useState('');
+  const [editBranchAddress, setEditBranchAddress] = useState('');
+
+  // --- NEW: Branch Edit & Delete Handlers ---
+  const handleDeleteBranch = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this branch?")) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/branches/${id}/`, { 
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } 
+      });
+      setMessage('Branch deleted successfully!');
+      fetchBranches();
+      setTimeout(() => setMessage(''), 2000);
+    } catch (err) { alert("Failed to delete branch. It may have existing orders tied to it."); }
+  };
+
+  const startEditingBranch = (branch) => {
+    setEditingBranchId(branch.id);
+    setEditBranchName(branch.name);
+    setEditBranchAddress(branch.address);
+  };
+
+  const handleUpdateBranch = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`${API_BASE_URL}/branches/${editingBranchId}/`, { 
+        name: editBranchName, 
+        address: editBranchAddress, 
+        is_active: true 
+      }, { 
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } 
+      });
+      setMessage('Branch updated successfully!');
+      setEditingBranchId(null);
+      fetchBranches();
+      setTimeout(() => setMessage(''), 2000);
+    } catch (err) { alert("Failed to update branch."); }
+  };
   
   const [cashierName, setCashierName] = useState('');
   const [cashierEmail, setCashierEmail] = useState('');
@@ -230,12 +271,39 @@ function Settings() {
                 <button type="submit" className="btn-primary">+ Add Branch</button>
               </form>
 
-              <h3 className="sub-header">Existing Branches</h3>
-              <ul className="branch-list">
+              <h3 className="sub-header" style={{ marginTop: '30px' }}>Existing Branches</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {branches.map(b => (
-                  <li key={b.id}><strong>{b.name}</strong> <br/> <span className="branch-address">{b.address}</span></li>
+                  <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#f8fafc', flexWrap: 'wrap', gap: '10px' }}>
+                    
+                    {/* If this branch is being edited, show the input form */}
+                    {editingBranchId === b.id ? (
+                      <form onSubmit={handleUpdateBranch} style={{ display: 'flex', gap: '10px', width: '100%', flexWrap: 'wrap' }}>
+                        <input type="text" className="form-input" value={editBranchName} onChange={e => setEditBranchName(e.target.value)} required style={{ flex: 1, minWidth: '150px', padding: '8px' }} />
+                        <input type="text" className="form-input" value={editBranchAddress} onChange={e => setEditBranchAddress(e.target.value)} required style={{ flex: 2, minWidth: '200px', padding: '8px' }} />
+                        <div style={{ display: 'flex', gap: '5px' }}>
+                          <button type="submit" className="btn-success" style={{ padding: '8px 12px', fontSize: '14px' }}>Save</button>
+                          <button type="button" className="btn-primary" onClick={() => setEditingBranchId(null)} style={{ padding: '8px 12px', fontSize: '14px', backgroundColor: '#94a3b8', border: 'none' }}>Cancel</button>
+                        </div>
+                      </form>
+                    ) : (
+                      /* Otherwise, show the normal text and action buttons */
+                      <>
+                        <div style={{ flex: 1 }}>
+                          <strong style={{ fontSize: '16px', color: '#0f172a' }}>{b.name}</strong> <br/>
+                          <span style={{ color: '#64748b', fontSize: '14px' }}>{b.address}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '15px' }}>
+                          <button type="button" onClick={() => startEditingBranch(b)} style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Edit</button>
+                          <button type="button" onClick={() => handleDeleteBranch(b.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Delete</button>
+                        </div>
+                      </>
+                    )}
+                    
+                  </div>
                 ))}
-              </ul>
+                {branches.length === 0 && <p style={{ color: '#64748b' }}>No branches found.</p>}
+              </div>
             </div>
           </div>
 

@@ -411,7 +411,7 @@ function App() {
     return (
       <div className="auth-container">
         <div className="auth-card">
-          <h2>{authMode === 'login' ? 'Login to POS' : 'Register POS Admin'}</h2>
+          <h2>{authMode === 'login' ? 'Login' : 'Register'}</h2>
           
           {authError && (
             <p className="auth-error" style={{color: authError.includes('successful') ? 'green' : '#ff4d4f'}}>
@@ -437,9 +437,9 @@ function App() {
               onChange={e => setSelectedRole(e.target.value)} 
               style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '15px', background: 'white' }}
             >
-              <option value="Cashier">Sign in/up as Cashier</option>
-              <option value="Manager">Sign in/up as Manager</option>
-              <option value="Admin">Sign in/up as Admin</option>
+              <option value="Cashier">Sign in/Sign up as Cashier</option>
+              <option value="Manager">Sign in/Sign up as Manager</option>
+              <option value="Admin">Sign in/Sign up as Admin</option>
             </select>
 
             {/* ALWAYS SHOW EMAIL & PASSWORD */}
