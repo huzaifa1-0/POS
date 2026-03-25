@@ -23,16 +23,27 @@ import { jwtDecode } from "jwt-decode";
 // This secretly attaches the Branch ID & Simulated Role to EVERY request
 // 🚨 NEW: Global Axios Interceptor
 axios.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem('access_token');
   const branchId = sessionStorage.getItem('branch_id');
   const activeRole = sessionStorage.getItem('active_role'); // 🚨 Get active role
   
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // 2. Always attach the Branch ID so Django filters data correctly
   if (branchId) {
     config.headers['X-Branch-Id'] = branchId;
   }
+
+  // 3. Always attach the Simulated Role (so Admins can pretend to be Cashiers properly)
   if (activeRole) {
-    config.headers['X-Simulated-Role'] = activeRole; // 🚨 Add simulated role to every request
+    config.headers['X-Simulated-Role'] = activeRole;
   }
+
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 function App() {
