@@ -19,10 +19,17 @@ import { jwtDecode } from "jwt-decode";
 
 // 🚨 NEW: Global Axios Interceptor
 // This secretly attaches the selected Branch ID to EVERY request sent to Django
+// 🚨 NEW: Global Axios Interceptor
+// This secretly attaches the Branch ID & Simulated Role to EVERY request
 axios.interceptors.request.use((config) => {
   const branchId = sessionStorage.getItem('branch_id');
+  const activeRole = sessionStorage.getItem('active_role'); // <-- Add this
+  
   if (branchId) {
     config.headers['X-Branch-Id'] = branchId;
+  }
+  if (activeRole) {                                         // <-- Add this
+    config.headers['X-Simulated-Role'] = activeRole;        // <-- Add this
   }
   return config;
 });
@@ -607,7 +614,7 @@ function App() {
         </div>
 
         <div className="nav-rail-bottom">
-          {realRole === 'Admin' ? (
+          {activeRole === 'Admin' ? (
             <NavLink
               to="/settings"
               className={({ isActive }) => `rail-btn settings-nav-btn ${isActive ? 'active' : ''}`}
@@ -947,7 +954,7 @@ function App() {
         <Route
           path="/settings"
           element={
-            realRole === 'Admin' ? (
+            activeRole === 'Admin' ? (
               <SettingsPage />
             ) : (
               <ProtectedRoute permission="view:settings">
