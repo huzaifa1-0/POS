@@ -436,20 +436,26 @@ def manage_role_permissions(request):
     if not (is_admin or is_manager):
         return Response({'error': 'Not authorized.'}, status=status.HTTP_403_FORBIDDEN)
         
-    # --- PERFECTED SCREENS LIST (WITH SETTINGS) ---
+    # --- 🚨 FIX 1: Added 'edit:inventory' so Manage Inventory can be accessed ---
     AVAILABLE_SCREENS = [
         {'key': 'view:pos_home', 'label': 'POS Terminal'},
         {'key': 'view:reports', 'label': 'Reports Dashboard'},
         {'key': 'view:inventory', 'label': 'Inventory'},
+        {'key': 'edit:inventory', 'label': 'Manage Inventory'}, 
         {'key': 'view:expenses', 'label': 'Expenses'},
         {'key': 'view:recipes', 'label': 'Recipe Builder'},
         {'key': 'view:vendors', 'label': 'Vendors'},
-        {'key': 'view:settings', 'label': 'Settings Dashboard'}, # Added correctly!
+        {'key': 'view:settings', 'label': 'Settings Dashboard'},
     ]
 
     res, _ = Resource.objects.get_or_create(name='System Apps', slug='system')
     for screen in AVAILABLE_SCREENS:
         Permission.objects.get_or_create(resource=res, action='view', permission_key=screen['key'])
+
+    # --- 🚨 FIX 2: Force create the roles so they ALWAYS appear in the Matrix ---
+    Role.objects.get_or_create(name='Admin')
+    Role.objects.get_or_create(name='Manager')
+    Role.objects.get_or_create(name='Cashier')
 
     if request.method == 'GET':
         if is_admin:
@@ -498,6 +504,10 @@ def manage_user_roles(request):
     if not (is_admin or is_manager):
         return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
 
+    Role.objects.get_or_create(name='Admin')
+    Role.objects.get_or_create(name='Manager')
+    Role.objects.get_or_create(name='Cashier')
+    
     if request.method == 'GET':
         if is_admin:
             # Admins see everyone
