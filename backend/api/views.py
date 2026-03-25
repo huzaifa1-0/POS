@@ -444,6 +444,7 @@ def manage_role_permissions(request):
         {'key': 'view:pos_home', 'label': 'POS Terminal'},
         {'key': 'view:reports', 'label': 'Reports Dashboard'},
         {'key': 'view:inventory', 'label': 'Inventory'},
+        {'key': 'edit:inventory', 'label': 'Manage Stock'},
         {'key': 'view:expenses', 'label': 'Expenses'},
         {'key': 'view:recipes', 'label': 'Recipe Builder'},
         {'key': 'view:vendors', 'label': 'Vendors'},
