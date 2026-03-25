@@ -32,6 +32,9 @@ from rest_framework.permissions import AllowAny
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
 
 class ExpenseViewSet(viewsets.ModelViewSet):
     queryset = Expense.objects.all().order_by('-date')
@@ -71,6 +74,23 @@ def get_my_permissions(request):
         return Response({"permissions": []})    
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+        password = attrs.get('password')
+
+        if username and password:
+            try:
+                user = User.objects.get(username=username)
+                # If user exists, but password doesn't match, trigger the specific error
+                if not user.check_password(password):
+                    raise AuthenticationFailed('Incorrect Password')
+            except User.DoesNotExist:
+                # If the email doesn't exist at all
+                raise AuthenticationFailed('No active account found.')
+                
+        return super().validate(attrs)
+
     @classmethod
     def get_token(cls, user):
         # Get the standard token
@@ -118,6 +138,11 @@ class RegisterView(APIView):
             # Check if they missed anything
             if not email or not password or not name or not role_name:
                 return Response({'error': 'Please provide name, email, password, and role'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                validate_email(email)
+            except ValidationError:
+                return Response({'error': 'Invalid email format. Please provide a valid email.'}, status=status.HTTP_400_BAD_REQUEST)
                 
             if User.objects.filter(username=email).exists():
                 return Response({'error': 'Email is already registered'}, status=status.HTTP_400_BAD_REQUEST)
@@ -586,6 +611,11 @@ class CreateCashierView(APIView):
 
         if not all([name, email, password, branch_id]):
             return Response({'error': 'Please provide name, email, password and branch_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            validate_email(email)
+        except ValidationError:
+            return Response({'error': 'Invalid email format. Please provide a valid email.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if User.objects.filter(username=email).exists():
             return Response({'error': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)

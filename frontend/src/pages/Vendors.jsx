@@ -66,6 +66,16 @@ const Vendors = () => {
   const handleSubmitVendor = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
+
+    // --- NEW: STRICT NUMERIC VALIDATION FOR QA TEST CASE ---
+    if (formData.payment_method !== 'Cash' && formData.payment_account) {
+      const isNumeric = /^\d+$/.test(formData.payment_account); 
+      if (!isNumeric) {
+        alert("Invalid Input: JazzCash / Payment Account must contain ONLY numbers.");
+        return; // Stops the form from submitting to the backend
+      }
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -150,10 +160,21 @@ const Vendors = () => {
             </div>
 
             {/* ONLY SHOW THIS IF PAYMENT METHOD IS NOT CASH */}
+            {/* ONLY SHOW THIS IF PAYMENT METHOD IS NOT CASH */}
             {formData.payment_method !== 'Cash' && (
               <div className="form-group" style={{ flex: '1.5', minWidth: '160px', marginBottom: 0 }}>
                 <label className="form-label" style={{ fontSize: '13px' }}>Account Details</label>
-                <input type="text" name="payment_account" value={formData.payment_account} onChange={handleFormChange} placeholder="Phone or IBAN" className="form-input" style={{ padding: '8px', fontSize: '14px' }} required />
+                <input 
+                  type="text" 
+                  pattern="\d*" /* <-- NEW: Forces numeric keypad on mobile */
+                  name="payment_account" 
+                  value={formData.payment_account} 
+                  onChange={handleFormChange} 
+                  placeholder="Phone or IBAN" 
+                  className="form-input" 
+                  style={{ padding: '8px', fontSize: '14px' }} 
+                  required 
+                />
               </div>
             )}
 
