@@ -88,6 +88,7 @@ function App() {
   const [itemToDelete, setItemToDelete] = useState(null); 
   const [showReceiptModal, setShowReceiptModal] = useState(false); /* NEW: Controls the receipt modal */
   const { toPDF, targetRef } = usePDF({ filename: `${activeOrder}_Receipt.pdf` });
+  const [toastMessage, setToastMessage] = useState('');
 
 
 
@@ -277,18 +278,22 @@ function App() {
   };
 
   const handleAddItem = (item) => {
-    setOrders(prev => {
-      const currentOrder = prev[activeOrder] || { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' };
-      const existingItem = currentOrder.items.find(i => i.id === item.id);
-      
-      let newItems = existingItem 
-        ? currentOrder.items.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i)
-        : [...currentOrder.items, { ...item, qty: 1 }];
+    setOrders(prev => {
+      const currentOrder = prev[activeOrder] || { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' };
+      const existingItem = currentOrder.items.find(i => i.id === item.id);
+      
+      let newItems = existingItem 
+        ? currentOrder.items.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i)
+        : [...currentOrder.items, { ...item, qty: 1 }];
 
-      const newStatus = currentOrder.status === 'Sent' ? 'Sent' : 'Running';
-      return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: newStatus } };
-    });
-  };
+      const newStatus = currentOrder.status === 'Sent' ? 'Sent' : 'Running';
+      return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: newStatus } };
+    });
+    
+    // 🚨 NEW: Trigger the notification and clear it after 1 second
+    setToastMessage(`Added ${item.name}!`);
+    setTimeout(() => setToastMessage(''), 1000);
+  };
 
   const handleRemoveClick = (itemId) => setItemToDelete(itemId);
 
@@ -809,9 +814,18 @@ function App() {
       </div>
 
       {/* MIDDLE SECTION */}
-      <div className="middle-section">
-        <div className="middle-content">
-          <div className="current-order-area">
+      {/* MIDDLE SECTION */}
+      <div className="middle-section">
+        <div className="middle-content">
+          {/* 🚨 ADDED position: 'relative' to contain the notification popup */}
+          <div className="current-order-area" style={{ position: 'relative' }}>
+            
+            {/* 🚨 NEW: TOAST NOTIFICATION UI */}
+            {toastMessage && (
+              <div style={{ position: 'absolute', top: '20px', right: '20px', background: '#10b981', color: 'white', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', zIndex: 100 }}>
+                ✅ {toastMessage}
+              </div>
+            )}
             <h2 style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
               {activeOrder} - 
               <span className="status-badge" style={{ 
@@ -861,32 +875,36 @@ function App() {
               </div>
             )}
 
-            {/* View Receipt Button */}
-            {currentOrderData.items.length > 0 && (
-              <button 
-                style={{ width: '100%', padding: '12px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '15px' }}
-                onClick={() => setShowReceiptModal(true)}
-              >
-                <Receipt size={18} /> View Receipt
-              </button>
-            )}
+            {/* --- ACTION BUTTONS ROW --- */}
+            {/* --- ACTION BUTTONS ROW (SMALL & RIGHT-ALIGNED) --- */}
+          
+            {currentOrderData.items.length > 0 && (
+              <div style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                {/* Send to Kitchen Button OR Sent Badge */}
+                {currentOrderData.status !== 'Sent' ? (
+                  <button 
+                    style={{ padding: '8px 16px', background: '#ff6b6b', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}
+                    onClick={() => setOrders(prev => ({...prev, [activeOrder]: { ...prev[activeOrder], status: 'Sent' }}))}
+                  >
+                    <ChefHat size={16} /> Send to Kitchen
+                  </button>
+                ) : (
+                  <div style={{ padding: '8px 16px', background: '#dcfce3', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: '6px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    ✅ Sent
+                  </div>
+                )}
+                {/* View Receipt Button */}
+                <button 
+                  style={{ padding: '8px 16px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}
+                  onClick={() => setShowReceiptModal(true)}
+                >
+                  <Receipt size={16} /> View Receipt
+                </button>
 
-            {/* Send to Kitchen Button */}
-            {currentOrderData.items.length > 0 && currentOrderData.status !== 'Sent' && (
-              <button 
-                style={{ width: '100%', padding: '12px', background: '#ff6b6b', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '10px' }}
-                onClick={() => setOrders(prev => ({...prev, [activeOrder]: { ...prev[activeOrder], status: 'Sent' }}))}
-              >
-                <ChefHat size={18} /> Send to Kitchen (KOT)
-              </button>
-            )}
-
-            {currentOrderData.status === 'Sent' && (
-              <div style={{ width: '100%', padding: '12px', background: '#f0fdf4', color: '#16a34a', border: '1px solid #dcfce3', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '10px' }}>
-                ✅ Sent to Kitchen (Completed)
-              </div>
-            )}
-          </div>
+                
+              </div>
+            )}
+          </div>
 
           <div className="menu-grid">
             {menuItems.map(item => (
