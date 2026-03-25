@@ -21,15 +21,16 @@ import { jwtDecode } from "jwt-decode";
 // This secretly attaches the selected Branch ID to EVERY request sent to Django
 // 🚨 NEW: Global Axios Interceptor
 // This secretly attaches the Branch ID & Simulated Role to EVERY request
+// 🚨 NEW: Global Axios Interceptor
 axios.interceptors.request.use((config) => {
   const branchId = sessionStorage.getItem('branch_id');
-  const activeRole = sessionStorage.getItem('active_role'); // <-- Add this
+  const activeRole = sessionStorage.getItem('active_role'); // 🚨 Get active role
   
   if (branchId) {
     config.headers['X-Branch-Id'] = branchId;
   }
-  if (activeRole) {                                         // <-- Add this
-    config.headers['X-Simulated-Role'] = activeRole;        // <-- Add this
+  if (activeRole) {
+    config.headers['X-Simulated-Role'] = activeRole; // 🚨 Add simulated role to every request
   }
   return config;
 });

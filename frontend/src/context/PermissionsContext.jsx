@@ -14,10 +14,11 @@ export const PermissionsProvider = ({ children }) => {
         const activeRole = sessionStorage.getItem('active_role'); // GET SIMULATED ROLE
         
         if (!token) {
+            setPermissions([]);
             setLoading(false);
             return; 
         }
-
+        setLoading(true);
         axios.get(`${API_BASE_URL}/auth/permissions/`, {
             headers: { 
                 Authorization: `Bearer ${token}`,

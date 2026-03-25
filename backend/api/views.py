@@ -429,19 +429,21 @@ class ManageInventoryView(APIView):
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def manage_role_permissions(request):
-    # 1. Identify who is asking
     is_admin = request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Admin').exists())
     is_manager = hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Manager').exists()
 
     if not (is_admin or is_manager):
         return Response({'error': 'Not authorized.'}, status=status.HTTP_403_FORBIDDEN)
         
-    # --- 🚨 FIX 1: Added 'edit:inventory' so Manage Inventory can be accessed ---
+    # 🚨 FORCE INITIALIZE ROLES (Ensures columns appear in Settings)
+    Role.objects.get_or_create(name='Admin')
+    Role.objects.get_or_create(name='Manager')
+    Role.objects.get_or_create(name='Cashier')
+
     AVAILABLE_SCREENS = [
         {'key': 'view:pos_home', 'label': 'POS Terminal'},
         {'key': 'view:reports', 'label': 'Reports Dashboard'},
         {'key': 'view:inventory', 'label': 'Inventory'},
-        {'key': 'edit:inventory', 'label': 'Manage Inventory'}, 
         {'key': 'view:expenses', 'label': 'Expenses'},
         {'key': 'view:recipes', 'label': 'Recipe Builder'},
         {'key': 'view:vendors', 'label': 'Vendors'},
@@ -497,17 +499,17 @@ def manage_role_permissions(request):
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def manage_user_roles(request):
-    # 1. Identify who is asking
     is_admin = request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Admin').exists())
     is_manager = hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Manager').exists()
 
     if not (is_admin or is_manager):
         return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
 
+    # 🚨 FORCE INITIALIZE ROLES (Ensures dropdowns work)
     Role.objects.get_or_create(name='Admin')
     Role.objects.get_or_create(name='Manager')
     Role.objects.get_or_create(name='Cashier')
-    
+
     if request.method == 'GET':
         if is_admin:
             # Admins see everyone
