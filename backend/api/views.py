@@ -1,3 +1,5 @@
+from urllib import request
+
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
@@ -28,6 +30,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import serializers
 from rest_framework.permissions import AllowAny
 from django.db.models.functions import Coalesce
+from django.utils import timezone
 
 
 class ExpenseViewSet(viewsets.ModelViewSet):
@@ -294,11 +297,20 @@ class ReportDashboardView(APIView):
         else:
             safe_orders = Order.objects.none() # Unknown user sees nothing
         # ----------------------------------------------------
+        range_filter = request.GET.get('range', 'all')
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
 
-        # --- 2. APPLY THE SAFE ORDERS TO YOUR EXISTING LOGIC ---
-        
-        # We replace Order.objects with safe_orders right here!
         orders = safe_orders.filter(status='Completed') 
+
+        if range_filter == 'custom' and start_date_str and end_date_str:
+            orders = orders.filter(created_at__date__gte=start_date_str, created_at__date__lte=end_date_str)
+        elif range_filter == 'today':
+            today = timezone.now().date()
+            orders = orders.filter(created_at__date=today)
+        elif range_filter == 'month':
+            today = timezone.now().date()
+            orders = orders.filter(created_at__year=today.year, created_at__month=today.month)
         order_items = OrderItem.objects.filter(order__in=orders)
 
         total_income = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0

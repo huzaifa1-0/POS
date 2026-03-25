@@ -7,19 +7,32 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api
 const Reports = () => {
   const [dateRange, setDateRange] = useState('all'); 
   
-  // NEW: Added cogs and net_profit to the state
+  // NEW: State for Custom Date Range
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  
   const [data, setData] = useState({
     total_income: 0, cogs: 0, net_profit: 0, cash_income: 0, online_income: 0, top_items: [], low_stock: [], recent_orders: []
   });
 
+  // NEW: Trigger fetch when dates change
   useEffect(() => {
-    fetchReportData();
-  }, [dateRange]);
+    // Only fetch if it's NOT a custom range, OR if it is a custom range and BOTH dates are picked
+    if (dateRange !== 'custom' || (dateRange === 'custom' && startDate && endDate)) {
+      fetchReportData();
+    }
+  }, [dateRange, startDate, endDate]);
 
   const fetchReportData = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/reports/dashboard/?range=${dateRange}`, {
-        // ADD THIS HEADER LINE TO SEND THE TOKEN!
+      let url = `${BASE_URL}/reports/dashboard/?range=${dateRange}`;
+      
+      // NEW: Attach custom dates to the API request
+      if (dateRange === 'custom' && startDate && endDate) {
+        url += `&start_date=${startDate}&end_date=${endDate}`;
+      }
+
+      const res = await axios.get(url, {
         headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` }
       });
       setData(res.data);
@@ -53,18 +66,48 @@ const Reports = () => {
   return (
     <div className="reports-page-wrapper" style={{ flex: 1, padding: '30px', background: '#f8fafc', overflowY: 'auto' }}>
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', flexWrap: 'wrap', gap: '15px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <BarChart2 size={28} color="#4f46e5" />
           <h2 style={{ margin: 0, color: '#1e293b' }}>Analytics & Reports</h2>
         </div>
         
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-          <select value={dateRange} onChange={(e) => setDateRange(e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}>
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
+          
+          <select 
+            value={dateRange} 
+            onChange={(e) => {
+              setDateRange(e.target.value);
+              // Reset dates if they pick something else
+              if(e.target.value !== 'custom') { setStartDate(''); setEndDate(''); }
+            }} 
+            style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
+          >
             <option value="all">All Time</option>
             <option value="today">Today</option>
             <option value="month">This Month</option>
+            {/* NEW OPTION */}
+            <option value="custom">Custom Date Range...</option> 
           </select>
+
+          {/* NEW: CALENDAR INPUTS (Only shows when 'Custom Date Range' is selected) */}
+          {dateRange === 'custom' && (
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', animation: 'fadeIn 0.3s ease' }}>
+              <input 
+                type="date" 
+                value={startDate} 
+                onChange={(e) => setStartDate(e.target.value)} 
+                style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} 
+              />
+              <span style={{ fontWeight: 'bold', color: '#64748b' }}>to</span>
+              <input 
+                type="date" 
+                value={endDate} 
+                onChange={(e) => setEndDate(e.target.value)} 
+                style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} 
+              />
+            </div>
+          )}
 
           <button onClick={handleExportCSV} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
             <Download size={18} /> Export CSV
@@ -72,29 +115,28 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* NEW: UPGRADED PROFIT METRICS CARDS */}
+      {/* --- PROFIT METRICS CARDS --- */}
+      {/* --- REVENUE METRICS CARDS --- */}
       <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', flexWrap: 'wrap' }}>
+        
+        {/* Total Revenue Card */}
         <div style={{ flex: '1', minWidth: '200px', background: 'white', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #3b82f6', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
           <p style={{ margin: 0, color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px' }}>Total Revenue</p>
           <h3 style={{ margin: '10px 0 0 0', fontSize: '24px', color: '#1e293b' }}>PKR {data.total_income}</h3>
         </div>
         
-        <div style={{ flex: '1', minWidth: '200px', background: 'white', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #ef4444', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <p style={{ margin: 0, color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px' }}>Cost of Goods (COGS)</p>
-          <h3 style={{ margin: '10px 0 0 0', fontSize: '24px', color: '#1e293b' }}>PKR {data.cogs}</h3>
-        </div>
-
+        {/* Cash Income Card */}
         <div style={{ flex: '1', minWidth: '200px', background: 'white', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #10b981', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <p style={{ margin: 0, color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px' }}>Net Profit</p>
-          <h3 style={{ margin: '10px 0 0 0', fontSize: '24px', color: '#1e293b' }}>PKR {data.net_profit}</h3>
+          <p style={{ margin: 0, color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px' }}>Cash Payments</p>
+          <h3 style={{ margin: '10px 0 0 0', fontSize: '24px', color: '#1e293b' }}>PKR {data.cash_income}</h3>
         </div>
 
+        {/* Online/Other Income Card */}
         <div style={{ flex: '1', minWidth: '200px', background: 'white', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #8b5cf6', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <p style={{ margin: 0, color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px' }}>Profit Margin</p>
-          <h3 style={{ margin: '10px 0 0 0', fontSize: '24px', color: '#1e293b' }}>
-            {data.total_income > 0 ? ((data.net_profit / data.total_income) * 100).toFixed(1) : 0}%
-          </h3>
+          <p style={{ margin: 0, color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px' }}>Online / Bank Payments</p>
+          <h3 style={{ margin: '10px 0 0 0', fontSize: '24px', color: '#1e293b' }}>PKR {data.online_income}</h3>
         </div>
+
       </div>
 
       <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', flexWrap: 'wrap' }}>
@@ -115,7 +157,6 @@ const Reports = () => {
           ) : (<p style={{ color: '#94a3b8' }}>No sales data yet.</p>)}
         </div>
 
-        {/* NEW: UPDATED LOW STOCK MAPPING */}
         <div style={{ flex: 1, minWidth: '250px', background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
           <h3 style={{ margin: '0 0 15px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#ef4444' }}><AlertTriangle size={20}/> Raw Ingredients Alert</h3>
           {data.low_stock.length > 0 ? (
@@ -123,7 +164,6 @@ const Reports = () => {
              {data.low_stock.map((item, idx) => (
                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
                  <span style={{ fontWeight: 'bold', color: '#991b1b' }}>{item.name}</span>
-                 {/* Replaced stock_available with quantity_on_hand and unit */}
                  <strong style={{ color: '#dc2626' }}>{item.quantity_on_hand} {item.unit} left</strong>
                </div>
              ))}
@@ -158,7 +198,7 @@ const Reports = () => {
                    </tr>
                  ))
                ) : (
-                 <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>No sales data yet.</td></tr>
+                 <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>No sales data for this date range.</td></tr>
                )}
              </tbody>
            </table>
