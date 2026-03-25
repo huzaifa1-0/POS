@@ -57,6 +57,24 @@ MIDDLEWARE = [
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Add this explicitly to tell Django our custom frontend headers are safe!
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'x-branch-id',         # <--- ALLOWS BRANCH SELECTION
+    'x-simulated-role',    # <--- ALLOWS ADMIN ROLE SIMULATION
+]
+
+# Alternatively, if you want a quicker fix, you can just paste this single line:
+CORS_ALLOW_ALL_HEADERS = True
 CORS_ALLOW_CREDENTIALS = True
 # This line is for extra security in newer Django versions
 CSRF_TRUSTED_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
