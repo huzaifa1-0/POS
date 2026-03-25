@@ -582,6 +582,8 @@ class CreateCashierView(APIView):
         password = request.data.get('password')
         branch_id = request.data.get('branch_id')
 
+        role_name = request.data.get('role', 'Cashier')
+
         if not all([name, email, password, branch_id]):
             return Response({'error': 'Please provide name, email, password and branch_id'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -599,10 +601,10 @@ class CreateCashierView(APIView):
 
         # Unified Profile Creation
         profile = UserProfile.objects.create(user=user, branch=branch)
-        cashier_role, _ = Role.objects.get_or_create(name='Cashier')
-        profile.roles.add(cashier_role)
+        assigned_role, _ = Role.objects.get_or_create(name=role_name)
+        profile.roles.add(assigned_role)
 
-        return Response({'message': f'Cashier {name} created and assigned to {branch.name}'}, status=status.HTTP_201_CREATED)
+        return Response({'message': f'{role_name} {name} created and assigned to {branch.name}'}, status=status.HTTP_201_CREATED)
 
 class ChangeCashierBranchView(APIView):
     permission_classes = [IsAuthenticated]

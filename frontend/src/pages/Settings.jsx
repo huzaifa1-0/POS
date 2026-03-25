@@ -20,6 +20,8 @@ function Settings() {
   const [editBranchName, setEditBranchName] = useState('');
   const [editBranchAddress, setEditBranchAddress] = useState('');
 
+  const [staffRole, setStaffRole] = useState('Cashier');
+
   // --- NEW: Branch Edit & Delete Handlers ---
   const handleDeleteBranch = async (id) => {
     if (!window.confirm("Are you sure you want to delete this branch?")) return;
@@ -159,11 +161,23 @@ function Settings() {
   const handleCreateCashier = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_BASE_URL}/auth/create-cashier/`, { name: cashierName, email: cashierEmail, password: cashierPassword, branch_id: selectedBranchId }, { headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } });
-      setMessage('Cashier created and assigned to branch!');
-      setCashierName(''); setCashierEmail(''); setCashierPassword(''); setSelectedBranchId(''); fetchUsers();
+      await axios.post(`${API_BASE_URL}/auth/create-cashier/`, { 
+        name: cashierName, 
+        email: cashierEmail, 
+        password: cashierPassword, 
+        branch_id: selectedBranchId,
+        role: staffRole // <--- SENDING THE ROLE TO DJANGO
+      }, { headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } });
+      
+      setMessage(`${staffRole} created and assigned to branch!`);
+      
+      // Reset the form
+      setCashierName(''); setCashierEmail(''); setCashierPassword(''); 
+      setSelectedBranchId(''); setStaffRole('Cashier'); 
+      fetchUsers();
+      
       setTimeout(() => setMessage(''), 2000);
-    } catch (err) { alert(err.response?.data?.error || "Failed to create cashier."); }
+    } catch (err) { alert(err.response?.data?.error || "Failed to create staff member."); }
   };
 
   return (
@@ -308,13 +322,19 @@ function Settings() {
           </div>
 
           <div className="settings-card form-card">
-            <div className="settings-card-header"><h2>Assign New Cashier to Branch</h2></div>
+            <div className="settings-card-header"><h2>Create & Assign Staff to Branch</h2></div>
             <div className="card-body">
               <form className="settings-form" onSubmit={handleCreateCashier}>
-                <input type="text" className="form-input" placeholder="Cashier Full Name" value={cashierName} onChange={e => setCashierName(e.target.value)} required />
-                <input type="email" className="form-input" placeholder="Cashier Email" value={cashierEmail} onChange={e => setCashierEmail(e.target.value)} required />
+                <input type="text" className="form-input" placeholder="Staff Full Name" value={cashierName} onChange={e => setCashierName(e.target.value)} required />
+                <input type="email" className="form-input" placeholder="Staff Email" value={cashierEmail} onChange={e => setCashierEmail(e.target.value)} required />
                 <input type="password" className="form-input" placeholder="Password" value={cashierPassword} onChange={e => setCashierPassword(e.target.value)} required />
                 
+                {/* --- NEW: ROLE DROPDOWN --- */}
+                <select className="form-select" value={staffRole} onChange={e => setStaffRole(e.target.value)} required>
+                  <option value="Cashier">Assign as Cashier</option>
+                  <option value="Manager">Assign as Manager</option>
+                </select>
+
                 <select className="form-select" value={selectedBranchId} onChange={e => setSelectedBranchId(e.target.value)} required>
                   <option value="" disabled>Select a Branch</option>
                   {branches.map(b => (
@@ -322,7 +342,7 @@ function Settings() {
                   ))}
                 </select>
 
-                <button type="submit" className="btn-success">Create Cashier</button>
+                <button type="submit" className="btn-success">Create Staff Member</button>
               </form>
             </div>
           </div>
