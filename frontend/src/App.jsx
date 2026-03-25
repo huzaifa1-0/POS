@@ -52,12 +52,16 @@ function App() {
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
   
   // --- NEW: ADMIN SETUP STATES ---
-  let realRole = null;
-  if (token) {
-    try { realRole = jwtDecode(token).role; } catch(e) {}
-  }
-  const [showAdminSetup, setShowAdminSetup] = useState(false);
-  const [adminBranches, setAdminBranches] = useState([]);
+  let realRole = null;
+  if (token) {
+    try { realRole = jwtDecode(token).role; } catch(e) {}
+  }
+  const isPendingSetup = realRole === 'Admin' && !sessionStorage.getItem('active_role');
+  
+  {/* 🚨 FIX: Pass isPendingSetup here instead of false! */}
+  const [showAdminSetup, setShowAdminSetup] = useState(isPendingSetup); 
+  
+  const [adminBranches, setAdminBranches] = useState([]);
   const [selectedSimBranch, setSelectedSimBranch] = useState('');
   const [selectedSimRole, setSelectedSimRole] = useState('Admin');
 
@@ -97,8 +101,15 @@ function App() {
 
   // Add this useEffect to sync changes automatically
   useEffect(() => {
-    localStorage.setItem('nashta_pos_orders', JSON.stringify(orders));
-  }, [orders]);
+    if (showAdminSetup && token) {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
+      axios.get(`${API_BASE}/branches/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => setAdminBranches(res.data))
+      .catch(err => console.error("Could not fetch branches on refresh", err));
+    }
+  }, [showAdminSetup, token]);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
 
@@ -626,7 +637,7 @@ function App() {
         </div>
 
         <div className="nav-rail-bottom">
-          {activeRole === 'Admin' ? (
+          {realRole === 'Admin' ? (
             <NavLink
               to="/settings"
               className={({ isActive }) => `rail-btn settings-nav-btn ${isActive ? 'active' : ''}`}
@@ -966,7 +977,7 @@ function App() {
         <Route
           path="/settings"
           element={
-            activeRole === 'Admin' ? (
+            realRole === 'Admin' ? (
               <SettingsPage />
             ) : (
               <ProtectedRoute permission="view:settings">
