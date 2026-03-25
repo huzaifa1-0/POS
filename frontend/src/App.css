@@ -1620,3 +1620,150 @@
   .settings-checkbox { width: 16px; height: 16px; }
   .role-select { padding: 6px; font-size: 11px; }
 }
+
+
+/* --- RESPONSIVE EXPENSES & SETTINGS LAYOUT --- */
+
+/* Main Container */
+.settings-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header & Button Alignment */
+.expense-header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.settings-header {
+  margin: 0;
+  font-size: 24px;
+  color: #0f172a;
+}
+
+/* Form Styling */
+.settings-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  box-sizing: border-box; /* Prevents overflow */
+  transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Cards */
+.settings-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.settings-card-header {
+  background-color: #f8fafc;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.settings-card-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #1e293b;
+}
+
+/* Responsive Table (CRITICAL FOR MOBILE) */
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto; /* Allows horizontal scrolling on mobile */
+  -webkit-overflow-scrolling: touch;
+}
+
+.settings-table {
+  width: 100%;
+  min-width: 650px; /* Forces table to keep its shape, enables scroll */
+  border-collapse: collapse;
+}
+
+.settings-table th, .settings-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.settings-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+}
+
+/* Alerts */
+.settings-success-alert {
+  background-color: #d1fae5;
+  color: #065f46;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- MOBILE SPECIFIC FIXES --- */
+/* --- MOBILE SPECIFIC FIXES --- */
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 15px 10px;
+  }
+
+  /* Keep Header and Button on the exact same line */
+  .expense-header-wrapper {
+    flex-direction: row; /* Forces them to stay side-by-side */
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap; /* Prevents wrapping */
+  }
+
+  /* Make the heading slightly smaller to fit */
+  .expense-header-wrapper h1 {
+    font-size: 18px;
+    text-align: left;
+    margin: 0;
+  }
+
+  /* Shrink the button slightly so it fits next to the text */
+  .expense-header-wrapper .btn-primary {
+    width: auto; 
+    padding: 8px 12px;
+    font-size: 14px;
+    white-space: nowrap; /* Stops the button text from breaking into two lines */
+  }
+
+  /* Force Form to Single Column */
+  .settings-form {
+    grid-template-columns: 1fr !important; 
+  }
+}
