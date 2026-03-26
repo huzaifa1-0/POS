@@ -199,8 +199,19 @@ function BranchManagement() {
           .action-btn-container { gap: 4px !important; }
           
           /* Modal Adjustments */
-          .dashboard-modal { margin: 0; width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; }
-          .modal-body { padding: 12px; }
+          /* 🚨 UPGRADED: Sleek Floating Mobile Modal */
+          .dashboard-modal { 
+            margin: 15px; 
+            width: calc(100vw - 30px); 
+            height: auto; /* Lets the modal shrink if there is less data */
+            max-height: 85vh; /* Prevents it from touching the very top/bottom of the screen */
+            border-radius: 16px !important; /* Keeps the modern rounded corners */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+          }
+          .modal-body { 
+            padding: 15px; 
+            overflow-y: auto; /* Ensures only the inside scrolls, not the whole page */
+          }
           .modal-title { font-size: 18px !important; }
           
           /* 4 Metric Cards -> 2x2 Grid */
