@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 function Settings() {
+  const activeRole = sessionStorage.getItem('active_role');
   const [activeTab, setActiveTab] = useState('permissions');
 
   const [screens, setScreens] = useState([]);
@@ -188,12 +189,18 @@ function Settings() {
         <button className={`tab-btn ${activeTab === 'permissions' ? 'active' : ''}`} onClick={() => setActiveTab('permissions')}>
           Staff & Permissions
         </button>
-        <button className={`tab-btn ${activeTab === 'branches' ? 'active' : ''}`} onClick={() => setActiveTab('branches')}>
-          Branch Management
-        </button>
-        <button className={`tab-btn ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
-          Branch Sales Reports
-        </button>
+        
+        {/* 🚨 NEW: ONLY SHOW THESE TABS IF THE USER IS NOT AN ADMIN */}
+        {activeRole !== 'Admin' && (
+          <>
+            <button className={`tab-btn ${activeTab === 'branches' ? 'active' : ''}`} onClick={() => setActiveTab('branches')}>
+              Branch Management
+            </button>
+            <button className={`tab-btn ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
+              Branch Sales Reports
+            </button>
+          </>
+        )}
       </div>
 
       {message && <div className="settings-success-alert">✓ {message}</div>}
@@ -273,7 +280,7 @@ function Settings() {
       )}
 
       {/* --- TAB 2: BRANCH MANAGEMENT --- */}
-      {activeTab === 'branches' && (
+      {activeRole !== 'Admin' && activeTab === 'branches' && (
         <div className="settings-layout-wrapper">
           
           <div className="settings-card form-card">
@@ -351,7 +358,7 @@ function Settings() {
       )}
 
       {/* --- TAB 3: BRANCH SALES REPORTS --- */}
-      {activeTab === 'reports' && (
+      {activeRole !== 'Admin' && activeTab === 'reports' && (
         <div className="settings-layout-wrapper">
           <div className="settings-card form-card" style={{ flex: 1, minWidth: '100%' }}>
             <div className="settings-card-header">

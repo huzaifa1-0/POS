@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2, BookOpen, Settings } from 'lucide-react';
+import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2, BookOpen, Settings, MapPin, PieChart } from 'lucide-react';
 import {Navigate, Routes, Route, NavLink } from 'react-router-dom'; 
 import Inventory from './pages/Inventory'; 
 import Reports from './pages/Reports'; 
@@ -8,6 +8,8 @@ import Expenses from './pages/Expenses';
 import ManageInventory from './pages/ManageInventory';
 import Vendors from './pages/Vendors';
 import RecipeBuilder from './pages/RecipeBuilder';
+import BranchManagement from './pages/BranchManagement';
+import BranchReports from './pages/BranchReports';
 import axios from 'axios';
 import { usePDF } from 'react-to-pdf';
 import { PermissionsProvider } from './context/PermissionsContext';
@@ -610,7 +612,11 @@ function App() {
           <NavLink to="/" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="POS Home">
             <Home size={24} />
           </NavLink>
-
+          {activeRole === 'Admin' && (
+            <NavLink to="/branch-reports" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Master Analytics">
+              <PieChart size={24} />
+            </NavLink>
+          )}
           {/* 2. HIDE THESE ICONS UNTIL ADMIN FINISHES SETUP */}
           {!showAdminSetup && (
             <>
@@ -642,6 +648,11 @@ function App() {
         </div>
 
         <div className="nav-rail-bottom">
+          {activeRole === 'Admin' && (
+            <NavLink to="/branch-management" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Network Management">
+              <MapPin size={24} />
+            </NavLink>
+          )}
           {realRole === 'Admin' ? (
             <NavLink
               to="/settings"
@@ -937,7 +948,15 @@ function App() {
       
       </>
       )} />
+        <Route 
+          path="/branch-management" 
+          element={ activeRole === 'Admin' ? <BranchManagement /> : <Navigate to="/" /> } 
+        />
         
+        <Route 
+          path="/branch-reports" 
+          element={ activeRole === 'Admin' ? <BranchReports /> : <Navigate to="/" /> } 
+        />
         {/* PROTECTED SEPARATE PAGES */}
         <Route 
           path="/reports" 
