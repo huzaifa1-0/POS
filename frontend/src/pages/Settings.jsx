@@ -142,18 +142,23 @@ function Settings() {
   // --- NEW FUNCTION: Reassign Cashier Branch ---
   const handleBranchReassignment = async (userId, branchId) => {
     try {
-      await axios.post(`${API_BASE_URL}/auth/change-cashier-branch/`, 
-      { 
-        cashier_id: userId, 
-        branch_id: branchId 
-      }, 
-      { headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } });
+      // 🚨 Hit our new, conflict-free endpoint
+      await axios.post(`${API_BASE_URL}/update-staff-branch/`, { 
+        user_id: userId,     // Exact variable expected by Django
+        branch_id: branchId  // Exact variable expected by Django
+      }, getConfig());
       
       setMessage('Staff branch reassigned successfully!');
-      setTimeout(() => setMessage(''), 2000);
+      setTimeout(() => setMessage(''), 3000);
+      
+      // Refresh the user list so the UI updates instantly!
       fetchUsers();
     } catch (err) { 
-      alert(err.response?.data?.error || "Failed to reassign branch. Ensure you are an Admin."); 
+      // If the backend blocks it (e.g. "Already has a Manager"), show the alert!
+      alert(err.response?.data?.error || "Failed to reassign branch."); 
+      
+      // Refresh the users to visually snap the dropdown back to its original state
+      fetchUsers(); 
     }
   };
 

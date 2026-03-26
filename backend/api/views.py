@@ -845,3 +845,44 @@ class MasterReportView(APIView):
             })
             
         return Response(reports, status=status.HTTP_200_OK)
+
+
+class UpdateStaffBranchView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        # 1. Ensure the user making the request is an Admin
+        is_admin = request.user.is_superuser
+        if not is_admin:
+            admin_profile = UserProfile.objects.filter(user=request.user).first()
+            if admin_profile and admin_profile.roles.filter(name='Admin').exists():
+                is_admin = True
+                
+        if not is_admin:
+            return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+
+        # 2. Get the variables sent from React
+        user_id = request.data.get('user_id')
+        branch_id = request.data.get('branch_id')
+
+        try:
+            # 3. Find the user and the new branch
+            user_to_update = User.objects.get(id=user_id)
+            profile, _ = UserProfile.objects.get_or_create(user=user_to_update)
+            new_branch = Branch.objects.get(id=branch_id)
+
+            # 🚨 4. ENFORCE 1 MANAGER PER BRANCH RULE
+            if profile.roles.filter(name='Manager').exists():
+                # Check if this new branch already has a manager (excluding this current user)
+                if UserProfile.objects.filter(branch=new_branch, roles__name='Manager').exclude(user__id=user_id).exists():
+                    return Response({'error': f'Cannot move user. "{new_branch.name}" already has a Manager!'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 5. Save the new branch
+            profile.branch = new_branch
+            profile.save()
+            return Response({"message": "Branch updated successfully"}, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Branch.DoesNotExist:
+            return Response({'error': 'Branch not found'}, status=status.HTTP_404_NOT_FOUND)
