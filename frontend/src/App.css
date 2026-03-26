@@ -1767,3 +1767,77 @@
     grid-template-columns: 1fr !important; 
   }
 }
+
+/* ==========================================================================
+   📈 BRANCH REPORTS & GRAPH - ULTIMATE MOBILE VIEW
+   ========================================================================== */
+
+@media screen and (max-width: 768px) {
+  
+  /* 1. Stack the Graph and Table vertically instead of side-by-side */
+  .split-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+
+  /* 2. Dashboard Containers (Graph Box & Table Box) */
+  .dashboard-box {
+    padding: 15px !important; /* Tighter padding for mobile screens */
+    height: auto !important;
+    min-height: auto !important;
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  /* 3. The Trend Graph Sizing */
+  /* Forces the graph to be exactly 280px tall on mobile so it fits perfectly on screen without taking up the whole phone */
+  .dashboard-box .recharts-responsive-container,
+  .dashboard-box > div[style*="height: 320px"] {
+    height: 280px !important;
+    min-height: 280px !important;
+    margin-top: 10px;
+  }
+
+  /* 4. Search Bar Full Width */
+  .search-bar {
+    width: 100% !important;
+    margin-top: 5px;
+  }
+
+  /* 5. Branch Directory Table (Smooth Horizontal Scroll) */
+  .table-scroll-area {
+    margin-top: 10px;
+    border-radius: 8px;
+    overflow-x: auto !important; 
+    /* Enables native, buttery-smooth swiping on iPhones and Androids */
+    -webkit-overflow-scrolling: touch; 
+    box-shadow: inset -8px 0 8px -8px rgba(0,0,0,0.1); /* Subtle shadow to indicate it is scrollable */
+  }
+
+  .modern-table {
+    min-width: 480px !important; /* Prevents the columns from squishing too thin */
+  }
+
+  /* Tighter Table Rows for Mobile */
+  .modern-table th, 
+  .modern-table td {
+    padding: 10px 8px !important; 
+    font-size: 12px !important;   
+  }
+
+  .modern-table th {
+    font-size: 11px !important;
+  }
+
+  /* 6. Hide non-critical data on small screens */
+  .mobile-hide {
+    display: none !important;
+  }
+
+  /* 7. Shrink Action Buttons to Icons Only */
+  .modern-table .action-btn {
+    padding: 8px !important;
+    justify-content: center;
+  }
+}
