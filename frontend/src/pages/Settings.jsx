@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
 
+// 🚨 IMPORT THE PAGES DIRECTLY SO WE DON'T REPEAT CODE!
+import BranchManagement from './BranchManagement';
+import BranchReports from './BranchReports';
+
 function Settings() {
   const token = sessionStorage.getItem('access_token');
   let realRole = null;
@@ -9,91 +13,29 @@ function Settings() {
     try { realRole = jwtDecode(token).role; } catch(e) {}
   }
   const activeRole = sessionStorage.getItem('active_role');
-  const effectiveRole = activeRole || realRole; // 🚨 NEW: Defaults to realRole immediately upon login
+  const effectiveRole = activeRole || realRole; 
+  
   const [activeTab, setActiveTab] = useState('permissions');
 
+  // Core Settings States
   const [screens, setScreens] = useState([]);
   const [matrix, setMatrix] = useState([]);
   const [users, setUsers] = useState([]);
-  const [availableRoles, setAvailableRoles] = useState([]);
-  const [assignments, setAssignments] = useState({});
-  const [message, setMessage] = useState('');
-  
   const [branches, setBranches] = useState([]);
-  const [branchName, setBranchName] = useState('');
-  const [branchAddress, setBranchAddress] = useState('');
-
-  // --- NEW: Edit Branch States ---
-  const [editingBranchId, setEditingBranchId] = useState(null);
-  const [editBranchName, setEditBranchName] = useState('');
-  const [editBranchAddress, setEditBranchAddress] = useState('');
-
-  const [staffRole, setStaffRole] = useState('Cashier');
-  
-
-  // --- NEW: Branch Edit & Delete Handlers ---
-  const handleDeleteBranch = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this branch?")) return;
-    try {
-      await axios.delete(`${API_BASE_URL}/branches/${id}/`, { 
-        headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } 
-      });
-      setMessage('Branch deleted successfully!');
-      fetchBranches();
-      setTimeout(() => setMessage(''), 2000);
-    } catch (err) { alert("Failed to delete branch. It may have existing orders tied to it."); }
-  };
-
-  const startEditingBranch = (branch) => {
-    setEditingBranchId(branch.id);
-    setEditBranchName(branch.name);
-    setEditBranchAddress(branch.address);
-  };
-
-  const handleUpdateBranch = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.put(`${API_BASE_URL}/branches/${editingBranchId}/`, { 
-        name: editBranchName, 
-        address: editBranchAddress, 
-        is_active: true 
-      }, { 
-        headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } 
-      });
-      setMessage('Branch updated successfully!');
-      setEditingBranchId(null);
-      fetchBranches();
-      setTimeout(() => setMessage(''), 2000);
-    } catch (err) { alert("Failed to update branch."); }
-  };
-  
-  const [cashierName, setCashierName] = useState('');
-  const [cashierEmail, setCashierEmail] = useState('');
-  const [cashierPassword, setCashierPassword] = useState('');
-  const [selectedBranchId, setSelectedBranchId] = useState('');
-  const [branchSales, setBranchSales] = useState([]);
+  const [message, setMessage] = useState('');
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
-  const fetchBranchSales = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/reports/branch-sales/`, { 
-        headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } 
-      });
-      setBranchSales(res.data);
-    } catch (err) { 
-      console.error("Failed to load branch sales reports"); 
-    }
-  };
+  const getConfig = () => ({ headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } });
+
   useEffect(() => {
     fetchMatrix();
     fetchUsers();
     fetchBranches();
-    fetchBranchSales();
   }, []);
 
   const fetchMatrix = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/auth/role-permissions/`, { headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } });
+      const res = await axios.get(`${API_BASE_URL}/auth/role-permissions/`, getConfig());
       setScreens(res.data.screens);
       setMatrix(res.data.matrix);
     } catch (err) { console.error("Failed to load settings matrix"); }
@@ -101,16 +43,14 @@ function Settings() {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/auth/users/`, { headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } });
-      setUsers(res.data.users);
-      setAvailableRoles(res.data.roles);
-      setAssignments(res.data.assignments);
+      const res = await axios.get(`${API_BASE_URL}/staff-list/`, getConfig());
+      setUsers(res.data.filter(u => u.role !== 'Admin')); 
     } catch (err) { console.error("Failed to load staff list"); }
   };
 
   const fetchBranches = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/branches/`, { headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } });
+      const res = await axios.get(`${API_BASE_URL}/branches/`, getConfig());
       setBranches(res.data);
     } catch (err) { console.error("Failed to load branches"); }
   };
@@ -124,7 +64,7 @@ function Settings() {
     setMatrix(prevMatrix => prevMatrix.map(role => role.role_id === roleId ? { ...role, permissions: newPermissions } : role));
 
     try {
-      await axios.post(`${API_BASE_URL}/auth/role-permissions/`, { role_id: roleId, permissions: newPermissions }, { headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } });
+      await axios.post(`${API_BASE_URL}/auth/role-permissions/`, { role_id: roleId, permissions: newPermissions }, getConfig());
       setMessage('Screen permissions saved instantly!');
       setTimeout(() => setMessage(''), 2000);
     } catch (err) { alert("Failed to save changes."); fetchMatrix(); }
@@ -132,112 +72,85 @@ function Settings() {
 
   const handleRoleAssignment = async (userId, roleName) => {
     try {
-      await axios.post(`${API_BASE_URL}/auth/users/`, { user_id: userId, role_name: roleName }, { headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } });
+      await axios.post(`${API_BASE_URL}/auth/update-role/`, { user_id: userId, role_name: roleName }, getConfig());
       setMessage('Staff access updated successfully!');
-      setTimeout(() => setMessage(''), 2000);
-      fetchUsers(); 
-    } catch (err) { alert("Failed to update staff access."); }
-  };
-
-  // --- NEW FUNCTION: Reassign Cashier Branch ---
-  const handleBranchReassignment = async (userId, branchId) => {
-    try {
-      // 🚨 Hit our new, conflict-free endpoint
-      await axios.post(`${API_BASE_URL}/update-staff-branch/`, { 
-        user_id: userId,     // Exact variable expected by Django
-        branch_id: branchId  // Exact variable expected by Django
-      }, getConfig());
-      
-      setMessage('Staff branch reassigned successfully!');
       setTimeout(() => setMessage(''), 3000);
-      
-      // Refresh the user list so the UI updates instantly!
-      fetchUsers();
+      fetchUsers(); 
     } catch (err) { 
-      // If the backend blocks it (e.g. "Already has a Manager"), show the alert!
-      alert(err.response?.data?.error || "Failed to reassign branch."); 
-      
-      // Refresh the users to visually snap the dropdown back to its original state
+      alert(err.response?.data?.error || "Failed to update staff access."); 
       fetchUsers(); 
     }
   };
 
-  const handleCreateBranch = async (e) => {
-    e.preventDefault();
+  const handleBranchReassignment = async (userId, branchId) => {
     try {
-      await axios.post(`${API_BASE_URL}/branches/`, { name: branchName, address: branchAddress, is_active: true }, { headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } });
-      setMessage('Branch created successfully!');
-      setBranchName(''); setBranchAddress(''); fetchBranches();
-      setTimeout(() => setMessage(''), 2000);
-    } catch (err) { alert("Failed to create branch."); }
-  };
-
-  const handleCreateCashier = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post(`${API_BASE_URL}/auth/create-cashier/`, { 
-        name: cashierName, 
-        email: cashierEmail, 
-        password: cashierPassword, 
-        branch_id: selectedBranchId,
-        role: staffRole // <--- SENDING THE ROLE TO DJANGO
-      }, { headers: { Authorization: `Bearer ${sessionStorage.getItem('access_token')}` } });
+      await axios.post(`${API_BASE_URL}/update-staff-branch/`, { 
+        user_id: userId,
+        branch_id: branchId
+      }, getConfig());
       
-      setMessage(`${staffRole} created and assigned to branch!`);
-      
-      // Reset the form
-      setCashierName(''); setCashierEmail(''); setCashierPassword(''); 
-      setSelectedBranchId(''); setStaffRole('Cashier'); 
+      setMessage('Staff branch reassigned successfully!');
+      setTimeout(() => setMessage(''), 3000);
       fetchUsers();
-      
-      setTimeout(() => setMessage(''), 2000);
-    } catch (err) { alert(err.response?.data?.error || "Failed to create staff member."); }
+    } catch (err) { 
+      alert(err.response?.data?.error || "Failed to reassign branch."); 
+      fetchUsers(); 
+    }
   };
 
   return (
-    <div className="settings-container">
-      <h1 className="settings-header">System Settings</h1>
+    <div className="settings-container" style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto', overflowX: 'hidden' }}>
+      <h1 className="settings-header" style={{ fontSize: '28px', color: '#0f172a', marginBottom: '20px' }}>System Settings</h1>
       
-      <div className="settings-tabs">
-        <button className={`tab-btn ${activeTab === 'permissions' ? 'active' : ''}`} onClick={() => setActiveTab('permissions')}>
+      <div className="settings-tabs" style={{ display: 'flex', gap: '10px', borderBottom: '2px solid #e2e8f0', marginBottom: '20px' }}>
+        <button 
+          style={{ padding: '12px 20px', background: 'none', border: 'none', borderBottom: activeTab === 'permissions' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'permissions' ? '#3b82f6' : '#64748b', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}
+          onClick={() => setActiveTab('permissions')}
+        >
           Staff & Permissions
         </button>
         
-        {/* 🚨 NEW: ONLY SHOW THESE TABS IF THE USER IS NOT AN ADMIN */}
+        {/* Only show these to simulated Managers/Cashiers */}
         {effectiveRole !== 'Admin' && (
           <>
-            <button className={`tab-btn ${activeTab === 'branches' ? 'active' : ''}`} onClick={() => setActiveTab('branches')}>
+            <button 
+              style={{ padding: '12px 20px', background: 'none', border: 'none', borderBottom: activeTab === 'branches' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'branches' ? '#3b82f6' : '#64748b', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}
+              onClick={() => setActiveTab('branches')}
+            >
               Branch Management
             </button>
-            <button className={`tab-btn ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
+            <button 
+              style={{ padding: '12px 20px', background: 'none', border: 'none', borderBottom: activeTab === 'reports' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'reports' ? '#3b82f6' : '#64748b', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}
+              onClick={() => setActiveTab('reports')}
+            >
               Branch Sales Reports
             </button>
           </>
         )}
       </div>
 
-      {message && <div className="settings-success-alert">✓ {message}</div>}
+      {message && <div className="settings-success-alert" style={{ padding: '15px', background: '#d1fae5', color: '#065f46', borderRadius: '8px', marginBottom: '20px', fontWeight: 'bold' }}>✓ {message}</div>}
 
       {/* --- TAB 1: PERMISSIONS & APPROVALS --- */}
       {activeTab === 'permissions' && (
         <div className="settings-layout-wrapper">
-          <div className="settings-card matrix-card">
-            <div className="settings-card-header"><h2>Screen Access Matrix</h2></div>
-            <div className="table-responsive-wrapper">
-              <table className="settings-table">
+          <div className="settings-card matrix-card" style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', marginBottom: '30px' }}>
+            <div className="settings-card-header"><h2 style={{ fontSize: '18px', margin: '0 0 15px 0' }}>Screen Access Matrix</h2></div>
+            <div className="table-responsive-wrapper" style={{ overflowX: 'auto' }}>
+              <table className="settings-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr>
-                    <th>App Screen</th>
-                    {matrix.map(role => <th key={role.role_id} className="center-text">{role.role_name}</th>)}
+                  <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                    <th style={{ padding: '12px', textAlign: 'left', color: '#475569' }}>App Screen</th>
+                    {matrix.map(role => <th key={role.role_id} className="center-text" style={{ padding: '12px', color: '#475569' }}>{role.role_name}</th>)}
                   </tr>
                 </thead>
                 <tbody>
                   {screens.map(screen => (
-                    <tr key={screen.key}>
-                      <td>{screen.label}</td>
+                    <tr key={screen.key} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '12px', color: '#334155', fontWeight: '500' }}>{screen.label}</td>
                       {matrix.map(role => (
-                        <td key={role.role_id} className="center-text">
-                          <input type="checkbox" className="settings-checkbox" checked={role.permissions.includes(screen.key)} onChange={(e) => handleCheckboxChange(role.role_id, screen.key, e.target.checked)} />
+                        <td key={role.role_id} className="center-text" style={{ padding: '12px', textAlign: 'center' }}>
+                          <input type="checkbox" className="settings-checkbox" checked={role.permissions.includes(screen.key)} onChange={(e) => handleCheckboxChange(role.role_id, screen.key, e.target.checked)} style={{ transform: 'scale(1.2)', cursor: 'pointer' }} />
                         </td>
                       ))}
                     </tr>
@@ -247,36 +160,39 @@ function Settings() {
             </div>
           </div>
 
-          <div className="settings-card approvals-card">
-             <div className="settings-card-header"><h2>Staff Approvals & Routing</h2></div>
-             <div className="table-responsive-wrapper scrollable-table">
-              <table className="settings-table">
+          <div className="settings-card approvals-card" style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+             <div className="settings-card-header"><h2 style={{ fontSize: '18px', margin: '0 0 15px 0' }}>Staff Approvals & Routing</h2></div>
+             <div className="table-responsive-wrapper scrollable-table" style={{ overflowX: 'auto' }}>
+              <table className="settings-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
                 <thead>
-                  {/* Added Branch column header */}
-                  <tr><th>Email</th><th>Status</th><th>Role Assignment</th><th>Branch Reassignment</th></tr>
+                  <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                    <th style={{ padding: '12px', textAlign: 'left', color: '#475569' }}>Staff Member</th>
+                    <th style={{ padding: '12px', textAlign: 'left', color: '#475569' }}>Status</th>
+                    <th style={{ padding: '12px', textAlign: 'left', color: '#475569' }}>Role Assignment</th>
+                    <th style={{ padding: '12px', textAlign: 'left', color: '#475569' }}>Branch Transfer</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {users.map(user => (
-                    <tr key={user.id}>
-                      <td>{user.email || user.username}</td>
-                      <td>
-                        <span className={`status-badge ${assignments[user.id] === 'Pending' ? 'pending' : 'approved'}`}>
-                          {assignments[user.id]}
+                    <tr key={user.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '12px' }}>
+                        <strong style={{ display: 'block', color: '#0f172a' }}>{user.name}</strong>
+                        <span style={{ fontSize: '12px', color: '#64748b' }}>{user.email || user.username}</span>
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <span style={{ background: user.role === 'Pending' ? '#fef3c7' : '#dcfce3', color: user.role === 'Pending' ? '#b45309' : '#16a34a', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' }}>
+                          {user.role}
                         </span>
                       </td>
-                      <td>
-                        <select className="role-select" value={assignments[user.id]} onChange={(e) => handleRoleAssignment(user.id, e.target.value)}>
+                      <td style={{ padding: '12px' }}>
+                        <select className="role-select" value={user.role} onChange={(e) => handleRoleAssignment(user.id, e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
                           <option value="Pending">Revoke Access</option>
-                          {availableRoles.map(role => <option key={role.id} value={role.name}>Approve as {role.name}</option>)}
+                          <option value="Cashier">Approve as Cashier</option>
+                          <option value="Manager">Approve as Manager</option>
                         </select>
                       </td>
-                      {/* --- NEW: Branch Assignment Dropdown --- */}
-                      <td>
-                        <select 
-                          className="role-select" 
-                          defaultValue="" 
-                          onChange={(e) => handleBranchReassignment(user.id, e.target.value)}
-                        >
+                      <td style={{ padding: '12px' }}>
+                        <select className="role-select" value={user.branch_id || ""} onChange={(e) => handleBranchReassignment(user.id, e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
                           <option value="" disabled>Move to Branch...</option>
                           {branches.map(b => (
                             <option key={b.id} value={b.id}>{b.name}</option>
@@ -285,6 +201,7 @@ function Settings() {
                       </td>
                     </tr>
                   ))}
+                  {users.length === 0 && <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>No staff hired yet.</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -292,122 +209,16 @@ function Settings() {
         </div>
       )}
 
-      {/* --- TAB 2: BRANCH MANAGEMENT --- */}
+      {/* 🚨 EMBED THE DEDICATED PAGES DIRECTLY! */}
       {effectiveRole !== 'Admin' && activeTab === 'branches' && (
-        <div className="settings-layout-wrapper">
-          
-          <div className="settings-card form-card">
-            <div className="settings-card-header"><h2>Create New Branch</h2></div>
-            <div className="card-body">
-              <form className="settings-form" onSubmit={handleCreateBranch}>
-                <input type="text" className="form-input" placeholder="Branch Name (e.g., Gulberg Branch)" value={branchName} onChange={e => setBranchName(e.target.value)} required />
-                <input type="text" className="form-input" placeholder="Branch Address" value={branchAddress} onChange={e => setBranchAddress(e.target.value)} required />
-                <button type="submit" className="btn-primary">+ Add Branch</button>
-              </form>
-
-              <h3 className="sub-header" style={{ marginTop: '30px' }}>Existing Branches</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {branches.map(b => (
-                  <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#f8fafc', flexWrap: 'wrap', gap: '10px' }}>
-                    
-                    {/* If this branch is being edited, show the input form */}
-                    {editingBranchId === b.id ? (
-                      <form onSubmit={handleUpdateBranch} style={{ display: 'flex', gap: '10px', width: '100%', flexWrap: 'wrap' }}>
-                        <input type="text" className="form-input" value={editBranchName} onChange={e => setEditBranchName(e.target.value)} required style={{ flex: 1, minWidth: '150px', padding: '8px' }} />
-                        <input type="text" className="form-input" value={editBranchAddress} onChange={e => setEditBranchAddress(e.target.value)} required style={{ flex: 2, minWidth: '200px', padding: '8px' }} />
-                        <div style={{ display: 'flex', gap: '5px' }}>
-                          <button type="submit" className="btn-success" style={{ padding: '8px 12px', fontSize: '14px' }}>Save</button>
-                          <button type="button" className="btn-primary" onClick={() => setEditingBranchId(null)} style={{ padding: '8px 12px', fontSize: '14px', backgroundColor: '#94a3b8', border: 'none' }}>Cancel</button>
-                        </div>
-                      </form>
-                    ) : (
-                      /* Otherwise, show the normal text and action buttons */
-                      <>
-                        <div style={{ flex: 1 }}>
-                          <strong style={{ fontSize: '16px', color: '#0f172a' }}>{b.name}</strong> <br/>
-                          <span style={{ color: '#64748b', fontSize: '14px' }}>{b.address}</span>
-                        </div>
-                        <div style={{ display: 'flex', gap: '15px' }}>
-                          <button type="button" onClick={() => startEditingBranch(b)} style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Edit</button>
-                          <button type="button" onClick={() => handleDeleteBranch(b.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Delete</button>
-                        </div>
-                      </>
-                    )}
-                    
-                  </div>
-                ))}
-                {branches.length === 0 && <p style={{ color: '#64748b' }}>No branches found.</p>}
-              </div>
-            </div>
-          </div>
-
-          <div className="settings-card form-card">
-            <div className="settings-card-header"><h2>Create & Assign Staff to Branch</h2></div>
-            <div className="card-body">
-              <form className="settings-form" onSubmit={handleCreateCashier}>
-                <input type="text" className="form-input" placeholder="Staff Full Name" value={cashierName} onChange={e => setCashierName(e.target.value)} required />
-                <input type="email" className="form-input" placeholder="Staff Email" value={cashierEmail} onChange={e => setCashierEmail(e.target.value)} required />
-                <input type="password" className="form-input" placeholder="Password" value={cashierPassword} onChange={e => setCashierPassword(e.target.value)} required />
-                
-                {/* --- NEW: ROLE DROPDOWN --- */}
-                <select className="form-select" value={staffRole} onChange={e => setStaffRole(e.target.value)} required>
-                  <option value="Cashier">Assign as Cashier</option>
-                  <option value="Manager">Assign as Manager</option>
-                </select>
-
-                <select className="form-select" value={selectedBranchId} onChange={e => setSelectedBranchId(e.target.value)} required>
-                  <option value="" disabled>Select a Branch</option>
-                  {branches.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
-
-                <button type="submit" className="btn-success">Create Staff Member</button>
-              </form>
-            </div>
-          </div>
-
+        <div style={{ animation: 'fadeIn 0.3s ease-out', margin: '-30px' }}>
+           <BranchManagement />
         </div>
       )}
 
-      {/* --- TAB 3: BRANCH SALES REPORTS --- */}
       {effectiveRole !== 'Admin' && activeTab === 'reports' && (
-        <div className="settings-layout-wrapper">
-          <div className="settings-card form-card" style={{ flex: 1, minWidth: '100%' }}>
-            <div className="settings-card-header">
-              <h2>Total Revenue by Branch</h2>
-            </div>
-            <div className="table-responsive-wrapper scrollable-table">
-              <table className="settings-table">
-                <thead>
-                  <tr>
-                    <th>Branch Name</th>
-                    <th className="center-text">Total Orders Completed</th>
-                    <th className="center-text">Total Revenue Generated</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {branchSales.length > 0 ? (
-                    branchSales.map((report, index) => (
-                      <tr key={index}>
-                        <td><strong style={{ color: '#0f172a' }}>{report.branch_name}</strong></td>
-                        <td className="center-text">{report.total_orders}</td>
-                        <td className="center-text" style={{ color: '#10b981', fontWeight: '900', fontSize: '16px' }}>
-                          Rs. {Number(report.total_revenue).toLocaleString()}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="3" className="center-text" style={{ padding: '30px', color: '#64748b' }}>
-                        No sales data available yet. Start making sales!
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div style={{ animation: 'fadeIn 0.3s ease-out', margin: '-30px' }}>
+           <BranchReports />
         </div>
       )}
 
