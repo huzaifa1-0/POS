@@ -720,7 +720,7 @@ class StaffListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # 1. Foolproof Admin Check
+        # 1. Bulletproof Admin Security Check
         is_admin = request.user.is_superuser
         if not is_admin:
             admin_profile = UserProfile.objects.filter(user=request.user).first()
@@ -730,6 +730,7 @@ class StaffListView(APIView):
         if not is_admin:
             return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
 
+        # 2. Fetch all users
         users = User.objects.all()
         staff_data = []
         
@@ -740,7 +741,7 @@ class StaffListView(APIView):
             if user.is_superuser:
                 role_name = 'Admin'
             else:
-                # 🚨 FOOLPROOF METHOD: Query the table directly instead of using user.profile
+                # 3. Direct table lookup (bypasses Django hasattr errors)
                 profile = UserProfile.objects.filter(user=user).first()
                 if profile:
                     role = profile.roles.first()
@@ -751,7 +752,7 @@ class StaffListView(APIView):
                     
             staff_data.append({
                 'id': user.id,
-                'name': user.first_name or user.username,
+                'name': user.first_name or user.username or 'Unknown',
                 'email': user.email or user.username,
                 'role': role_name,
                 'branch_name': branch_name

@@ -32,7 +32,8 @@ urlpatterns = [
     path('auth/users/', manage_user_roles, name='manage_users'),
     path('reports/dashboard/', ReportDashboardView.as_view(), name='report-dashboard'),
     path('auth/create-cashier/', CreateCashierView.as_view(), name='create-cashier'),
-    path('auth/users/', StaffListView.as_view(), name='staff-list'),
+    # 🚨 CRITICAL FIX: Changed from 'auth/users/' to 'staff-list/' to bypass Djoser!
+    path('staff-list/', StaffListView.as_view(), name='staff-list'),
     path('auth/users/<int:pk>/role/', UpdateUserRoleView.as_view(), name='update_user_role'),
     path('auth/users/<int:pk>/branch/', UpdateUserBranchView.as_view(), name='update_user_branch'),
     path('reports/master/', MasterReportView.as_view(), name='master-reports'),

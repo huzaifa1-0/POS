@@ -53,28 +53,23 @@ function BranchManagement() {
   // 🚨 BULLETPROOF EMPLOYEE FETCHER
   // 🚨 BULLETPROOF EMPLOYEE FETCHER (Synced with your Settings endpoint)
   // 🚨 BULLETPROOF EMPLOYEE FETCHER
+  // 🚨 BULLETPROOF EMPLOYEE FETCHER
   const fetchUsers = async () => {
     try {
-      // 🚨 FIX: We must hit /auth/users/ because that is what is inside your Django urls.py!
-      const res = await axios.get(`${API_BASE_URL}/auth/users/`, getConfig());
+      // 1. Hit the new conflict-free endpoint!
+      const res = await axios.get(`${API_BASE_URL}/staff-list/`, getConfig());
       
-      // Handles data no matter what format Django sends it in
-      let rawData = Array.isArray(res.data) ? res.data : (res.data.users || res.data.results || []);
+      // 2. Because our Python backend now perfectly formats the data, we just set it!
+      // (Filtering out the Admin so you only see your hired employees)
+      if (Array.isArray(res.data)) {
+        setUsers(res.data.filter(u => u.role !== 'Admin')); 
+      }
       
-      const processed = rawData.map(u => ({
-        id: u.id,
-        name: u.name || u.first_name || u.username || 'Unknown',
-        email: u.email || 'No Email',
-        role: u.role || u.role_name || 'Pending',
-        branch_name: u.branch_name || u.branch || 'Unassigned'
-      }));
-      
-      setUsers(processed.filter(u => u.role !== 'Admin')); 
     } catch (err) { 
-      console.error("Failed to load users:", err); 
+      console.error("Failed to load staff list:", err); 
     }
   };
-  
+
   const handleCreateBranch = async (e) => {
     e.preventDefault();
     try {
