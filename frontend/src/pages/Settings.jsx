@@ -72,7 +72,9 @@ function Settings() {
 
   const handleRoleAssignment = async (userId, roleName) => {
     try {
-      await axios.post(`${API_BASE_URL}/auth/update-role/`, { user_id: userId, role_name: roleName }, getConfig());
+      // Hits the new clean endpoint!
+      await axios.post(`${API_BASE_URL}/update-role/`, { user_id: userId, role_name: roleName }, getConfig());
+      
       setMessage('Staff access updated successfully!');
       setTimeout(() => setMessage(''), 3000);
       fetchUsers(); 

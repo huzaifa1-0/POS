@@ -886,3 +886,41 @@ class UpdateStaffBranchView(APIView):
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         except Branch.DoesNotExist:
             return Response({'error': 'Branch not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class UpdateStaffRoleView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        # 1. Admin Verification
+        is_admin = request.user.is_superuser
+        if not is_admin:
+            admin_profile = UserProfile.objects.filter(user=request.user).first()
+            if admin_profile and admin_profile.roles.filter(name='Admin').exists():
+                is_admin = True
+                
+        if not is_admin:
+            return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+
+        # 2. Get the exact variables sent from React
+        user_id = request.data.get('user_id')
+        role_name = request.data.get('role_name')
+        
+        try:
+            # 3. Find user and profile
+            user_to_update = User.objects.get(id=user_id)
+            profile, _ = UserProfile.objects.get_or_create(user=user_to_update)
+            
+            # 🚨 4. ENFORCE 1 MANAGER PER BRANCH ON ROLE CHANGE
+            if role_name == 'Manager' and profile.branch:
+                if UserProfile.objects.filter(branch=profile.branch, roles__name='Manager').exclude(user__id=user_id).exists():
+                    return Response({'error': f'Their assigned branch ({profile.branch.name}) already has a Manager.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 5. Update the Role
+            role_obj, _ = Role.objects.get_or_create(name=role_name)
+            profile.roles.clear()
+            profile.roles.add(role_obj)
+            return Response({'message': 'Role updated successfully'}, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            return Response({'error': 'Staff member not found'}, status=status.HTTP_404_NOT_FOUND)

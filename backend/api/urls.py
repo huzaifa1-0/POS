@@ -3,7 +3,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from .views import BranchSalesReportView, CategoryViewSet, MenuItemViewSet, OrderViewSet, RegisterView, ReportDashboardView, VendorViewSet, ItemViewSet, StockEntryViewSet, RecipeViewSet, get_my_permissions, CustomTokenLoginView, manage_role_permissions, manage_user_roles, ExpenseViewSet
+from .views import BranchSalesReportView, CategoryViewSet, MenuItemViewSet, OrderViewSet, RegisterView, ReportDashboardView, UpdateStaffRoleView, VendorViewSet, ItemViewSet, StockEntryViewSet, RecipeViewSet, get_my_permissions, CustomTokenLoginView, manage_role_permissions, manage_user_roles, ExpenseViewSet
 from .views import CategoryViewSet, MenuItemViewSet, OrderViewSet, RegisterView, ReportDashboardView, VendorViewSet, ItemViewSet, StockEntryViewSet, RecipeViewSet, BranchViewSet, CreateCashierView, ChangeCashierBranchView, StaffListView,UpdateUserRoleView, UpdateUserBranchView, MasterReportView, UpdateStaffBranchView
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
@@ -35,6 +35,7 @@ urlpatterns = [
     # 🚨 CRITICAL FIX: Changed from 'auth/users/' to 'staff-list/' to bypass Djoser!
     path('staff-list/', StaffListView.as_view(), name='staff-list'),
     path('update-staff-branch/', UpdateStaffBranchView.as_view(), name='update_staff_branch'),
+    path('update-role/', UpdateStaffRoleView.as_view(), name='update_role'),
     path('auth/users/<int:pk>/role/', UpdateUserRoleView.as_view(), name='update_user_role'),
     path('auth/users/<int:pk>/branch/', UpdateUserBranchView.as_view(), name='update_user_branch'),
     path('reports/master/', MasterReportView.as_view(), name='master-reports'),
