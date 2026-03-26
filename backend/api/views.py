@@ -36,7 +36,7 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from .models import UserProfile
-
+import calendar
 
 class ExpenseViewSet(viewsets.ModelViewSet):
     queryset = Expense.objects.all().order_by('-date')
@@ -813,6 +813,7 @@ class UpdateUserBranchView(APIView):
 # --- 2. MASTER BRANCH REPORT (For your new page) ---
 class MasterReportView(APIView):
     permission_classes = [IsAuthenticated]
+    
     def get(self, request):
         is_admin = request.user.is_superuser
         profile = UserProfile.objects.filter(user=request.user).first()
@@ -821,20 +822,18 @@ class MasterReportView(APIView):
                 
         if not is_admin: return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
         
+        # 1. GATHER INDIVIDUAL BRANCH DATA
         branches = Branch.objects.all()
-        reports = []
+        branch_reports = []
         
         for branch in branches:
             orders = Order.objects.filter(branch=branch, status='Completed')
             total_income = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             cash_income = orders.filter(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             online_income = orders.exclude(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-            
-            # 🚨 CRITICAL FIX: Removed the staff_member query that was causing the 500 Server Crash!
-            # Expenses are currently global in your database, so we will set branch expenses to 0 for now.
             total_expenses = 0 
             
-            reports.append({
+            branch_reports.append({
                 'id': branch.id,
                 'name': branch.name,
                 'address': branch.address,
@@ -843,9 +842,33 @@ class MasterReportView(APIView):
                 'online_income': online_income,
                 'total_expenses': total_expenses
             })
-            
-        return Response(reports, status=status.HTTP_200_OK)
 
+        # 2. GENERATE 6-MONTH NETWORK TREND FOR THE GRAPH
+        trend_data = []
+        current_date = timezone.now()
+
+        # Loop backwards through the last 6 months
+        for i in range(5, -1, -1):
+            month = current_date.month - i
+            year = current_date.year
+            if month <= 0:
+                month += 12
+                year -= 1
+
+            month_orders = Order.objects.filter(status='Completed', created_at__year=year, created_at__month=month)
+            month_revenue = month_orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+            month_name = calendar.month_abbr[month]
+            trend_data.append({
+                'name': f"{month_name} {year}",
+                'revenue': month_revenue
+            })
+            
+        # Return both the table data AND the graph data!
+        return Response({
+            'branch_reports': branch_reports,
+            'network_trend': trend_data
+        }, status=status.HTTP_200_OK)
 
 class UpdateStaffBranchView(APIView):
     permission_classes = [IsAuthenticated]
