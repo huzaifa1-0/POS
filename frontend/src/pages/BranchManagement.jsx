@@ -53,8 +53,38 @@ function BranchManagement() {
   const fetchUsers = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/auth/users/`, getConfig());
-      setUsers(res.data.filter(u => u.role !== 'Admin')); 
-    } catch (err) { console.error(err); }
+      let processedUsers = [];
+
+      // 🚨 CHECK: Did Django return the complex Object format?
+      if (res.data && !Array.isArray(res.data) && res.data.users) {
+        
+        // Loop through the users array and manually attach their roles and branches
+        processedUsers = res.data.users.map(u => {
+          // Match the user ID to the assignments dictionary
+          const userAssign = res.data.assignments ? res.data.assignments[u.id] : null;
+          
+          return {
+            id: u.id,
+            name: u.first_name || u.username || 'Unknown',
+            email: u.email || 'No Email',
+            // Safely extract role and branch, defaulting to 'Pending/Unassigned' if missing
+            role: userAssign ? (userAssign.role || userAssign.role_name || 'Pending') : 'Pending',
+            branch_name: userAssign ? (userAssign.branch || userAssign.branch_name || 'Unassigned') : 'Unassigned'
+          };
+        });
+
+      } 
+      // 🚨 FALLBACK: If Django returned the standard Array format
+      else if (Array.isArray(res.data)) {
+        processedUsers = res.data;
+      }
+
+      // Finally, filter out the Admins so you only see your hired employees!
+      setUsers(processedUsers.filter(u => u.role !== 'Admin'));
+
+    } catch (err) { 
+      console.error("Error fetching users:", err); 
+    }
   };
 
   const handleCreateBranch = async (e) => {

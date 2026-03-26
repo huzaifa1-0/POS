@@ -34,6 +34,7 @@ from django.utils import timezone
 
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
 
 
 class ExpenseViewSet(viewsets.ModelViewSet):
@@ -708,3 +709,45 @@ class BranchSalesReportView(APIView):
         formatted_report.sort(key=lambda x: x['total_revenue'], reverse=True)
 
         return Response(formatted_report, status=status.HTTP_200_OK)
+    
+
+
+
+class StaffListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # 1. Security check: Only admins should be able to fetch the full employee list
+        is_admin = request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Admin').exists())
+        
+        if not is_admin:
+            return Response({'error': 'Not authorized to view staff list.'}, status=status.HTTP_403_FORBIDDEN)
+
+        users = User.objects.all()
+        staff_data = []
+        
+        for user in users:
+            role_name = 'Pending'
+            branch_name = None
+            
+            # Figure out their role
+            if user.is_superuser:
+                role_name = 'Admin'
+            elif hasattr(user, 'profile'):
+                role = user.profile.roles.first()
+                if role:
+                    role_name = role.name
+                # Figure out their branch
+                if user.profile.branch:
+                    branch_name = user.profile.branch.name
+            
+            # Append to our list
+            staff_data.append({
+                'id': user.id,
+                'name': user.first_name or user.username,
+                'email': user.email or user.username,
+                'role': role_name,
+                'branch_name': branch_name
+            })
+            
+        return Response(staff_data, status=status.HTTP_200_OK)
