@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   MapPin, Plus, Edit, Trash2, Building, UserPlus, X, 
-  TrendingUp, AlertTriangle, Calendar, BarChart2, Users, Search 
+  TrendingUp, AlertTriangle, BarChart2, Users, Search 
 } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
@@ -12,7 +12,7 @@ function BranchManagement() {
   const [users, setUsers] = useState([]); 
   const [message, setMessage] = useState('');
   
-  // --- NEW: SEARCH STATE ---
+  // Search State
   const [searchQuery, setSearchQuery] = useState('');
   
   // Form States
@@ -50,41 +50,24 @@ function BranchManagement() {
     } catch (err) { console.error(err); }
   };
 
+  // 🚨 BULLETPROOF EMPLOYEE FETCHER
   const fetchUsers = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/auth/users/`, getConfig());
-      let processedUsers = [];
-
-      // 🚨 CHECK: Did Django return the complex Object format?
-      if (res.data && !Array.isArray(res.data) && res.data.users) {
-        
-        // Loop through the users array and manually attach their roles and branches
-        processedUsers = res.data.users.map(u => {
-          // Match the user ID to the assignments dictionary
-          const userAssign = res.data.assignments ? res.data.assignments[u.id] : null;
-          
-          return {
-            id: u.id,
-            name: u.first_name || u.username || 'Unknown',
-            email: u.email || 'No Email',
-            // Safely extract role and branch, defaulting to 'Pending/Unassigned' if missing
-            role: userAssign ? (userAssign.role || userAssign.role_name || 'Pending') : 'Pending',
-            branch_name: userAssign ? (userAssign.branch || userAssign.branch_name || 'Unassigned') : 'Unassigned'
-          };
-        });
-
-      } 
-      // 🚨 FALLBACK: If Django returned the standard Array format
-      else if (Array.isArray(res.data)) {
-        processedUsers = res.data;
-      }
-
-      // Finally, filter out the Admins so you only see your hired employees!
-      setUsers(processedUsers.filter(u => u.role !== 'Admin'));
-
-    } catch (err) { 
-      console.error("Error fetching users:", err); 
-    }
+      
+      // Handles data no matter what format Django sends it in
+      let rawData = Array.isArray(res.data) ? res.data : (res.data.users || res.data.results || []);
+      
+      const processed = rawData.map(u => ({
+        id: u.id,
+        name: u.name || u.first_name || u.username || 'Unknown',
+        email: u.email || 'No Email',
+        role: u.role || u.role_name || 'Pending',
+        branch_name: u.branch_name || u.branch || 'Unassigned'
+      }));
+      
+      setUsers(processed.filter(u => u.role !== 'Admin')); 
+    } catch (err) { console.error(err); }
   };
 
   const handleCreateBranch = async (e) => {
@@ -167,7 +150,6 @@ function BranchManagement() {
     }
   };
 
-  // --- NEW: FILTER LOGIC ---
   const filteredBranches = branches.filter(b => 
     b.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     b.address.toLowerCase().includes(searchQuery.toLowerCase())
@@ -191,12 +173,17 @@ function BranchManagement() {
           padding: 20px; opacity: 0; animation: fadeIn 0.25s forwards ease-out;
         }
         .dashboard-modal {
-          background: #f8fafc; width: 100%; max-width: 1300px; max-height: 95vh;
-          border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+          background: #f8fafc; width: 100%; max-width: 900px; /* Reduced width for a cleaner look */
+          max-height: 90vh; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
           display: flex; flex-direction: column; transform: translateY(30px) scale(0.95);
           animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; overflow: hidden;
         }
         .modal-body { padding: 25px; overflow-y: auto; flex: 1; }
+
+        /* Custom Scrollbar for compact lists */
+        .compact-scroll::-webkit-scrollbar { width: 6px; }
+        .compact-scroll::-webkit-scrollbar-track { background: transparent; }
+        .compact-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
         @keyframes fadeIn { to { opacity: 1; } }
         @keyframes slideUp { to { transform: translateY(0) scale(1); } }
@@ -208,49 +195,27 @@ function BranchManagement() {
         .action-btn { background: none; border: none; padding: 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: 600; font-size: 13px; }
         .action-btn.view { background: #eff6ff; color: #3b82f6; }
         
-        /* 🚨 EXTREME MOBILE RESPONSIVENESS FIXES */
         @media (max-width: 768px) {
           .full-width-wrapper { padding: 10px; }
           .page-title { font-size: 20px !important; margin-bottom: 15px !important; }
-          
-          /* Keep tabs on same row */
           .tab-btn-title { font-size: 13px !important; padding: 12px 5px !important; flex: 1; text-align: center; }
-          
-          /* Table squeeze fix */
           .table-container { padding: 10px !important; }
           .modern-table { min-width: 100% !important; font-size: 12px !important; }
           .modern-table th, .modern-table td { padding: 8px 4px !important; }
           .modern-table th { font-size: 10px !important; letter-spacing: 0; }
-          .mobile-hide { display: none !important; } /* Hides ID column */
-          
-          /* Shrink Action Buttons (Hide Text, Keep Icon) */
+          .mobile-hide { display: none !important; } 
           .action-text { display: none; } 
           .action-btn { padding: 6px !important; justify-content: center; }
           .action-btn-container { gap: 4px !important; }
           
-          /* Modal Adjustments */
-          /* 🚨 UPGRADED: Sleek Floating Mobile Modal */
-          .dashboard-modal { 
-            margin: 15px; 
-            width: calc(100vw - 30px); 
-            height: auto; /* Lets the modal shrink if there is less data */
-            max-height: 85vh; /* Prevents it from touching the very top/bottom of the screen */
-            border-radius: 16px !important; /* Keeps the modern rounded corners */
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-          }
-          .modal-body { 
-            padding: 15px; 
-            overflow-y: auto; /* Ensures only the inside scrolls, not the whole page */
-          }
+          /* Mobile Modal fixes */
+          .dashboard-modal { margin: 15px; width: calc(100vw - 30px); height: auto; max-height: 85vh; border-radius: 16px; }
+          .modal-body { padding: 15px; }
           .modal-title { font-size: 18px !important; }
-          
-          /* 4 Metric Cards -> 2x2 Grid */
           .metric-container { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; margin-bottom: 15px !important;}
           .metric-card { padding: 12px !important; }
           .metric-card p { font-size: 9px !important; }
           .metric-card h3 { font-size: 16px !important; margin-top: 5px !important; }
-          
-          /* Split Grid to Column */
           .desktop-grid { grid-template-columns: 1fr !important; gap: 15px !important; }
           .mobile-col { flex-direction: column !important; align-items: stretch !important; }
           .mobile-col-btn { width: 100% !important; margin-top: 10px; }
@@ -264,9 +229,7 @@ function BranchManagement() {
         
         {message && <div style={{ padding: '16px', background: '#d1fae5', color: '#065f46', borderRadius: '8px', marginBottom: '20px', fontWeight: 'bold', fontSize: '14px' }}>✓ {message}</div>}
 
-        {/* --- UNIFIED MANAGEMENT CONTAINER --- */}
         <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', marginBottom: '25px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
-          {/* 🚨 Tabs kept on the SAME row */}
           <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
             <button className="tab-btn-title" onClick={() => setActiveForm('branch')} style={{ padding: '16px', background: 'none', border: 'none', borderBottom: activeForm === 'branch' ? '3px solid #3b82f6' : '3px solid transparent', color: activeForm === 'branch' ? '#3b82f6' : '#64748b', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '15px' }}>
               <Building size={16}/> Locations
@@ -310,10 +273,7 @@ function BranchManagement() {
           </div>
         </div>
 
-        {/* --- DYNAMIC DATA TABLE --- */}
         <div className="table-container" style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
-          
-          {/* Header & Search Bar Row */}
           <div className="mobile-col" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
             <h2 style={{ fontSize: '18px', margin: 0, color: '#0f172a' }}>
               {activeForm === 'branch' ? 'Active Locations' : 'Hired Employees'}
@@ -332,7 +292,6 @@ function BranchManagement() {
           
           <div style={{ width: '100%', overflowX: 'auto', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
             {activeForm === 'branch' ? (
-              // BRANCHES TABLE
               <table className="modern-table">
                 <thead>
                   <tr>
@@ -390,7 +349,6 @@ function BranchManagement() {
                 </tbody>
               </table>
             ) : (
-              // EMPLOYEES TABLE
               <table className="modern-table">
                 <thead>
                   <tr>
@@ -410,7 +368,7 @@ function BranchManagement() {
                           <span style={{ fontSize: '12px', color: '#64748b', wordBreak: 'break-all' }}>{u.email}</span>
                         </td>
                         <td><span style={{ background: u.role === 'Manager' ? '#fef3c7' : '#e0f2fe', color: u.role === 'Manager' ? '#b45309' : '#0369a1', padding: '4px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold' }}>{u.role}</span></td>
-                        <td style={{ color: '#334155', fontWeight: '500', fontSize: '13px' }}>{u.branch_name || 'Unassigned'}</td>
+                        <td style={{ color: '#334155', fontWeight: '500', fontSize: '13px' }}>{u.branch_name}</td>
                       </tr>
                     ))
                   )}
@@ -439,8 +397,7 @@ function BranchManagement() {
                 <div style={{ textAlign: 'center', padding: '40px', color: '#64748b', fontSize: '14px' }}>Fetching branch data...</div>
               ) : branchStats ? (
                 <>
-                  {/* 🚨 2x2 GRID ON MOBILE, 4-COLUMN ON DESKTOP */}
-                  <div className="metric-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '20px' }}>
+                  <div className="metric-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '15px', marginBottom: '20px' }}>
                     <div className="metric-card" style={{ background: 'white', padding: '15px', borderRadius: '10px', borderLeft: '4px solid #3b82f6', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
                       <p style={{ margin: 0, color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '11px' }}>Total Revenue</p>
                       <h3 style={{ margin: '8px 0 0 0', fontSize: '20px', color: '#1e293b' }}>PKR {branchStats.total_income}</h3>
@@ -459,60 +416,44 @@ function BranchManagement() {
                     </div>
                   </div>
 
-                  <div className="desktop-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '15px', marginBottom: '20px' }}>
+                  {/* 🚨 UPDATED: Order History Removed, Top Items compact and equal width! */}
+                  <div className="desktop-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px' }}>
+                    
                     <div style={{ background: 'white', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                       <h3 style={{ margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '6px', color: '#3b82f6', fontSize: '15px' }}><TrendingUp size={16}/> Top Selling Items</h3>
-                      {branchStats.top_items.length > 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {branchStats.top_items.map((item, idx) => (
-                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '13px' }}>
-                              <span style={{ fontWeight: 'bold', color: '#334155' }}>{item.name}</span>
-                              <div style={{ display: 'flex', gap: '15px' }}>
-                                <span style={{ color: '#64748b' }}>Sold: {item.total_sold}</span>
-                                <strong style={{ color: '#10b981' }}>PKR {item.revenue}</strong>
+                      <div className="compact-scroll" style={{ maxHeight: '180px', overflowY: 'auto', paddingRight: '5px' }}>
+                        {branchStats.top_items.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {branchStats.top_items.map((item, idx) => (
+                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '13px' }}>
+                                <span style={{ fontWeight: 'bold', color: '#334155' }}>{item.name}</span>
+                                <div style={{ display: 'flex', gap: '15px' }}>
+                                  <span style={{ color: '#64748b' }}>Sold: {item.total_sold}</span>
+                                  <strong style={{ color: '#10b981' }}>PKR {item.revenue}</strong>
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (<p style={{ color: '#94a3b8', fontSize: '13px' }}>No sales data yet.</p>)}
+                            ))}
+                          </div>
+                        ) : (<p style={{ color: '#94a3b8', fontSize: '13px' }}>No sales data yet.</p>)}
+                      </div>
                     </div>
 
                     <div style={{ background: 'white', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                       <h3 style={{ margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '6px', color: '#ef4444', fontSize: '15px' }}><AlertTriangle size={16}/> Low Stock Alert</h3>
-                      {branchStats.low_stock.length > 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {branchStats.low_stock.map((item, idx) => (
-                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', fontSize: '13px' }}>
-                              <span style={{ fontWeight: 'bold', color: '#991b1b' }}>{item.name}</span>
-                              <strong style={{ color: '#dc2626' }}>{item.quantity_on_hand} {item.unit}</strong>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (<p style={{ color: '#16a34a', fontWeight: 'bold', fontSize: '13px' }}>All stock levels good! ✅</p>)}
+                      <div className="compact-scroll" style={{ maxHeight: '180px', overflowY: 'auto', paddingRight: '5px' }}>
+                        {branchStats.low_stock.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {branchStats.low_stock.map((item, idx) => (
+                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', fontSize: '13px' }}>
+                                <span style={{ fontWeight: 'bold', color: '#991b1b' }}>{item.name}</span>
+                                <strong style={{ color: '#dc2626' }}>{item.quantity_on_hand} {item.unit}</strong>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (<p style={{ color: '#16a34a', fontWeight: 'bold', fontSize: '13px' }}>All stock levels good! ✅</p>)}
+                      </div>
                     </div>
-                  </div>
 
-                  <div style={{ background: 'white', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                    <h3 style={{ margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '6px', color: '#475569', fontSize: '15px' }}><Calendar size={16}/> Order History</h3>
-                    <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
-                      <table className="modern-table" style={{ minWidth: '100%', fontSize: '12px' }}>
-                        <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
-                          <tr><th>Order ID</th><th>Date</th><th>Type</th><th>Amount</th></tr>
-                        </thead>
-                        <tbody>
-                          {branchStats.recent_orders.length > 0 ? (
-                            branchStats.recent_orders.map((order, idx) => (
-                              <tr key={idx}>
-                                <td style={{ color: '#64748b' }}>#{order.id}</td>
-                                <td>{new Date(order.created_at).toLocaleDateString()}</td>
-                                <td style={{ fontWeight: '500' }}>{order.order_type}</td>
-                                <td style={{ fontWeight: 'bold', color: '#334155' }}>PKR {order.total_amount}</td>
-                              </tr>
-                            ))
-                          ) : (<tr><td colSpan="4" style={{ textAlign: 'center', padding: '15px', color: '#94a3b8' }}>No recent orders.</td></tr>)}
-                        </tbody>
-                      </table>
-                    </div>
                   </div>
                 </>
               ) : null}

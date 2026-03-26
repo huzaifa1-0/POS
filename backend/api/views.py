@@ -713,35 +713,35 @@ class BranchSalesReportView(APIView):
 
 
 
+# Make sure User is imported at the top: from django.contrib.auth.models import User
+
 class StaffListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # 1. Security check: Only admins should be able to fetch the full employee list
         is_admin = request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Admin').exists())
         
         if not is_admin:
-            return Response({'error': 'Not authorized to view staff list.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
 
         users = User.objects.all()
         staff_data = []
         
         for user in users:
             role_name = 'Pending'
-            branch_name = None
+            branch_name = 'Unassigned'
             
-            # Figure out their role
             if user.is_superuser:
                 role_name = 'Admin'
             elif hasattr(user, 'profile'):
+                # Safely get the role
                 role = user.profile.roles.first()
                 if role:
                     role_name = role.name
-                # Figure out their branch
+                # Safely get the branch
                 if user.profile.branch:
                     branch_name = user.profile.branch.name
-            
-            # Append to our list
+                    
             staff_data.append({
                 'id': user.id,
                 'name': user.first_name or user.username,
@@ -750,4 +750,5 @@ class StaffListView(APIView):
                 'branch_name': branch_name
             })
             
+        # This will return a perfectly clean array of objects to React
         return Response(staff_data, status=status.HTTP_200_OK)
