@@ -71,6 +71,7 @@ function App() {
   const [selectedRole, setSelectedRole] = useState('Cashier');
   // New state variables for the advanced form
   const activeRole = sessionStorage.getItem('active_role');
+  const effectiveRole = activeRole || realRole; // 🚨 NEW: Defaults to realRole immediately upon login
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -612,7 +613,7 @@ function App() {
           <NavLink to="/" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="POS Home">
             <Home size={24} />
           </NavLink>
-          {activeRole === 'Admin' && (
+          {effectiveRole === 'Admin' && (
             <NavLink to="/branch-reports" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Master Analytics">
               <PieChart size={24} />
             </NavLink>
@@ -648,7 +649,7 @@ function App() {
         </div>
 
         <div className="nav-rail-bottom">
-          {activeRole === 'Admin' && (
+          {effectiveRole === 'Admin' && (
             <NavLink to="/branch-management" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Network Management">
               <MapPin size={24} />
             </NavLink>
@@ -950,12 +951,12 @@ function App() {
       )} />
         <Route 
           path="/branch-management" 
-          element={ activeRole === 'Admin' ? <BranchManagement /> : <Navigate to="/" /> } 
+          element={ effectiveRole === 'Admin' ? <BranchManagement /> : <Navigate to="/" /> } 
         />
         
         <Route 
           path="/branch-reports" 
-          element={ activeRole === 'Admin' ? <BranchReports /> : <Navigate to="/" /> } 
+          element={ effectiveRole === 'Admin' ? <BranchReports /> : <Navigate to="/" /> } 
         />
         {/* PROTECTED SEPARATE PAGES */}
         <Route 

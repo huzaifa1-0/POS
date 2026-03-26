@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { jwtDecode } from "jwt-decode";
 
 function Settings() {
+  const token = sessionStorage.getItem('access_token');
+  let realRole = null;
+  if (token) {
+    try { realRole = jwtDecode(token).role; } catch(e) {}
+  }
   const activeRole = sessionStorage.getItem('active_role');
+  const effectiveRole = activeRole || realRole; // 🚨 NEW: Defaults to realRole immediately upon login
   const [activeTab, setActiveTab] = useState('permissions');
 
   const [screens, setScreens] = useState([]);
@@ -22,6 +29,7 @@ function Settings() {
   const [editBranchAddress, setEditBranchAddress] = useState('');
 
   const [staffRole, setStaffRole] = useState('Cashier');
+  
 
   // --- NEW: Branch Edit & Delete Handlers ---
   const handleDeleteBranch = async (id) => {
@@ -191,7 +199,7 @@ function Settings() {
         </button>
         
         {/* 🚨 NEW: ONLY SHOW THESE TABS IF THE USER IS NOT AN ADMIN */}
-        {activeRole !== 'Admin' && (
+        {effectiveRole !== 'Admin' && (
           <>
             <button className={`tab-btn ${activeTab === 'branches' ? 'active' : ''}`} onClick={() => setActiveTab('branches')}>
               Branch Management
@@ -280,7 +288,7 @@ function Settings() {
       )}
 
       {/* --- TAB 2: BRANCH MANAGEMENT --- */}
-      {activeRole !== 'Admin' && activeTab === 'branches' && (
+      {effectiveRole !== 'Admin' && activeTab === 'branches' && (
         <div className="settings-layout-wrapper">
           
           <div className="settings-card form-card">
@@ -358,7 +366,7 @@ function Settings() {
       )}
 
       {/* --- TAB 3: BRANCH SALES REPORTS --- */}
-      {activeRole !== 'Admin' && activeTab === 'reports' && (
+      {effectiveRole !== 'Admin' && activeTab === 'reports' && (
         <div className="settings-layout-wrapper">
           <div className="settings-card form-card" style={{ flex: 1, minWidth: '100%' }}>
             <div className="settings-card-header">
