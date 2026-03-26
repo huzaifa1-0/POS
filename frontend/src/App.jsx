@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2, BookOpen, Settings, MapPin, PieChart } from 'lucide-react';
+import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2, BookOpen, Settings, MapPin, PieChart, Building } from 'lucide-react';
 import {Navigate, Routes, Route, NavLink } from 'react-router-dom'; 
 import Inventory from './pages/Inventory'; 
 import Reports from './pages/Reports'; 
@@ -65,7 +65,8 @@ function App() {
   
   const [adminBranches, setAdminBranches] = useState([]);
   const [selectedSimBranch, setSelectedSimBranch] = useState('');
-  const [selectedSimRole, setSelectedSimRole] = useState('Admin');
+  // 🚨 DEFAULT TO CASHIER SINCE WE ARE REMOVING ADMIN
+  const [selectedSimRole, setSelectedSimRole] = useState('Cashier');
 
   // --- NEW: STATE FOR THE DROPDOWN ---
   const [selectedRole, setSelectedRole] = useState('Cashier');
@@ -692,14 +693,65 @@ function App() {
                   Please select the physical branch and the role you wish to simulate for this session.
                 </p>
 
-                <select 
-                  value={selectedSimBranch} 
-                  onChange={(e) => setSelectedSimBranch(e.target.value)} 
-                  style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '15px' }}
-                >
-                  <option value="" disabled>Select a Branch...</option>
-                  {adminBranches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
+                {/* 🚨 MODERN RADIO BUTTON BRANCH LIST */}
+                <div style={{ marginBottom: '20px', textAlign: 'left' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', color: '#475569', marginBottom: '10px' }}>
+                    Select Target Location:
+                  </label>
+                  
+                  {/* Scrollable container in case you have many branches */}
+                  <div style={{ maxHeight: '240px', overflowY: 'auto', paddingRight: '5px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {adminBranches.length === 0 ? (
+                      <p style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic', textAlign: 'center', padding: '20px' }}>Loading branches...</p>
+                    ) : (
+                      adminBranches.map(b => (
+                        <label 
+                          key={b.id} 
+                          style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between',
+                            padding: '14px 16px', 
+                            borderRadius: '10px', 
+                            border: selectedSimBranch == b.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                            backgroundColor: selectedSimBranch == b.id ? '#eff6ff' : '#ffffff',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            boxShadow: selectedSimBranch == b.id ? '0 2px 4px rgba(59, 130, 246, 0.1)' : 'none'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ 
+                              background: selectedSimBranch == b.id ? '#3b82f6' : '#f1f5f9', 
+                              color: selectedSimBranch == b.id ? 'white' : '#64748b', 
+                              padding: '8px', 
+                              borderRadius: '8px', 
+                              display: 'flex', 
+                              justifyContent: 'center', 
+                              alignItems: 'center',
+                              transition: 'all 0.2s ease'
+                            }}>
+                              <Building size={16} />
+                            </div>
+                            <span style={{ fontWeight: '600', color: selectedSimBranch == b.id ? '#1e293b' : '#475569', fontSize: '15px' }}>
+                              {b.name}
+                            </span>
+                          </div>
+                          
+                          {/* The actual Radio Button */}
+                          <input 
+                            type="radio" 
+                            name="simBranch" 
+                            value={b.id} 
+                            checked={selectedSimBranch == b.id} 
+                            onChange={(e) => setSelectedSimBranch(e.target.value)} 
+                            style={{ width: '18px', height: '18px', accentColor: '#3b82f6', cursor: 'pointer' }}
+                          />
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
 
                 <select 
                   value={selectedSimRole} 
@@ -708,7 +760,6 @@ function App() {
                 >
                   <option value="Cashier">Login as Cashier</option>
                   <option value="Manager">Login as Manager</option>
-                  <option value="Admin">Login as Full Admin</option>
                 </select>
 
                 <button 
