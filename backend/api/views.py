@@ -35,6 +35,7 @@ from django.utils import timezone
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
+from .models import UserProfile
 
 
 class ExpenseViewSet(viewsets.ModelViewSet):
@@ -719,8 +720,13 @@ class StaffListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        is_admin = request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Admin').exists())
-        
+        # 1. Foolproof Admin Check
+        is_admin = request.user.is_superuser
+        if not is_admin:
+            admin_profile = UserProfile.objects.filter(user=request.user).first()
+            if admin_profile and admin_profile.roles.filter(name='Admin').exists():
+                is_admin = True
+                
         if not is_admin:
             return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -733,14 +739,15 @@ class StaffListView(APIView):
             
             if user.is_superuser:
                 role_name = 'Admin'
-            elif hasattr(user, 'profile'):
-                # Safely get the role
-                role = user.profile.roles.first()
-                if role:
-                    role_name = role.name
-                # Safely get the branch
-                if user.profile.branch:
-                    branch_name = user.profile.branch.name
+            else:
+                # 🚨 FOOLPROOF METHOD: Query the table directly instead of using user.profile
+                profile = UserProfile.objects.filter(user=user).first()
+                if profile:
+                    role = profile.roles.first()
+                    if role:
+                        role_name = role.name
+                    if profile.branch:
+                        branch_name = profile.branch.name
                     
             staff_data.append({
                 'id': user.id,
@@ -750,5 +757,4 @@ class StaffListView(APIView):
                 'branch_name': branch_name
             })
             
-        # This will return a perfectly clean array of objects to React
         return Response(staff_data, status=status.HTTP_200_OK)
