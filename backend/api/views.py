@@ -758,3 +758,89 @@ class StaffListView(APIView):
             })
             
         return Response(staff_data, status=status.HTTP_200_OK)
+
+
+
+class UpdateUserRoleView(APIView):
+    permission_classes = [IsAuthenticated]
+    def put(self, request, pk):
+        is_admin = request.user.is_superuser
+        profile = UserProfile.objects.filter(user=request.user).first()
+        if not is_admin and profile and profile.roles.filter(name='Admin').exists():
+            is_admin = True
+            
+        if not is_admin: return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+            
+        try:
+            user_to_update = User.objects.get(pk=pk)
+            new_role_name = request.data.get('role')
+            
+            target_profile = UserProfile.objects.filter(user=user_to_update).first()
+            if not target_profile: target_profile = UserProfile.objects.create(user=user_to_update)
+                
+            role_obj, _ = Role.objects.get_or_create(name=new_role_name)
+            target_profile.roles.clear()
+            target_profile.roles.add(role_obj)
+            return Response({"message": "Role updated successfully"})
+        except User.DoesNotExist: return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class UpdateUserBranchView(APIView):
+    permission_classes = [IsAuthenticated]
+    def put(self, request, pk):
+        is_admin = request.user.is_superuser
+        profile = UserProfile.objects.filter(user=request.user).first()
+        if not is_admin and profile and profile.roles.filter(name='Admin').exists():
+            is_admin = True
+            
+        if not is_admin: return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+            
+        try:
+            user_to_update = User.objects.get(pk=pk)
+            branch_id = request.data.get('branch_id')
+            
+            target_profile = UserProfile.objects.filter(user=user_to_update).first()
+            if not target_profile: target_profile = UserProfile.objects.create(user=user_to_update)
+            
+            if branch_id:
+                target_profile.branch = Branch.objects.get(pk=branch_id)
+            else:
+                target_profile.branch = None
+            target_profile.save()
+            return Response({"message": "Branch updated successfully"})
+        except User.DoesNotExist: return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+# --- 2. MASTER BRANCH REPORT (For your new page) ---
+class MasterReportView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        is_admin = request.user.is_superuser
+        profile = UserProfile.objects.filter(user=request.user).first()
+        if not is_admin and profile and profile.roles.filter(name='Admin').exists():
+            is_admin = True
+                
+        if not is_admin: return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+        
+        branches = Branch.objects.all()
+        reports = []
+        
+        for branch in branches:
+            orders = Order.objects.filter(branch=branch, status='Completed')
+            total_income = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            cash_income = orders.filter(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            online_income = orders.exclude(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            
+            # Fetch expenses tied to staff members of this branch
+            expenses = Expense.objects.filter(staff_member__userprofile__branch=branch)
+            total_expenses = expenses.aggregate(Sum('amount'))['amount__sum'] or 0
+            
+            reports.append({
+                'id': branch.id,
+                'name': branch.name,
+                'address': branch.address,
+                'total_income': total_income,
+                'cash_income': cash_income,
+                'online_income': online_income,
+                'total_expenses': total_expenses
+            })
+            
+        return Response(reports, status=status.HTTP_200_OK)
