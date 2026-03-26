@@ -614,7 +614,7 @@ function App() {
           <NavLink to="/" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="POS Home">
             <Home size={24} />
           </NavLink>
-          {effectiveRole === 'Admin' && (
+          {realRole === 'Admin' && (
             <NavLink to="/branch-reports" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Master Analytics">
               <PieChart size={24} />
             </NavLink>
@@ -650,7 +650,7 @@ function App() {
         </div>
 
         <div className="nav-rail-bottom">
-          {effectiveRole === 'Admin' && (
+          {realRole === 'Admin' && (
             <NavLink to="/branch-management" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Network Management">
               <MapPin size={24} />
             </NavLink>
@@ -1002,12 +1002,12 @@ function App() {
       )} />
         <Route 
           path="/branch-management" 
-          element={ effectiveRole === 'Admin' ? <BranchManagement /> : <Navigate to="/" /> } 
+          element={ realRole === 'Admin' ? <BranchManagement /> : <Navigate to="/" /> } 
         />
         
         <Route 
           path="/branch-reports" 
-          element={ effectiveRole === 'Admin' ? <BranchReports /> : <Navigate to="/" /> } 
+          element={ realRole === 'Admin' ? <BranchReports /> : <Navigate to="/" /> } 
         />
         {/* PROTECTED SEPARATE PAGES */}
         <Route 
