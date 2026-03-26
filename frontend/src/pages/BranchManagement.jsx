@@ -51,44 +51,30 @@ function BranchManagement() {
   };
 
   // 🚨 BULLETPROOF EMPLOYEE FETCHER
+  // 🚨 BULLETPROOF EMPLOYEE FETCHER (Synced with your Settings endpoint)
+  // 🚨 BULLETPROOF EMPLOYEE FETCHER
   const fetchUsers = async () => {
     try {
+      // 🚨 FIX: We must hit /auth/users/ because that is what is inside your Django urls.py!
       const res = await axios.get(`${API_BASE_URL}/auth/users/`, getConfig());
       
-      let processedUsers = [];
-
-      // If backend returns the complex Object format
-      if (res.data && !Array.isArray(res.data) && res.data.users) {
-        processedUsers = res.data.users.map(u => {
-          const userAssign = res.data.assignments ? res.data.assignments[u.id] : null;
-          return {
-            id: u.id,
-            name: u.first_name || u.username || 'Unknown',
-            email: u.email || 'No Email',
-            role: userAssign ? (userAssign.role || userAssign.role_name || 'Pending') : 'Pending',
-            branch_name: userAssign ? (userAssign.branch || userAssign.branch_name || 'Unassigned') : 'Unassigned'
-          };
-        });
-      } 
-      // If backend returns our perfectly clean Flat Array format
-      else if (Array.isArray(res.data)) {
-        processedUsers = res.data.map(u => ({
-          id: u.id,
-          name: u.name || u.first_name || u.username || 'Unknown',
-          email: u.email || 'No Email',
-          role: u.role || 'Pending',
-          branch_name: u.branch_name || 'Unassigned'
-        }));
-      }
-
-      // Filter out the Admin so you only see hired staff
-      setUsers(processedUsers.filter(u => u.role !== 'Admin'));
-
+      // Handles data no matter what format Django sends it in
+      let rawData = Array.isArray(res.data) ? res.data : (res.data.users || res.data.results || []);
+      
+      const processed = rawData.map(u => ({
+        id: u.id,
+        name: u.name || u.first_name || u.username || 'Unknown',
+        email: u.email || 'No Email',
+        role: u.role || u.role_name || 'Pending',
+        branch_name: u.branch_name || u.branch || 'Unassigned'
+      }));
+      
+      setUsers(processed.filter(u => u.role !== 'Admin')); 
     } catch (err) { 
-      console.error("Error fetching users:", err); 
+      console.error("Failed to load users:", err); 
     }
   };
-
+  
   const handleCreateBranch = async (e) => {
     e.preventDefault();
     try {
