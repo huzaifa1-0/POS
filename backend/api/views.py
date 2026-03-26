@@ -316,7 +316,12 @@ class ReportDashboardView(APIView):
         
         # Create a safe base query
         if is_admin:
-            safe_orders = Order.objects.all() # Admin sees all branches
+            # 🚨 FIX: If the Admin is checking a specific branch from the Popup, filter by that branch!
+            branch_id = request.headers.get('X-Branch-Id')
+            if branch_id and branch_id != 'null':
+                safe_orders = Order.objects.filter(branch_id=branch_id)
+            else:
+                safe_orders = Order.objects.all() # Admin sees all branches by default
         elif hasattr(user, 'profile') and user.profile.branch:
             safe_orders = Order.objects.filter(branch=user.profile.branch) # Cashier sees ONLY their branch
         else:
