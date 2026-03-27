@@ -403,7 +403,10 @@ class ReportDashboardView(APIView):
             'trend_data': trend_data,
             'recent_expenses': list(recent_expenses),
             'top_items': list(top_items),
-            'low_stock': low_stock
+            'low_stock': low_stock,
+            'low_stock_items': low_stock,
+            'top_selling_items': list(top_items),
+            'recent_orders': []
         })
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by('-created_at')
