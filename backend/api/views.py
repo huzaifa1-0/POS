@@ -700,32 +700,27 @@ class BranchSalesReportView(APIView):
 
 # Make sure User is imported at the top: from django.contrib.auth.models import User
 
+# Returns comprehensive staff details (for Admin/Settings)
 class StaffListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # 1. Bulletproof Admin Security Check
-        is_admin = request.user.is_superuser
-        if not is_admin:
-            admin_profile = UserProfile.objects.filter(user=request.user).first()
-            if admin_profile and admin_profile.roles.filter(name='Admin').exists():
-                is_admin = True
-                
+        is_admin = request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.roles.filter(name='Admin').exists())
         if not is_admin:
             return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
 
-        # 2. Fetch all users
         users = User.objects.all()
         staff_data = []
         
         for user in users:
             role_name = 'Pending'
             branch_name = 'Unassigned'
+            # 🚨 FIX: We need the ID for React filtering in the popup!
+            branch_id = None 
             
             if user.is_superuser:
                 role_name = 'Admin'
             else:
-                # 3. Direct table lookup (bypasses Django hasattr errors)
                 profile = UserProfile.objects.filter(user=user).first()
                 if profile:
                     role = profile.roles.first()
@@ -733,17 +728,20 @@ class StaffListView(APIView):
                         role_name = role.name
                     if profile.branch:
                         branch_name = profile.branch.name
+                        # 🚨 FIX: Capture the actual ID here
+                        branch_id = profile.branch.id 
                     
             staff_data.append({
                 'id': user.id,
                 'name': user.first_name or user.username or 'Unknown',
                 'email': user.email or user.username,
                 'role': role_name,
-                'branch_name': branch_name
+                'branch_name': branch_name,
+                # 🚨 Send it to React
+                'branch_id': branch_id 
             })
             
         return Response(staff_data, status=status.HTTP_200_OK)
-
 
 
 class UpdateUserRoleView(APIView):

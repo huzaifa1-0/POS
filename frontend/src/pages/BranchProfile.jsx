@@ -37,7 +37,12 @@ export default function BranchProfile({ branch, allStaff, onClose }) {
         
         .profile-tabs { display: flex; background: #f1f5f9; padding: 0 20px; border-bottom: 1px solid #e2e8f0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .tab-btn { padding: 16px 20px; background: none; border: none; border-bottom: 3px solid transparent; color: #64748b; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; transition: all 0.2s; white-space: nowrap; }
-        .tab-btn.active { border-bottom-color: #3b82f6; color: #3b82f6; }
+        .tab-btn.active { 
+          background-color: #3b82f6; /* Solid Blue Background */
+          color: #ffffff; /* 🚨 FIX: Force Text to WHITE so it is visible! */
+          border-bottom-color: #3b82f6;
+          border-radius: 8px; /* Optional: Make it look like a button */
+        }
         .tab-btn:hover:not(.active) { color: #0f172a; }
 
         .profile-body { padding: 25px; overflow-y: auto; flex: 1; }
