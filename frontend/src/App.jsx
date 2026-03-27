@@ -787,46 +787,23 @@ const handleAddItem = (item) => {
           <button className="rail-btn logout-btn" onClick={handleLogout} title="Logout">
             <LogOut size={24} />
           </button>
-          <div 
-            style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              gap: '4px',
-              cursor: 'default',
-              marginBottom: '10px' // Gives breathing room before the settings icon
-            }}
-            title={`Current Session: ${effectiveRole}`}
-          >
+          <div className="role-badge-container" title={`Current Session: ${effectiveRole}`}>
+            
             {/* Dynamic Avatar Circle */}
-            <div style={{ 
-              width: '32px', 
-              height: '32px', 
-              borderRadius: '50%', 
-              /* Dynamic Colors: Purple for Admin, Orange for Manager, Green for Cashier */
-              background: effectiveRole === 'Admin' ? '#8b5cf6' : effectiveRole === 'Manager' ? '#f59e0b' : '#10b981', 
-              color: 'white', 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center', 
-              fontWeight: '900', 
-              fontSize: '15px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-            }}>
+            <div 
+              className="role-avatar"
+              style={{ 
+                background: effectiveRole === 'Admin' ? '#8b5cf6' : effectiveRole === 'Manager' ? '#f59e0b' : '#10b981' 
+              }}
+            >
               {effectiveRole ? effectiveRole.charAt(0).toUpperCase() : '?'}
             </div>
             
-            {/* Tiny Role Text */}
-            <span style={{ 
-              color: '#cbd5e1', 
-              fontSize: '10px', 
-              fontWeight: '700', 
-              letterSpacing: '0.5px',
-              textTransform: 'uppercase'
-            }}>
+            {/* Tiny Role Text (Hidden on Mobile!) */}
+            <span className="role-text">
               {effectiveRole}
             </span>
+            
           </div>
         </div>
       </div>
