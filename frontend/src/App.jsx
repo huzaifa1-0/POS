@@ -499,9 +499,9 @@ const handleAddItem = (item) => {
               onChange={e => setSelectedRole(e.target.value)} 
               style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '15px', background: 'white' }}
             >
-              <option value="Cashier">Sign in/Sign up as Cashier</option>
-              <option value="Manager">Sign in/Sign up as Manager</option>
-              <option value="Admin">Sign in/Sign up as Admin</option>
+              <option value="Cashier">Login as Cashier</option>
+              <option value="Manager">Login as Manager</option>
+              <option value="Admin">Login as Admin</option>
             </select>
 
             {/* ALWAYS SHOW EMAIL & PASSWORD */}
@@ -521,8 +521,8 @@ const handleAddItem = (item) => {
               required 
             />
 
-            {/* --- NEW: PASSWORD REQUIREMENTS HELPER TEXT --- */}
-            {authMode === 'signup' && (
+           
+            {/* {authMode === 'signup' && (
               <div style={{ textAlign: 'left', fontSize: '12px', color: '#666', marginBottom: '15px', padding: '0 5px' }}>
                 <strong style={{ color: '#333' }}>Password must contain:</strong>
                 <ul style={{ margin: '5px 0 0 20px', padding: 0 }}>
@@ -531,7 +531,7 @@ const handleAddItem = (item) => {
                   <li>One number & one special character (!@#$%^&*)</li>
                 </ul>
               </div>
-            )}
+            )} */}
 
             {/* CONDITIONAL: ONLY SHOW CONFIRM PASSWORD IF SIGNUP */}
             {authMode === 'signup' && (
@@ -556,7 +556,7 @@ const handleAddItem = (item) => {
             }} 
             className="auth-switch"
           >
-            {authMode === 'login' ? "Don't have an account? Sign up" : "Already have an account? Login"}
+            {/* {authMode === 'login' ? "Don't have an account? Sign up" : "Already have an account? Login"} */}
           </p>
         </div>
       </div>
