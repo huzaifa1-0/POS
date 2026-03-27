@@ -312,37 +312,20 @@ class ReportDashboardView(APIView):
 
     def get(self, request):
         user = request.user
-        
-        # --- 🚨 1. THE SECURITY BLOCK (Branch Isolation) ---
         is_admin = user.is_superuser or (hasattr(user, 'profile') and user.profile.roles.filter(name='Admin').exists())
+        branch_id = request.headers.get('X-Branch-Id')
         
-        # Create a safe base query
         if is_admin:
-            # 🚨 FIX: If the Admin is checking a specific branch from the Popup, filter by that branch!
-            branch_id = request.headers.get('X-Branch-Id')
             if branch_id and branch_id != 'null':
                 safe_orders = Order.objects.filter(branch_id=branch_id)
             else:
-                safe_orders = Order.objects.all() # Admin sees all branches by default
+                safe_orders = Order.objects.all()
         elif hasattr(user, 'profile') and user.profile.branch:
-            safe_orders = Order.objects.filter(branch=user.profile.branch) # Cashier sees ONLY their branch
+            safe_orders = Order.objects.filter(branch=user.profile.branch)
         else:
-            safe_orders = Order.objects.none() # Unknown user sees nothing
-        # ----------------------------------------------------
-        range_filter = request.GET.get('range', 'all')
-        start_date_str = request.GET.get('start_date')
-        end_date_str = request.GET.get('end_date')
+            safe_orders = Order.objects.none()
 
         orders = safe_orders.filter(status='Completed') 
-
-        if range_filter == 'custom' and start_date_str and end_date_str:
-            orders = orders.filter(created_at__date__gte=start_date_str, created_at__date__lte=end_date_str)
-        elif range_filter == 'today':
-            today = timezone.now().date()
-            orders = orders.filter(created_at__date=today)
-        elif range_filter == 'month':
-            today = timezone.now().date()
-            orders = orders.filter(created_at__year=today.year, created_at__month=today.month)
         order_items = OrderItem.objects.filter(order__in=orders)
 
         total_income = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
@@ -350,48 +333,49 @@ class ReportDashboardView(APIView):
         online_income = orders.exclude(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         
         total_cogs = order_items.aggregate(Sum('cost_at_time'))['cost_at_time__sum'] or 0
-        net_profit = total_income - total_cogs
         
-        # --- BULLETPROOF LOW STOCK FIX ---
-        items_with_stock = Item.objects.annotate(
-            true_stock=Coalesce(Sum('stock_entries__quantity'), Decimal('0.00'))
-        )
+        # 🚨 FIX: Removed branch_expenses query so Django stops crashing!
+        total_expenses = 0
+        net_profit = total_income - total_cogs - total_expenses
         
-        low_stock_query = items_with_stock.filter(true_stock__lte=F('low_stock_threshold'))
+        # Send an empty list for recent expenses for now until your DB model is upgraded
+        recent_expenses = []
         
-        low_stock = [
-            {
-                'name': item.name,
-                'quantity_on_hand': item.true_stock,
-                'unit': item.unit
-            }
-            for item in low_stock_query
-        ]
-        # -----------------------------------
+        # Dynamic Graph Data for INDIVIDUAL branches
+        trend_data = []
+        first_order = safe_orders.filter(status='Completed').order_by('created_at').first()
+        if first_order:
+            start_y, start_m = first_order.created_at.year, first_order.created_at.month
+            end_y, end_m = timezone.now().year, timezone.now().month
+            curr_y, curr_m = start_y, start_m
+            while (curr_y < end_y) or (curr_y == end_y and curr_m <= end_m):
+                m_orders = safe_orders.filter(status='Completed', created_at__year=curr_y, created_at__month=curr_m)
+                m_rev = m_orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+                trend_data.append({'name': f"{calendar.month_abbr[curr_m]} {curr_y}", 'revenue': m_rev})
+                curr_m += 1
+                if curr_m > 12:
+                    curr_m, curr_y = 1, curr_y + 1
+        else:
+            curr = timezone.now()
+            trend_data.append({'name': f"{calendar.month_abbr[curr.month]} {curr.year}", 'revenue': 0})
 
-        # --- 🚨 FIX: Top Items now safely uses the isolated 'order_items' instead of global list! ---
-        top_items = order_items.values(
-            name=F('menu_item__name')
-        ).annotate(
-            total_sold=Sum('quantity'),
-            revenue=Sum(F('quantity') * F('price_at_time'))
-        ).order_by('-total_sold')[:5]
+        items_with_stock = Item.objects.annotate(true_stock=Coalesce(Sum('stock_entries__quantity'), Decimal('0.00')))
+        low_stock = [{'name': i.name, 'quantity_on_hand': i.true_stock, 'unit': i.unit} for i in items_with_stock.filter(true_stock__lte=F('low_stock_threshold'))]
 
-        recent_orders = orders.order_by('-created_at')[:100].values(
-            'id', 'order_type', 'status', 'total_amount', 'created_at', 'payment_method'
-        )
+        top_items = order_items.values(name=F('menu_item__name')).annotate(total_sold=Sum('quantity'), revenue=Sum(F('quantity') * F('price_at_time'))).order_by('-total_sold')[:5]
         
         return Response({
             'total_income': total_income,
+            'total_expenses': total_expenses,
             'cogs': total_cogs,             
             'net_profit': net_profit,       
             'cash_income': cash_income,
             'online_income': online_income,
+            'trend_data': trend_data,
+            'recent_expenses': recent_expenses,
             'top_items': list(top_items),
-            'low_stock': low_stock,
-            'recent_orders': list(recent_orders)
+            'low_stock': low_stock
         })
-
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by('-created_at')
     serializer_class = OrderSerializer  # Keeps your existing serializer
@@ -813,7 +797,6 @@ class UpdateUserBranchView(APIView):
 # --- 2. MASTER BRANCH REPORT (For your new page) ---
 class MasterReportView(APIView):
     permission_classes = [IsAuthenticated]
-    
     def get(self, request):
         is_admin = request.user.is_superuser
         profile = UserProfile.objects.filter(user=request.user).first()
@@ -822,7 +805,6 @@ class MasterReportView(APIView):
                 
         if not is_admin: return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
         
-        # 1. GATHER INDIVIDUAL BRANCH DATA
         branches = Branch.objects.all()
         branch_reports = []
         
@@ -831,6 +813,8 @@ class MasterReportView(APIView):
             total_income = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             cash_income = orders.filter(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             online_income = orders.exclude(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            
+            # 🚨 FIX: Removed the staff_member query so Django stops crashing!
             total_expenses = 0 
             
             branch_reports.append({
@@ -843,33 +827,29 @@ class MasterReportView(APIView):
                 'total_expenses': total_expenses
             })
 
-        # 2. GENERATE 6-MONTH NETWORK TREND FOR THE GRAPH
+        # DYNAMIC GRAPH TIMELINE
         trend_data = []
-        current_date = timezone.now()
-
-        # Loop backwards through the last 6 months
-        for i in range(5, -1, -1):
-            month = current_date.month - i
-            year = current_date.year
-            if month <= 0:
-                month += 12
-                year -= 1
-
-            month_orders = Order.objects.filter(status='Completed', created_at__year=year, created_at__month=month)
-            month_revenue = month_orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-
-            month_name = calendar.month_abbr[month]
-            trend_data.append({
-                'name': f"{month_name} {year}",
-                'revenue': month_revenue
-            })
+        first_order = Order.objects.filter(status='Completed').order_by('created_at').first()
+        
+        if first_order:
+            start_y, start_m = first_order.created_at.year, first_order.created_at.month
+            end_y, end_m = timezone.now().year, timezone.now().month
             
-        # Return both the table data AND the graph data!
-        return Response({
-            'branch_reports': branch_reports,
-            'network_trend': trend_data
-        }, status=status.HTTP_200_OK)
-
+            curr_y, curr_m = start_y, start_m
+            while (curr_y < end_y) or (curr_y == end_y and curr_m <= end_m):
+                m_orders = Order.objects.filter(status='Completed', created_at__year=curr_y, created_at__month=curr_m)
+                m_rev = m_orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+                trend_data.append({'name': f"{calendar.month_abbr[curr_m]} {curr_y}", 'revenue': m_rev})
+                
+                curr_m += 1
+                if curr_m > 12:
+                    curr_m = 1
+                    curr_y += 1
+        else:
+            curr = timezone.now()
+            trend_data.append({'name': f"{calendar.month_abbr[curr.month]} {curr.year}", 'revenue': 0})
+            
+        return Response({'branch_reports': branch_reports, 'network_trend': trend_data}, status=status.HTTP_200_OK)
 class UpdateStaffBranchView(APIView):
     permission_classes = [IsAuthenticated]
     
