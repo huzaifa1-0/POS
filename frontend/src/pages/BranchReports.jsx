@@ -93,7 +93,7 @@ function BranchReports() {
 
         .branch-section-header {
           display: flex; justify-content: space-between; align-items: center; 
-          margin-bottom: 15px; flex-wrap: wrap; gap: 15px;
+          margin-bottom: 20px; flex-wrap: wrap; gap: 15px;
         }
 
         /* 🚨 INDEPENDENT SCROLL AREA FOR BRANCHES */
