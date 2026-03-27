@@ -281,23 +281,82 @@ function App() {
     });
   };
 
-  const handleAddItem = (item) => {
-    setOrders(prev => {
-      const currentOrder = prev[activeOrder] || { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' };
-      const existingItem = currentOrder.items.find(i => i.id === item.id);
-      
-      let newItems = existingItem 
-        ? currentOrder.items.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i)
-        : [...currentOrder.items, { ...item, qty: 1 }];
+//   const handleAddItem = (item) => {
+//     setOrders(prev => {
+//       const currentOrder = prev[activeOrder] || { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' };
+//       const existingItem = currentOrder.items.find(i => i.id === item.id);
+//       
+//       let newItems = existingItem 
+//         ? currentOrder.items.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i)
+//         : [...currentOrder.items, { ...item, qty: 1 }];
 
-      const newStatus = currentOrder.status === 'Sent' ? 'Sent' : 'Running';
-      return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: newStatus } };
-    });
+//       const newStatus = currentOrder.status === 'Sent' ? 'Sent' : 'Running';
+//       return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: newStatus } };
+//     });
     
-    // 🚨 NEW: Trigger the notification and clear it after 1 second
-    setToastMessage(`Added ${item.name}!`);
-    setTimeout(() => setToastMessage(''), 1000);
-  };
+//     // 🚨 NEW: Trigger the notification and clear it after 1 second
+//     setToastMessage(`Added ${item.name}!`);
+//     setTimeout(() => setToastMessage(''), 1000);
+//   };
+
+//   const handleRemoveClick = (itemId) => setItemToDelete(itemId);
+
+//   const handleQuantityChange = (itemId, delta) => {
+//     setOrders(prev => {
+//       const currentOrder = prev[activeOrder];
+//       let newItems = currentOrder.items.map(item => {
+//         if (item.id === itemId) {
+//           return { ...item, qty: item.qty + delta };
+//         }
+//         return item;
+//       }).filter(item => item.qty > 0);
+
+//       if (newItems.length === 0) {
+//          return { ...prev, [activeOrder]: { ...currentOrder, items: [], status: 'Draft' } };
+//       }
+
+//       const newStatus = currentOrder.status === 'Sent' ? 'Running' : currentOrder.status;
+//       return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: newStatus } };
+//     });
+//   };
+
+//   const executeRemoveItem = () => {
+//     if (!itemToDelete) return;
+//     setOrders(prev => {
+//       const currentOrder = prev[activeOrder];
+//       const newItems = currentOrder.items.filter(i => i.id !== itemToDelete);
+      
+//       if (newItems.length === 0) {
+//         const remainingOrders = { ...prev };
+//         delete remainingOrders[activeOrder]; 
+//         const remainingKeys = Object.keys(remainingOrders);
+//         const nextActive = remainingKeys.length > 0 ? remainingKeys[0] : 'Table 1';
+//         if (!remainingOrders[nextActive]) remainingOrders['Table 1'] = { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' };
+//         setActiveOrder(nextActive);
+//         return remainingOrders;
+//       }
+//       const newStatus = currentOrder.status === 'Sent' ? 'Sent' : 'Running';
+//       return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: newStatus } };
+//     });
+//     setItemToDelete(null); 
+//   };
+
+const handleAddItem = (item) => {
+    setOrders(prev => {
+      const currentOrder = prev[activeOrder] || { type: 'Dine-In', items: [], status: 'Draft', paymentMethod: 'Cash' };
+      const existingItem = currentOrder.items.find(i => i.id === item.id);
+      
+      let newItems = existingItem 
+        ? currentOrder.items.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i)
+        : [...currentOrder.items, { ...item, qty: 1 }];
+
+      // 🚨 FIX: Any addition resets status to Running so you can send to kitchen again!
+      return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: 'Running' } };
+    });
+    
+    setToastMessage(`Added ${item.name} successfully!`);
+    setTimeout(() => setToastMessage(''), 1500);
+  };
 
   const handleRemoveClick = (itemId) => setItemToDelete(itemId);
 
@@ -305,18 +364,15 @@ function App() {
     setOrders(prev => {
       const currentOrder = prev[activeOrder];
       let newItems = currentOrder.items.map(item => {
-        if (item.id === itemId) {
-          return { ...item, qty: item.qty + delta };
-        }
+        if (item.id === itemId) return { ...item, qty: item.qty + delta };
         return item;
       }).filter(item => item.qty > 0);
 
       if (newItems.length === 0) {
          return { ...prev, [activeOrder]: { ...currentOrder, items: [], status: 'Draft' } };
       }
-
-      const newStatus = currentOrder.status === 'Sent' ? 'Running' : currentOrder.status;
-      return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: newStatus } };
+      // 🚨 FIX: Changing qty resets status to Running
+      return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: 'Running' } };
     });
   };
 
@@ -335,10 +391,12 @@ function App() {
         setActiveOrder(nextActive);
         return remainingOrders;
       }
-      const newStatus = currentOrder.status === 'Sent' ? 'Sent' : 'Running';
-      return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: newStatus } };
+      // 🚨 FIX: Removing an item resets status to Running
+      return { ...prev, [activeOrder]: { ...currentOrder, items: newItems, status: 'Running' } };
     });
     setItemToDelete(null); 
+    setToastMessage('Item removed successfully!');
+    setTimeout(() => setToastMessage(''), 1500);
   };
 
   // Change to an async function
@@ -795,13 +853,7 @@ function App() {
           
           {/* Beautiful Gradient Shop Name */}
           <span style={{
-            fontSize: '24px', 
-            fontWeight: '900', 
-            background: 'linear-gradient(45deg, #ff6b6b, #f97316)', 
-            WebkitBackgroundClip: 'text', 
-            WebkitTextFillColor: 'transparent',
-            letterSpacing: '0.5px',
-            textShadow: '0px 2px 4px rgba(0,0,0,0.05)'
+            fontSize: '25px', fontWeight: '900', color: '#273d61', letterSpacing: '0.5px', marginLeft: '10px'
           }}>
             Nashta POS
           </span>
@@ -884,7 +936,7 @@ function App() {
           <div className="current-order-area" style={{ position: 'relative' }}>
             
             {/* 🚨 NEW: TOAST NOTIFICATION UI */}
-            {toastMessage && (
+            {/* {toastMessage && (
               <div style={{ position: 'absolute', top: '20px', right: '20px', background: '#10b981', color: 'white', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', zIndex: 100 }}>
                 ✅ {toastMessage}
               </div>
@@ -898,7 +950,27 @@ function App() {
               }}>
                 {currentOrderData.status}
               </span>
+            </h2> */
+            
+            }
+            {toastMessage && (
+              <div style={{ position: 'absolute', top: '10px', right: '10px', background: toastMessage.includes('removed') ? '#ef4444' : '#10b981', color: 'white', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', zIndex: 100 }}>
+                {toastMessage.includes('removed') ? '🗑️' : '✅'} {toastMessage}
+              </div>
+            )}
+
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              {/* 🚨 FIX: Theme Color for Active Order (e.g. Table 1) */}
+              <span style={{ color: '#1d2c46' }}>{activeOrder}</span> - 
+              <span className="status-badge" style={{ 
+                fontSize: '14px', textTransform: 'uppercase', 
+                background: currentOrderData.status === 'Sent' ? '#dcfce3' : currentOrderData.status === 'Running' ? '#ffe0e0' : '#e0e7ff', 
+                color: currentOrderData.status === 'Sent' ? '#16a34a' : currentOrderData.status === 'Running' ? '#ff6b6b' : '#272461' 
+              }}>
+                {currentOrderData.status}
+              </span>
             </h2>
+
             
             <div className="order-item-list">
               {/* --- Replace the content inside order-item-list in App.jsx --- */}
@@ -957,12 +1029,12 @@ function App() {
                   </div>
                 )}
                 {/* View Receipt Button */}
-                <button 
+{/*                 <button 
                   style={{ padding: '8px 16px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}
                   onClick={() => setShowReceiptModal(true)}
                 >
                   <Receipt size={16} /> View Receipt
-                </button>
+                </button> */}
 
                 
               </div>
@@ -996,6 +1068,91 @@ function App() {
           </div>
         </div>
       </div>
+      {/* 🚨 NEW RIGHT SIDEBAR: PERMANENT LIVE RECEIPT */}
+            <div className="right-sidebar" style={{ width: '360px', background: '#f8fafc', borderLeft: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', background: 'white' }}>
+                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: '#0f172a' }}><Receipt size={20} color="#3b82f6" /> Live Receipt</h3>
+              </div>
+              
+              <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+                <div className="bill-receipt" ref={targetRef} style={{ background: 'white', padding: '20px', color: '#000', borderRadius: '12px', border: '1px dashed #cbd5e1', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                  <div className="bill-header" style={{ textAlign: 'center', marginBottom: '15px', borderBottom: '1px dashed #ccc', paddingBottom: '15px' }}>
+                    <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '900', color: 'black' }}>NASHTA POS</h2>
+                    <p style={{ fontSize: '12px', color: '#555', margin: '5px 0' }}>123 Food Street, Lahore</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 'bold', marginTop: '10px' }}>
+                        
+                        <span>{new Date().toLocaleDateString()}</span>
+                        <span>
+  {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'})}
+</span>
+
+                    </div>
+                  </div>
+
+                  <div className="bill-items">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px', paddingBottom: '5px', borderBottom: '1px solid #eee' }}>
+                        <span>Item</span><span>Amount</span>
+                    </div>
+                    {currentOrderData.items.length === 0 ? (
+                       <p style={{textAlign: 'center', fontSize: '13px', color: '#94a3b8', fontStyle: 'italic', margin: '20px 0'}}>Cart is empty.</p>
+                    ) : currentOrderData.items.map(item => (
+                      <div key={item.id} style={{ 
+  display: 'flex', 
+  justifyContent: 'space-between', 
+  fontSize: '14px', 
+  margin: '6px 0', 
+  color: '#1e293b' 
+}}>
+  <span>{item.qty} × {item.name}</span>
+  <span style={{ fontWeight: '600' }}>
+    PKR {(item.price * item.qty).toFixed(0)}
+  </span>
+</div>
+                    ))}
+                  </div>
+
+                  <div className="bill-totals" style={{ marginTop: '10px', paddingTop: '15px', borderTop: '1px dashed #ddd' }}>
+                    <div style={{ 
+  display: 'flex', 
+  justifyContent: 'space-between', 
+  fontSize: '20px', 
+  fontWeight: '900', 
+  margin: '10px 0', 
+  color: 'black' 
+}}>
+  <span>TOTAL</span>
+  <span>PKR {total.toFixed(0)}</span>
+</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '13px', marginTop: '10px' }}>
+                      <span>Method</span><span style={{ fontWeight: 'bold', color: '#333' }}>{currentOrderData.paymentMethod || 'Cash'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ padding: '20px', background: 'white', borderTop: '1px solid #e2e8f0' }}>
+                <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '15px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '10px', textAlign: 'left' }}>Select Payment:</span>
+                  <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '15px', fontWeight: '600', color: '#334155' }}>
+                      <input type="radio" name="payment" value="Cash" checked={(currentOrderData.paymentMethod || 'Cash') === 'Cash'} onChange={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Cash'}}))} /> 💵 Cash
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '15px', fontWeight: '600', color: '#334155' }}>
+                      <input type="radio" name="payment" value="Online" checked={currentOrderData.paymentMethod === 'Online'} onChange={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Online'}}))} /> 💳 Online
+                    </label>
+                  </div>
+                </div>
+
+                <button 
+                  className="print-btn" 
+                  onClick={handleFinalizeBill}
+                  disabled={currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent'}
+                  style={{ width: '100%', padding: '15px', fontSize: '15px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', opacity: (currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent') ? 0.5 : 1, cursor: (currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent') ? 'not-allowed' : 'pointer' }}
+                >
+                  <Printer size={18} /> Finalize & Print Bill
+                </button>
+              </div>
+            </div>
 
       
       </>
