@@ -1938,3 +1938,40 @@
     font-size: 14px !important;
   }
 }
+
+/* 🚨 NEW: ADMIN SIMULATION DROPDOWN */
+.role-dropdown-menu {
+  position: absolute;
+  left: 70px; /* Pops out to the right of the sidebar */
+  bottom: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.role-dropdown-menu button {
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.role-dropdown-menu button:hover {
+  background: #f8fafc;
+  color: #3b82f6;
+}

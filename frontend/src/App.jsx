@@ -65,6 +65,20 @@ function App() {
   
   const [adminBranches, setAdminBranches] = useState([]);
   const [selectedSimBranch, setSelectedSimBranch] = useState('');
+// 🚨 NEW: Popup Controllers
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [showBranchModal, setShowBranchModal] = useState(false);
+  const [pendingSimRole, setPendingSimRole] = useState('');
+
+  // 🚨 Fetch branches for the admin simulation modal
+  useEffect(() => {
+    if (realRole === 'Admin' && token) {
+      axios.get(`${API_BASE_URL}/branches/`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setAdminBranches(res.data))
+      .catch(err => console.error(err));
+    }
+  }, [realRole, token]);
+
   // 🚨 DEFAULT TO CASHIER SINCE WE ARE REMOVING ADMIN
   const [selectedSimRole, setSelectedSimRole] = useState('Cashier');
 
@@ -600,6 +614,35 @@ const handleAddItem = (item) => {
   return (
     <PermissionsProvider> {/* <-- ADD THIS WRAPPER */}
       <div className="app-container">
+
+        {/* 🚨 THE NEW BRANCH SELECTION POPUP FOR ADMINS */}
+        {showBranchModal && (
+          <div className="modal-overlay" onClick={() => setShowBranchModal(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '350px', textAlign: 'center' }}>
+              <h3 style={{ marginTop: 0, color: '#0f172a' }}>Select Target Branch</h3>
+              <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '20px' }}>Where do you want to simulate the <b>{pendingSimRole}</b> role?</p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '300px', overflowY: 'auto' }}>
+                {adminBranches.map(b => (
+                  <button 
+                    key={b.id}
+                    onClick={() => {
+                      sessionStorage.setItem('active_role', pendingSimRole);
+                      sessionStorage.setItem('branch_id', b.id);
+                      window.location.reload();
+                    }}
+                    style={{ padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: 'white', cursor: 'pointer', fontWeight: 'bold', color: '#334155', transition: 'all 0.2s' }}
+                    onMouseOver={(e) => e.target.style.borderColor = '#3b82f6'}
+                    onMouseOut={(e) => e.target.style.borderColor = '#cbd5e1'}
+                  >
+                    {b.name}
+                  </button>
+                ))}
+              </div>
+              <button className="btn-cancel" onClick={() => setShowBranchModal(false)} style={{ marginTop: '20px', width: '100%' }}>Cancel</button>
+            </div>
+          </div>
+        )}
         
         {itemToDelete && (
         <div className="modal-overlay">
@@ -730,7 +773,7 @@ const handleAddItem = (item) => {
             </NavLink>
           )}
           {/* 2. HIDE THESE ICONS UNTIL ADMIN FINISHES SETUP */}
-          {!showAdminSetup && (
+          {effectiveRole !== 'Admin' && (
             <>
                 <Can permission="view:reports">
                   <NavLink to="/reports" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Reports">
@@ -787,132 +830,147 @@ const handleAddItem = (item) => {
           <button className="rail-btn logout-btn" onClick={handleLogout} title="Logout">
             <LogOut size={24} />
           </button>
-          <div className="role-badge-container" title={`Current Session: ${effectiveRole}`}>
-            
-            {/* Dynamic Avatar Circle */}
-            <div 
-              className="role-avatar"
-              style={{ 
-                background: effectiveRole === 'Admin' ? '#8b5cf6' : effectiveRole === 'Manager' ? '#f59e0b' : '#10b981' 
-              }}
-            >
+          {/* 🚨 THE NEW CLICKABLE ROLE BADGE & DROPDOWN */}
+        <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+          <div 
+            className="role-badge-container" 
+            title={`Current Session: ${effectiveRole}`}
+            onClick={() => { if (realRole === 'Admin') setShowRoleDropdown(!showRoleDropdown); }}
+            style={{ cursor: realRole === 'Admin' ? 'pointer' : 'default' }}
+          >
+            <div className="role-avatar" style={{ background: effectiveRole === 'Admin' ? '#8b5cf6' : effectiveRole === 'Manager' ? '#f59e0b' : '#10b981' }}>
               {effectiveRole ? effectiveRole.charAt(0).toUpperCase() : '?'}
             </div>
-            
-            {/* Tiny Role Text (Hidden on Mobile!) */}
-            <span className="role-text">
-              {effectiveRole}
-            </span>
-            
+            <span className="role-text">{effectiveRole}</span>
           </div>
+
+          {/* ADMIN SIMULATION DROPDOWN */}
+          {showRoleDropdown && realRole === 'Admin' && (
+            <div className="role-dropdown-menu">
+               {/* Show this 'Return' button if they are currently simulating a branch */}
+               {effectiveRole !== 'Admin' && (
+                  <button onClick={() => {
+                     sessionStorage.removeItem('active_role');
+                     sessionStorage.removeItem('branch_id');
+                     window.location.reload();
+                  }} style={{ color: '#ef4444' }}>Return to Admin</button>
+               )}
+               <button onClick={() => { setPendingSimRole('Manager'); setShowBranchModal(true); setShowRoleDropdown(false); }}>Manager</button>
+               <button onClick={() => { setPendingSimRole('Cashier'); setShowBranchModal(true); setShowRoleDropdown(false); }}>Cashier</button>
+            </div>
+          )}
+        </div>
         </div>
       </div>
 
       {/* --- MULTI-PAGE ROUTING --- */}
       <Routes>
         <Route path="/" element={
-          showAdminSetup ? (
+          // showAdminSetup ? (
             
-            /* --- RENDER ADMIN LOBBY ON THE HOME PAGE --- */
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc', width: '100%' }}>
-              <div className="auth-card" style={{ maxWidth: '400px', width: '100%' }}>
-                <h2>Admin Workspace Setup</h2>
-                <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '14px' }}>
-                  Please select the physical branch and the role you wish to simulate for this session.
-                </p>
+          //   /* --- RENDER ADMIN LOBBY ON THE HOME PAGE --- */
+          //   <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc', width: '100%' }}>
+          //     <div className="auth-card" style={{ maxWidth: '400px', width: '100%' }}>
+          //       <h2>Admin Workspace Setup</h2>
+          //       <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '14px' }}>
+          //         Please select the physical branch and the role you wish to simulate for this session.
+          //       </p>
 
-                {/* 🚨 MODERN RADIO BUTTON BRANCH LIST */}
-                <div style={{ marginBottom: '20px', textAlign: 'left' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', color: '#475569', marginBottom: '10px' }}>
-                    Select Target Location:
-                  </label>
+          //       {/* 🚨 MODERN RADIO BUTTON BRANCH LIST */}
+          //       <div style={{ marginBottom: '20px', textAlign: 'left' }}>
+          //         <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', color: '#475569', marginBottom: '10px' }}>
+          //           Select Target Location:
+          //         </label>
                   
-                  {/* Scrollable container in case you have many branches */}
-                  <div style={{ maxHeight: '240px', overflowY: 'auto', paddingRight: '5px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {adminBranches.length === 0 ? (
-                      <p style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic', textAlign: 'center', padding: '20px' }}>Loading branches...</p>
-                    ) : (
-                      adminBranches.map(b => (
-                        <label 
-                          key={b.id} 
-                          style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'space-between',
-                            padding: '14px 16px', 
-                            borderRadius: '10px', 
-                            border: selectedSimBranch == b.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-                            backgroundColor: selectedSimBranch == b.id ? '#eff6ff' : '#ffffff',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            boxShadow: selectedSimBranch == b.id ? '0 2px 4px rgba(59, 130, 246, 0.1)' : 'none'
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ 
-                              background: selectedSimBranch == b.id ? '#3b82f6' : '#f1f5f9', 
-                              color: selectedSimBranch == b.id ? 'white' : '#64748b', 
-                              padding: '8px', 
-                              borderRadius: '8px', 
-                              display: 'flex', 
-                              justifyContent: 'center', 
-                              alignItems: 'center',
-                              transition: 'all 0.2s ease'
-                            }}>
-                              <Building size={16} />
-                            </div>
-                            <span style={{ fontWeight: '600', color: selectedSimBranch == b.id ? '#1e293b' : '#475569', fontSize: '15px' }}>
-                              {b.name}
-                            </span>
-                          </div>
+          //         {/* Scrollable container in case you have many branches */}
+          //         <div style={{ maxHeight: '240px', overflowY: 'auto', paddingRight: '5px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          //           {adminBranches.length === 0 ? (
+          //             <p style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic', textAlign: 'center', padding: '20px' }}>Loading branches...</p>
+          //           ) : (
+          //             adminBranches.map(b => (
+          //               <label 
+          //                 key={b.id} 
+          //                 style={{ 
+          //                   display: 'flex', 
+          //                   alignItems: 'center', 
+          //                   justifyContent: 'space-between',
+          //                   padding: '14px 16px', 
+          //                   borderRadius: '10px', 
+          //                   border: selectedSimBranch == b.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+          //                   backgroundColor: selectedSimBranch == b.id ? '#eff6ff' : '#ffffff',
+          //                   cursor: 'pointer',
+          //                   transition: 'all 0.2s ease',
+          //                   boxShadow: selectedSimBranch == b.id ? '0 2px 4px rgba(59, 130, 246, 0.1)' : 'none'
+          //                 }}
+          //               >
+          //                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          //                   <div style={{ 
+          //                     background: selectedSimBranch == b.id ? '#3b82f6' : '#f1f5f9', 
+          //                     color: selectedSimBranch == b.id ? 'white' : '#64748b', 
+          //                     padding: '8px', 
+          //                     borderRadius: '8px', 
+          //                     display: 'flex', 
+          //                     justifyContent: 'center', 
+          //                     alignItems: 'center',
+          //                     transition: 'all 0.2s ease'
+          //                   }}>
+          //                     <Building size={16} />
+          //                   </div>
+          //                   <span style={{ fontWeight: '600', color: selectedSimBranch == b.id ? '#1e293b' : '#475569', fontSize: '15px' }}>
+          //                     {b.name}
+          //                   </span>
+          //                 </div>
                           
-                          {/* The actual Radio Button */}
-                          <input 
-                            type="radio" 
-                            name="simBranch" 
-                            value={b.id} 
-                            checked={selectedSimBranch == b.id} 
-                            onChange={(e) => setSelectedSimBranch(e.target.value)} 
-                            style={{ width: '18px', height: '18px', accentColor: '#3b82f6', cursor: 'pointer' }}
-                          />
-                        </label>
-                      ))
-                    )}
-                  </div>
-                </div>
+          //                 {/* The actual Radio Button */}
+          //                 <input 
+          //                   type="radio" 
+          //                   name="simBranch" 
+          //                   value={b.id} 
+          //                   checked={selectedSimBranch == b.id} 
+          //                   onChange={(e) => setSelectedSimBranch(e.target.value)} 
+          //                   style={{ width: '18px', height: '18px', accentColor: '#3b82f6', cursor: 'pointer' }}
+          //                 />
+          //               </label>
+          //             ))
+          //           )}
+          //         </div>
+          //       </div>
 
-                <select 
-                  value={selectedSimRole} 
-                  onChange={(e) => setSelectedSimRole(e.target.value)} 
-                  style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '15px' }}
-                >
-                  <option value="Cashier">Login as Cashier</option>
-                  <option value="Manager">Login as Manager</option>
-                </select>
+          //       <select 
+          //         value={selectedSimRole} 
+          //         onChange={(e) => setSelectedSimRole(e.target.value)} 
+          //         style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '15px' }}
+          //       >
+          //         <option value="Cashier">Login as Cashier</option>
+          //         <option value="Manager">Login as Manager</option>
+          //       </select>
 
-                <button 
-                  className="auth-btn" 
-                  onClick={() => {
-                    if (!selectedSimBranch) return alert("You must select a branch to continue!");
+          //       <button 
+          //         className="auth-btn" 
+          //         onClick={() => {
+          //           if (!selectedSimBranch) return alert("You must select a branch to continue!");
                     
-                    sessionStorage.setItem('active_role', selectedSimRole);
-                    sessionStorage.setItem('branch_id', selectedSimBranch);
+          //           sessionStorage.setItem('active_role', selectedSimRole);
+          //           sessionStorage.setItem('branch_id', selectedSimBranch);
                     
-                    setShowAdminSetup(false);
-                    window.location.reload(); 
-                  }}
-                >
-                  Enter Workspace
-                </button>
-              </div>
-            </div>
+          //           setShowAdminSetup(false);
+          //           window.location.reload(); 
+          //         }}
+          //       >
+          //         Enter Workspace
+          //       </button>
+          //     </div>
+          //   </div>
 
+          // ) : (
+          effectiveRole === 'Admin' ? (
+            <BranchReports />
           ) : (
 
             <>
               {/* LEFT SIDEBAR (Orders) */}
             <div className="left-sidebar">
-        <div className="logo-area" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '25px', marginBottom: '25px', padding: '0 15px' }}>
+              <div className="logo-area" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '25px', marginBottom: '25px', padding: '0 15px' }}>
                 <span style={{ fontSize: '25px', fontWeight: '900', color: '#233e69', letterSpacing: '0.5px' }}>
                   Nashta POS
                 </span>
