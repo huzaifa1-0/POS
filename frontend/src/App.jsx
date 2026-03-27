@@ -1167,13 +1167,7 @@ const handleAddItem = (item) => {
                     {currentOrderData.items.length === 0 ? (
                        <p style={{textAlign: 'center', fontSize: '13px', color: '#94a3b8', fontStyle: 'italic', margin: '20px 0'}}>Cart is empty.</p>
                     ) : currentOrderData.items.map(item => (
-                      <div key={item.id} style={{ 
-  display: 'flex', 
-  justifyContent: 'space-between', 
-  fontSize: '14px', 
-  margin: '6px 0', 
-  color: '#1e293b' 
-}}>
+                      <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', margin: '6px 0', color: '#1e293b' }}>
   <span>{item.qty} × {item.name}</span>
   <span style={{ fontWeight: '600' }}>
     PKR {(item.price * item.qty).toFixed(0)}

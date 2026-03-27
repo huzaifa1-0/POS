@@ -1891,3 +1891,50 @@
     display: none; /* Hide the text completely on mobile to keep the bar clean! */
   }
 }
+/* 🚨 MOBILE VIEW FIX FOR RIGHT SIDEBAR (LIVE RECEIPT) */
+@media (max-width: 768px) {
+  .right-sidebar {
+    width: 100% !important; /* Override the 360px inline style */
+    border-left: none !important; /* Remove the desktop side border */
+    border-top: 4px solid #cbd5e1 !important; /* Add a thick top border to separate it from the menu */
+    height: auto !important; /* Allow it to adapt to mobile height */
+    flex: none !important;
+  }
+
+  /* Shrink the outer padding slightly to save screen space */
+  .right-sidebar > div {
+    padding: 15px !important; 
+  }
+
+  /* Make the physical "Paper Receipt" box more compact */
+  .bill-receipt {
+    padding: 15px !important;
+  }
+
+  /* Shrink the Nashta POS text on the receipt */
+  .bill-header h2 {
+    font-size: 18px !important;
+  }
+
+  .bill-header p {
+    font-size: 11px !important;
+  }
+
+  /* Adjust the Payment Selector Box */
+  .right-sidebar > div:last-child > div {
+    padding: 10px !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* Make the Cash/Online radio buttons slightly smaller */
+  .right-sidebar label {
+    font-size: 13px !important;
+    gap: 4px !important;
+  }
+
+  /* Make the Finalize & Print button very touch-friendly */
+  .print-btn {
+    padding: 12px !important;
+    font-size: 14px !important;
+  }
+}
