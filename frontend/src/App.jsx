@@ -1081,12 +1081,12 @@ const handleAddItem = (item) => {
             {menuItems.map(item => (
               <div className="menu-card" key={item.id} onClick={() => handleAddItem(item)}>
                 {item.icon ? (
-                  <img src={item.icon} alt={item.name} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', marginBottom: '10px' }} />
+                  <img src={item.icon} alt={item.name} style={{ width: '80px', height: '75px', objectFit: 'cover', borderRadius: '8px', marginBottom: '5px' }} />
                 ) : (
                   <div style={{fontSize: '40px', marginBottom: '10px'}}>🍽️</div>
                 )}
                 <div>{item.name}</div>
-                <div style={{color:'#ff6b6b'}}>PKR {item.price.toFixed(2)}</div>
+                <div style={{color:'#f0331a', fontSize: '15px'}}>PKR {item.price}</div>
               </div>
             ))}
           </div>
