@@ -531,7 +531,6 @@ const handleAddItem = (item) => {
             >
               <option value="Cashier">Login as Cashier</option>
               <option value="Manager">Login as Manager</option>
-              <option value="Admin">Login as Admin</option>
             </select>
 
             {/* ALWAYS SHOW EMAIL & PASSWORD */}
@@ -767,11 +766,7 @@ const handleAddItem = (item) => {
           <NavLink to="/" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="POS Home">
             <Home size={24} />
           </NavLink>
-          {realRole === 'Admin' && (
-            <NavLink to="/branch-reports" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Master Analytics">
-              <PieChart size={24} />
-            </NavLink>
-          )}
+          
           {/* 2. HIDE THESE ICONS UNTIL ADMIN FINISHES SETUP */}
           {effectiveRole !== 'Admin' && (
             <>
