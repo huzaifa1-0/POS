@@ -95,7 +95,23 @@ function App() {
   const [toastMessage, setToastMessage] = useState('');
 
 
+// 🚨 NEW: State to hold the current branch's name and address
+  const [currentBranch, setCurrentBranch] = useState({ name: '', address: '123 Food Street, Lahore' });
 
+  // 🚨 NEW: Fetch the branch details when the app loads
+  useEffect(() => {
+    const branchId = sessionStorage.getItem('branch_id');
+    if (token && branchId) {
+      axios.get(`${API_BASE_URL}/branches/`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => {
+          const branch = res.data.find(b => b.id.toString() === branchId.toString());
+          if (branch) {
+            setCurrentBranch({ name: branch.name, address: branch.address });
+          }
+        })
+        .catch(err => console.error("Could not fetch branch details", err));
+    }
+  }, [token]);
   // Replace your existing orders state with this
   const [orders, setOrders] = useState(() => {
     const savedOrders = localStorage.getItem('nashta_pos_orders');
@@ -771,6 +787,47 @@ const handleAddItem = (item) => {
           <button className="rail-btn logout-btn" onClick={handleLogout} title="Logout">
             <LogOut size={24} />
           </button>
+          <div 
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              gap: '4px',
+              cursor: 'default',
+              marginBottom: '10px' // Gives breathing room before the settings icon
+            }}
+            title={`Current Session: ${effectiveRole}`}
+          >
+            {/* Dynamic Avatar Circle */}
+            <div style={{ 
+              width: '32px', 
+              height: '32px', 
+              borderRadius: '50%', 
+              /* Dynamic Colors: Purple for Admin, Orange for Manager, Green for Cashier */
+              background: effectiveRole === 'Admin' ? '#8b5cf6' : effectiveRole === 'Manager' ? '#f59e0b' : '#10b981', 
+              color: 'white', 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              fontWeight: '900', 
+              fontSize: '15px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            }}>
+              {effectiveRole ? effectiveRole.charAt(0).toUpperCase() : '?'}
+            </div>
+            
+            {/* Tiny Role Text */}
+            <span style={{ 
+              color: '#cbd5e1', 
+              fontSize: '10px', 
+              fontWeight: '700', 
+              letterSpacing: '0.5px',
+              textTransform: 'uppercase'
+            }}>
+              {effectiveRole}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -878,24 +935,18 @@ const handleAddItem = (item) => {
             <>
               {/* LEFT SIDEBAR (Orders) */}
             <div className="left-sidebar">
-        <div className="logo-area" style={{
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginTop: '25px',    /* Adds breathing room from the top */
-          marginBottom: '25px', /* Adds space before the Dine-In section */
-          padding: '0 5px'
-        }}>
-          
-          {/* Beautiful Gradient Shop Name */}
-          <span style={{
-            fontSize: '25px', fontWeight: '900', color: '#273d61', letterSpacing: '0.5px', marginLeft: '10px'
-          }}>
-            Nashta POS
-          </span>
-
-          
-        </div>
+        <div className="logo-area" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '25px', marginBottom: '25px', padding: '0 15px' }}>
+                <span style={{ fontSize: '25px', fontWeight: '900', color: '#233e69', letterSpacing: '0.5px' }}>
+                  Nashta POS
+                </span>
+                
+                {/* 🚨 NEW: Dynamically show the assigned branch name! */}
+                {currentBranch.name && (
+                  <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <MapPin size={14} color="#3b82f6" /> {currentBranch.name}
+                  </span>
+                )}
+              </div>
         
         <div className="nav-section">
           <div className="section-header">
@@ -1114,13 +1165,20 @@ const handleAddItem = (item) => {
                 <div className="bill-receipt" ref={targetRef} style={{ background: 'white', padding: '20px', color: '#000', borderRadius: '12px', border: '1px dashed #cbd5e1', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                   <div className="bill-header" style={{ textAlign: 'center', marginBottom: '15px', borderBottom: '1px dashed #ccc', paddingBottom: '15px' }}>
                     <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '900', color: 'black' }}>NASHTA POS</h2>
-                    <p style={{ fontSize: '12px', color: '#555', margin: '5px 0' }}>123 Food Street, Lahore</p>
+                    {currentBranch.name && (
+                      <p style={{ fontSize: '14px', fontWeight: 'bold', color: 'black', margin: '0 0 4px 0' }}>
+                        {currentBranch.name}
+                      </p>
+                    )}
+                    <p style={{ fontSize: '12px', color: 'black', margin: '0 0 15px 0' }}>
+                      {currentBranch.address}
+                    </p>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 'bold', marginTop: '10px' }}>
                         
                         <span>{new Date().toLocaleDateString()}</span>
                         <span>
-  {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'})}
-</span>
+                          {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'})}
+                        </span>
 
                     </div>
                   </div>
