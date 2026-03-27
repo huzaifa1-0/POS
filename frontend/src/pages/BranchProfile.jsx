@@ -37,12 +37,7 @@ export default function BranchProfile({ branch, allStaff, onClose }) {
         
         .profile-tabs { display: flex; background: #f1f5f9; padding: 0 20px; border-bottom: 1px solid #e2e8f0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .tab-btn { padding: 16px 20px; background: none; border: none; border-bottom: 3px solid transparent; color: #64748b; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; transition: all 0.2s; white-space: nowrap; }
-        .tab-btn.active { 
-          background-color: #3b82f6; /* Solid Blue Background */
-          color: #ffffff; /* 🚨 FIX: Force Text to WHITE so it is visible! */
-          border-bottom-color: #3b82f6;
-          border-radius: 8px; /* Optional: Make it look like a button */
-        }
+        .tab-btn.active { background-color: #3b82f6; color: #ffffff; border-bottom-color: #3b82f6; border-radius: 8px 8px 0 0; }
         .tab-btn:hover:not(.active) { color: #0f172a; }
 
         .profile-body { padding: 25px; overflow-y: auto; flex: 1; }
@@ -51,11 +46,35 @@ export default function BranchProfile({ branch, allStaff, onClose }) {
         .modern-table td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 14px; }
         .modern-table tr:hover td { background-color: #f8fafc; }
 
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes slideUp { to { transform: translateY(0) scale(1); } }
+
+        /* 🚨 ULTIMATE MOBILE RESPONSIVENESS */
         @media (max-width: 768px) {
           .profile-modal { margin: 10px; width: calc(100vw - 20px); height: calc(100vh - 20px); border-radius: 12px; }
-          .profile-body { padding: 15px; }
-          .metric-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
-          .split-grid { grid-template-columns: 1fr !important; }
+          
+          /* Shrink Header */
+          .profile-header { padding: 15px !important; }
+          .profile-header h2 { font-size: 18px !important; }
+          .profile-header p { font-size: 11px !important; }
+          
+          /* Shrink Tabs */
+          .profile-tabs { padding: 0 10px !important; }
+          .tab-btn { padding: 12px 15px !important; font-size: 12px !important; }
+          
+          /* Compact Body & Metrics */
+          .profile-body { padding: 15px !important; }
+          .metric-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; margin-bottom: 15px !important; }
+          .metric-grid > div { padding: 12px !important; }
+          .metric-grid p { font-size: 10px !important; }
+          .metric-grid h3 { font-size: 16px !important; margin-top: 4px !important; }
+          
+          /* Stack split grids (Inventory & Low Stock) */
+          .split-grid { grid-template-columns: 1fr !important; gap: 15px !important; }
+          .split-grid > div { padding: 15px !important; }
+          
+          /* Compact Table Elements */
+          .modern-table th, .modern-table td { padding: 8px 10px !important; font-size: 12px !important; }
         }
       `}</style>
 
