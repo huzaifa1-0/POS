@@ -32,16 +32,16 @@ export default function BranchProfile({ branch, allStaff, onClose }) {
     <>
       <style>{`
         .profile-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; opacity: 0; animation: fadeIn 0.2s forwards ease-out; }
+        
+        /* Desktop Modal */
         .profile-modal { background: #f8fafc; width: 100%; max-width: 1100px; height: 90vh; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); display: flex; flex-direction: column; transform: translateY(30px) scale(0.95); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; overflow: hidden; }
+        
         .profile-header { background: white; padding: 20px 25px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
         
         .profile-tabs { display: flex; background: #f1f5f9; padding: 0 20px; border-bottom: 1px solid #e2e8f0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .tab-btn { padding: 16px 20px; background: none; border: none; border-bottom: 3px solid transparent; color: #64748b; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; transition: all 0.2s; white-space: nowrap; }
         .tab-btn.active { background-color: #3b82f6; color: #ffffff; border-bottom-color: #3b82f6; border-radius: 8px 8px 0 0; }
         .tab-btn:hover:not(.active) { color: #0f172a; }
-        
-        /* New class for the text inside the tab */
-        .tab-label { transition: all 0.2s ease; }
 
         .profile-body { padding: 25px; overflow-y: auto; flex: 1; }
         .modern-table { width: 100%; border-collapse: collapse; min-width: 600px; }
@@ -49,49 +49,44 @@ export default function BranchProfile({ branch, allStaff, onClose }) {
         .modern-table td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 14px; }
         .modern-table tr:hover td { background-color: #f8fafc; }
         
-        /* 🚨 Desktop Chart Height */
         .modal-chart-wrapper { width: 100%; height: 300px; min-height: 300px; position: relative; }
 
         @keyframes fadeIn { to { opacity: 1; } }
         @keyframes slideUp { to { transform: translateY(0) scale(1); } }
 
-        /* 🚨 ULTIMATE MOBILE VIEW SETTINGS */
+        /* 🚨 NEW: FLOATING MOBILE POPUP! */
         @media (max-width: 768px) {
-          .profile-modal { margin: 0; width: 100vw; height: 100vh; border-radius: 0; max-height: 100vh; } 
-          .profile-overlay { padding: 0; }
+          /* Notice how we keep the border radius and don't force 100vh! */
+          .profile-modal { margin: 15px; width: calc(100vw - 30px); height: 85vh; max-height: 85vh; border-radius: 16px; } 
+          .profile-overlay { padding: 15px; }
           
-          /* Header */
-          .profile-header { padding: 12px 15px !important; }
-          .profile-header h2 { font-size: 16px !important; }
-          .profile-header p { font-size: 11px !important; }
+          .profile-header { padding: 15px 18px !important; }
+          .profile-header h2 { font-size: 18px !important; }
+          .profile-header p { font-size: 12px !important; }
           
-          /* 🚨 MOBILE TABS: Hide text unless active to save space! */
-          .profile-tabs { padding: 0 5px !important; gap: 5px; justify-content: space-around; }
-          .tab-btn { padding: 12px 15px !important; font-size: 12px !important; flex: 1; justify-content: center; }
-          .tab-btn .tab-label { display: none; } /* Hide text by default on mobile */
-          .tab-btn.active .tab-label { display: inline-block; } /* Show text only on active tab */
-          .tab-btn svg { width: 16px; height: 16px; }
+          /* Show Icons Only in Tabs */
+          .profile-tabs { padding: 0 10px !important; gap: 5px; justify-content: space-around; }
+          .tab-btn { padding: 12px 15px !important; flex: 1; justify-content: center; }
+          .tab-btn .tab-label { display: none; } /* Hides text */
+          .tab-btn.active .tab-label { display: inline-block; font-size: 11px !important; margin-left: 4px; } 
+          .tab-btn svg { width: 18px; height: 18px; }
           
-          /* Body & Metrics */
-          .profile-body { padding: 12px !important; }
+          .profile-body { padding: 15px !important; }
           .metric-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; margin-bottom: 15px !important; }
-          .metric-grid > div { padding: 10px !important; border-width: 1px !important; border-left-width: 3px !important; }
-          .metric-grid p { font-size: 9px !important; letter-spacing: -0.5px; }
-          .metric-grid h3 { font-size: 14px !important; margin-top: 4px !important; }
+          .metric-grid > div { padding: 12px !important; border-width: 1px !important; border-left-width: 3px !important; }
+          .metric-grid p { font-size: 10px !important; }
+          .metric-grid h3 { font-size: 16px !important; margin-top: 4px !important; }
           
-          /* 🚨 Shrink Chart Height on Mobile */
-          .modal-chart-wrapper { height: 180px !important; min-height: 180px !important; }
-          .profile-body > div > div:nth-child(2) { padding: 12px !important; }
-          .profile-body > div > div:nth-child(2) h3 { font-size: 13px !important; margin-bottom: 10px !important; }
+          .modal-chart-wrapper { height: 200px !important; min-height: 200px !important; }
+          .profile-body > div > div:nth-child(2) { padding: 15px !important; }
+          .profile-body > div > div:nth-child(2) h3 { font-size: 14px !important; margin-bottom: 10px !important; }
           
-          /* Stack Split Grids */
-          .split-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
-          .split-grid > div { padding: 12px !important; }
-          .split-grid h3 { font-size: 13px !important; margin-bottom: 10px !important; }
+          .split-grid { grid-template-columns: 1fr !important; gap: 15px !important; }
+          .split-grid > div { padding: 15px !important; }
+          .split-grid h3 { font-size: 14px !important; margin-bottom: 10px !important; }
           
-          /* Keep table scrollable but don't break page */
           .modern-table { min-width: 400px; } 
-          .modern-table th, .modern-table td { padding: 8px !important; font-size: 11px !important; }
+          .modern-table th, .modern-table td { padding: 10px !important; font-size: 12px !important; }
         }
       `}</style>
 
