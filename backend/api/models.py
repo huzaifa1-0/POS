@@ -152,8 +152,13 @@ class Expense(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField()
     date = models.DateField()
-    # NEW: Link to staff
+    
+    # Existing staff link
     staff_member = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='expenses')
+    
+    # 🚨 FIX: ADD THIS LINE TO DIRECTLY LINK EXPENSES TO A BRANCH!
+    branch = models.ForeignKey('Branch', on_delete=models.CASCADE, related_name='expenses', null=True, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

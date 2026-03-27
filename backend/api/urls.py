@@ -14,7 +14,7 @@ router.register(r'stock-entries', StockEntryViewSet)
 router.register(r'orders', OrderViewSet, basename='order')
 router.register(r'recipes', RecipeViewSet)
 
-router.register(r'expenses', ExpenseViewSet)
+router.register(r'expenses', ExpenseViewSet, basename='expense')
 
 router.register(r'branches', BranchViewSet)
 

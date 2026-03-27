@@ -39,8 +39,40 @@ from .models import UserProfile
 import calendar
 
 class ExpenseViewSet(viewsets.ModelViewSet):
-    queryset = Expense.objects.all().order_by('-date')
     serializer_class = ExpenseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        is_admin = user.is_superuser or (hasattr(user, 'profile') and user.profile.roles.filter(name='Admin').exists())
+        
+        if is_admin:
+            # Admins can see all expenses in the main Expense Page
+            return Expense.objects.all().order_by('-date')
+        elif hasattr(user, 'profile') and user.profile.branch:
+            # 🚨 Managers ONLY see expenses for their specific branch!
+            return Expense.objects.filter(branch=user.profile.branch).order_by('-date')
+        return Expense.objects.none()
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        branch = None
+        
+        # 1. 🚨 If a Manager or Cashier logs an expense, forcefully lock it to their assigned branch!
+        if hasattr(user, 'profile') and user.profile.branch:
+            branch = user.profile.branch
+            
+        # 2. If an Admin logs an expense, let's see if they passed a specific branch ID
+        elif (user.is_superuser or (hasattr(user, 'profile') and user.profile.roles.filter(name='Admin').exists())):
+            branch_id = self.request.data.get('branch_id') or self.request.data.get('branch')
+            if branch_id:
+                try:
+                    branch = Branch.objects.get(id=branch_id)
+                except Branch.DoesNotExist:
+                    pass
+                    
+        # 3. Save the expense securely into the database
+        serializer.save(staff_member=user, branch=branch)
 
 
 @api_view(['GET'])
@@ -305,9 +337,6 @@ class StockEntryViewSet(viewsets.ModelViewSet):
         return Response({"message": "Stock entry deleted and inventory reversed."}, status=status.HTTP_204_NO_CONTENT)
     
 class ReportDashboardView(APIView):
-    from django.db.models.functions import Coalesce  # Add this import at the top of the file if it's missing
-
-class ReportDashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -318,14 +347,15 @@ class ReportDashboardView(APIView):
         if is_admin:
             if branch_id and branch_id != 'null':
                 safe_orders = Order.objects.filter(branch_id=branch_id)
-                # 🚨 FIX: Filter expenses specifically for this branch in the popup!
-                branch_expenses = Expense.objects.filter(staff_member__profile__branch_id=branch_id)
+                # 🚨 STRICT ISOLATION: Only fetch expenses for this EXACT branch ID. No fallbacks!
+                branch_expenses = Expense.objects.filter(branch_id=branch_id)
             else:
                 safe_orders = Order.objects.all()
                 branch_expenses = Expense.objects.all()
         elif hasattr(user, 'profile') and user.profile.branch:
             safe_orders = Order.objects.filter(branch=user.profile.branch)
-            branch_expenses = Expense.objects.filter(staff_member__profile__branch=user.profile.branch)
+            # 🚨 STRICT ISOLATION: Only fetch for Manager's branch
+            branch_expenses = Expense.objects.filter(branch=user.profile.branch)
         else:
             safe_orders = Order.objects.none()
             branch_expenses = Expense.objects.none()
@@ -336,17 +366,13 @@ class ReportDashboardView(APIView):
         total_income = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         cash_income = orders.filter(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         online_income = orders.exclude(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-        
         total_cogs = order_items.aggregate(Sum('cost_at_time'))['cost_at_time__sum'] or 0
         
-        # 🚨 FIX: Re-enabled Branch Expenses!
         total_expenses = branch_expenses.aggregate(Sum('amount'))['amount__sum'] or 0
         net_profit = total_income - total_cogs - total_expenses
         
-        # 🚨 FIX: Fetch recent expenses for the Expense Log Tab!
         recent_expenses = branch_expenses.order_by('-date')[:50].values('id', 'description', 'amount', 'date', 'category')
         
-        # Dynamic Graph Data for INDIVIDUAL branches
         trend_data = []
         first_order = safe_orders.filter(status='Completed').order_by('created_at').first()
         if first_order:
@@ -358,15 +384,13 @@ class ReportDashboardView(APIView):
                 m_rev = m_orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
                 trend_data.append({'name': f"{calendar.month_abbr[curr_m]} {curr_y}", 'revenue': m_rev})
                 curr_m += 1
-                if curr_m > 12:
-                    curr_m, curr_y = 1, curr_y + 1
+                if curr_m > 12: curr_m, curr_y = 1, curr_y + 1
         else:
             curr = timezone.now()
             trend_data.append({'name': f"{calendar.month_abbr[curr.month]} {curr.year}", 'revenue': 0})
 
         items_with_stock = Item.objects.annotate(true_stock=Coalesce(Sum('stock_entries__quantity'), Decimal('0.00')))
         low_stock = [{'name': i.name, 'quantity_on_hand': i.true_stock, 'unit': i.unit} for i in items_with_stock.filter(true_stock__lte=F('low_stock_threshold'))]
-
         top_items = order_items.values(name=F('menu_item__name')).annotate(total_sold=Sum('quantity'), revenue=Sum(F('quantity') * F('price_at_time'))).order_by('-total_sold')[:5]
         
         return Response({
@@ -817,8 +841,8 @@ class MasterReportView(APIView):
             cash_income = orders.filter(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             online_income = orders.exclude(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             
-            # 🚨 FIX: Corrected typo to 'staff_member__profile__branch' so it pulls expenses perfectly without crashing!
-            total_expenses = Expense.objects.filter(staff_member__profile__branch=branch).aggregate(Sum('amount'))['amount__sum'] or 0
+            # 🚨 DIRECT BRANCH EXPENSE LOOKUP!
+            total_expenses = Expense.objects.filter(branch=branch).aggregate(Sum('amount'))['amount__sum'] or 0
             
             branch_reports.append({
                 'id': branch.id,
@@ -830,24 +854,18 @@ class MasterReportView(APIView):
                 'total_expenses': total_expenses
             })
 
-        # DYNAMIC GRAPH TIMELINE
         trend_data = []
         first_order = Order.objects.filter(status='Completed').order_by('created_at').first()
-        
         if first_order:
             start_y, start_m = first_order.created_at.year, first_order.created_at.month
             end_y, end_m = timezone.now().year, timezone.now().month
-            
             curr_y, curr_m = start_y, start_m
             while (curr_y < end_y) or (curr_y == end_y and curr_m <= end_m):
                 m_orders = Order.objects.filter(status='Completed', created_at__year=curr_y, created_at__month=curr_m)
                 m_rev = m_orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
                 trend_data.append({'name': f"{calendar.month_abbr[curr_m]} {curr_y}", 'revenue': m_rev})
-                
                 curr_m += 1
-                if curr_m > 12:
-                    curr_m = 1
-                    curr_y += 1
+                if curr_m > 12: curr_m, curr_y = 1, curr_y + 1
         else:
             curr = timezone.now()
             trend_data.append({'name': f"{calendar.month_abbr[curr.month]} {curr.year}", 'revenue': 0})
@@ -930,3 +948,4 @@ class UpdateStaffRoleView(APIView):
             
         except User.DoesNotExist:
             return Response({'error': 'Staff member not found'}, status=status.HTTP_404_NOT_FOUND)
+
