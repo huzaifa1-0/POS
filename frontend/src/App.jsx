@@ -598,72 +598,108 @@ const handleAddItem = (item) => {
         </div>
       )}
       {showReceiptModal && (
-        <div className="modal-overlay" onClick={() => setShowReceiptModal(false)}>
-          <div className="modal-content receipt-modal" onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}><Receipt size={20} /> Bill View</h3>
-              <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }} onClick={() => setShowReceiptModal(false)}><X size={20}/></button>
+        <div className="modal-overlay" onClick={() => setShowReceiptModal(false)} style={{ backdropFilter: 'blur(5px)' }}>
+          <div className="modal-content receipt-modal" onClick={e => e.stopPropagation()} style={{ padding: 0, borderRadius: '16px', maxWidth: '420px', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+            
+            {/* --- PREMIUM HEADER --- */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 25px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#0f172a', fontSize: '18px', fontWeight: '800' }}>
+                <Receipt size={22} color="#3b82f6" /> Checkout & Bill
+              </h3>
+              <button 
+                style={{ background: '#e2e8f0', border: 'none', cursor: 'pointer', color: '#64748b', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} 
+                onClick={() => setShowReceiptModal(false)}
+              >
+                <X size={18}/>
+              </button>
             </div>
             
-            <div style={{ overflowY: 'auto', maxHeight: '50vh', paddingRight: '5px', marginBottom: '15px' }}>
-              <div className="bill-receipt" ref={targetRef} style={{ background: 'white', padding: '20px', color: '#000', borderRadius: '8px', border: '1px dashed #ccc' }}>
-                <div className="bill-header" style={{ textAlign: 'center', marginBottom: '15px', borderBottom: '1px dashed #ccc', paddingBottom: '15px' }}>
-                  <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '900' }}>NASHTA POS</h2>
-                  <p style={{ fontSize: '12px', color: '#555', margin: '5px 0' }}>123 Food Street, Lahore</p>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 'bold', marginTop: '10px' }}>
-                      <span>Order: {activeOrder}</span>
-                      <span>{new Date().toLocaleDateString()}</span>
+            {/* --- SCROLLABLE BODY --- */}
+            <div style={{ overflowY: 'auto', padding: '25px', background: '#f1f5f9' }}>
+              
+              {/* THE "PAPER" RECEIPT */}
+              <div className="bill-receipt" ref={targetRef} style={{ background: '#ffffff', padding: '30px 20px', color: '#0f172a', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02)' }}>
+                <div className="bill-header" style={{ textAlign: 'center', marginBottom: '20px' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', background: '#eff6ff', color: '#3b82f6', borderRadius: '50%', marginBottom: '12px' }}>
+                    <Building size={24}/>
+                  </div>
+                  <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900', letterSpacing: '1px' }}>NASHTA POS</h2>
+                  <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 15px 0' }}>123 Food Street, Lahore</p>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#475569', borderTop: '1px dashed #cbd5e1', borderBottom: '1px dashed #cbd5e1', padding: '10px 0', fontFamily: 'monospace' }}>
+                      <span><b>ORD:</b> {activeOrder}</span>
+                      <span>{new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                   </div>
                 </div>
 
-                <div className="bill-items">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px', paddingBottom: '5px', borderBottom: '1px solid #eee' }}>
-                      <span>Item</span>
-                      <span>Amount</span>
+                {/* ITEMS: Using Monospace font for perfect receipt alignment */}
+                <div className="bill-items" style={{ fontFamily: '"Courier New", Courier, monospace' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '14px', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0' }}>
+                      <span>ITEM</span>
+                      <span>AMT</span>
                   </div>
                   {currentOrderData.items.map(item => (
-                    <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', margin: '8px 0', color: '#333' }}>
+                    <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', margin: '10px 0', color: '#334155' }}>
                       <span>{item.qty}x {item.name}</span>
-                      <span>PKR {(item.price * item.qty).toFixed(2)}</span>
+                      <span>{(item.price * item.qty).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
 
-                <div className="bill-totals" style={{ marginTop: '10px', paddingTop: '15px', borderTop: '1px dashed #ddd' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: '900', margin: '5px 0', color: '#000' }}>
+                <div className="bill-totals" style={{ marginTop: '20px', paddingTop: '15px', borderTop: '2px dashed #cbd5e1' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '20px', fontWeight: '900', margin: '5px 0', color: '#0f172a' }}>
                     <span>TOTAL</span><span>PKR {total.toFixed(2)}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '13px', marginTop: '10px' }}>
-                    <span>Method</span><span style={{ fontWeight: 'bold', color: '#333' }}>{currentOrderData.paymentMethod || 'Cash'}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b', fontSize: '13px', marginTop: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    <span>Method</span><span style={{ fontWeight: '800', color: '#3b82f6' }}>{currentOrderData.paymentMethod || 'Cash'}</span>
                   </div>
+                </div>
+              </div>
+
+              {/* --- MODERN PAYMENT SELECTOR CARDS --- */}
+              <div style={{ marginTop: '25px' }}>
+                <span style={{ fontSize: '14px', fontWeight: '700', color: '#1e293b', display: 'block', marginBottom: '12px' }}>Select Payment Method</span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  
+                  {/* Cash Card */}
+                  <div 
+                    onClick={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Cash'}}))}
+                    style={{ padding: '14px', borderRadius: '10px', border: (currentOrderData.paymentMethod || 'Cash') === 'Cash' ? '2px solid #3b82f6' : '1px solid #cbd5e1', background: (currentOrderData.paymentMethod || 'Cash') === 'Cash' ? '#eff6ff' : 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '600', color: (currentOrderData.paymentMethod || 'Cash') === 'Cash' ? '#1e293b' : '#64748b', transition: 'all 0.2s ease', boxShadow: (currentOrderData.paymentMethod || 'Cash') === 'Cash' ? '0 4px 6px -1px rgba(59, 130, 246, 0.1)' : 'none' }}
+                  >
+                    <Banknote size={18} color={(currentOrderData.paymentMethod || 'Cash') === 'Cash' ? '#10b981' : '#94a3b8'} /> Cash
+                  </div>
+                  
+                  {/* Online Card */}
+                  <div 
+                    onClick={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Online'}}))}
+                    style={{ padding: '14px', borderRadius: '10px', border: currentOrderData.paymentMethod === 'Online' ? '2px solid #3b82f6' : '1px solid #cbd5e1', background: currentOrderData.paymentMethod === 'Online' ? '#eff6ff' : 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '600', color: currentOrderData.paymentMethod === 'Online' ? '#1e293b' : '#64748b', transition: 'all 0.2s ease', boxShadow: currentOrderData.paymentMethod === 'Online' ? '0 4px 6px -1px rgba(59, 130, 246, 0.1)' : 'none' }}
+                  >
+                    <CreditCard size={18} color={currentOrderData.paymentMethod === 'Online' ? '#3b82f6' : '#94a3b8'} /> Online
+                  </div>
+
                 </div>
               </div>
             </div>
 
-            <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '15px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '10px', textAlign: 'left' }}>Select Payment:</span>
-              <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '15px', fontWeight: '600', color: '#334155' }}>
-                  <input type="radio" name="payment" value="Cash" checked={(currentOrderData.paymentMethod || 'Cash') === 'Cash'} onChange={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Cash'}}))} /> 💵 Cash
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '15px', fontWeight: '600', color: '#334155' }}>
-                  <input type="radio" name="payment" value="Online" checked={currentOrderData.paymentMethod === 'Online'} onChange={() => setOrders(prev => ({...prev, [activeOrder]: {...prev[activeOrder], paymentMethod: 'Online'}}))} /> 💳 Online
-                </label>
-              </div>
+            {/* --- STICKY FOOTER ACTION --- */}
+            <div style={{ padding: '20px 25px', background: '#ffffff', borderTop: '1px solid #e2e8f0' }}>
+              <button 
+                className="print-btn" 
+                onClick={handleFinalizeBill}
+                disabled={currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent'}
+                style={{ 
+                  width: '100%', padding: '16px', background: (currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent') ? '#cbd5e1' : '#3b82f6', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold', fontSize: '15px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', transition: 'all 0.2s', 
+                  cursor: (currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent') ? 'not-allowed' : 'pointer', 
+                  boxShadow: (currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent') ? 'none' : '0 4px 6px -1px rgba(59, 130, 246, 0.4)' 
+                }}
+              >
+                <Printer size={20} /> Complete Checkout & Print
+              </button>
             </div>
 
-            <button 
-              className="print-btn" 
-              onClick={handleFinalizeBill}
-              disabled={currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent'}
-              style={{ marginTop: 0, opacity: (currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent') ? 0.5 : 1, cursor: (currentOrderData.items.length === 0 || currentOrderData.status !== 'Sent') ? 'not-allowed' : 'pointer' }}
-            >
-              <Printer size={18} /> Finalize & Print Bill (PDF)
-            </button>
           </div>
         </div>
       )}
-
       <div className="nav-rail">
         <div className="nav-rail-top">
           <div className="rail-logo">🍳</div>
