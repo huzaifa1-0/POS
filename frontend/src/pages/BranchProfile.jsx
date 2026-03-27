@@ -39,42 +39,59 @@ export default function BranchProfile({ branch, allStaff, onClose }) {
         .tab-btn { padding: 16px 20px; background: none; border: none; border-bottom: 3px solid transparent; color: #64748b; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; transition: all 0.2s; white-space: nowrap; }
         .tab-btn.active { background-color: #3b82f6; color: #ffffff; border-bottom-color: #3b82f6; border-radius: 8px 8px 0 0; }
         .tab-btn:hover:not(.active) { color: #0f172a; }
+        
+        /* New class for the text inside the tab */
+        .tab-label { transition: all 0.2s ease; }
 
         .profile-body { padding: 25px; overflow-y: auto; flex: 1; }
         .modern-table { width: 100%; border-collapse: collapse; min-width: 600px; }
         .modern-table th { background: #f8fafc; color: #475569; font-weight: 700; padding: 12px 16px; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 12px; text-transform: uppercase; position: sticky; top: 0; z-index: 10; }
         .modern-table td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 14px; }
         .modern-table tr:hover td { background-color: #f8fafc; }
+        
+        /* 🚨 Desktop Chart Height */
+        .modal-chart-wrapper { width: 100%; height: 300px; min-height: 300px; position: relative; }
 
         @keyframes fadeIn { to { opacity: 1; } }
         @keyframes slideUp { to { transform: translateY(0) scale(1); } }
 
-        /* 🚨 ULTIMATE MOBILE RESPONSIVENESS */
+        /* 🚨 ULTIMATE MOBILE VIEW SETTINGS */
         @media (max-width: 768px) {
-          .profile-modal { margin: 10px; width: calc(100vw - 20px); height: calc(100vh - 20px); border-radius: 12px; }
+          .profile-modal { margin: 0; width: 100vw; height: 100vh; border-radius: 0; max-height: 100vh; } 
+          .profile-overlay { padding: 0; }
           
-          /* Shrink Header */
-          .profile-header { padding: 15px !important; }
-          .profile-header h2 { font-size: 18px !important; }
+          /* Header */
+          .profile-header { padding: 12px 15px !important; }
+          .profile-header h2 { font-size: 16px !important; }
           .profile-header p { font-size: 11px !important; }
           
-          /* Shrink Tabs */
-          .profile-tabs { padding: 0 10px !important; }
-          .tab-btn { padding: 12px 15px !important; font-size: 12px !important; }
+          /* 🚨 MOBILE TABS: Hide text unless active to save space! */
+          .profile-tabs { padding: 0 5px !important; gap: 5px; justify-content: space-around; }
+          .tab-btn { padding: 12px 15px !important; font-size: 12px !important; flex: 1; justify-content: center; }
+          .tab-btn .tab-label { display: none; } /* Hide text by default on mobile */
+          .tab-btn.active .tab-label { display: inline-block; } /* Show text only on active tab */
+          .tab-btn svg { width: 16px; height: 16px; }
           
-          /* Compact Body & Metrics */
-          .profile-body { padding: 15px !important; }
+          /* Body & Metrics */
+          .profile-body { padding: 12px !important; }
           .metric-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; margin-bottom: 15px !important; }
-          .metric-grid > div { padding: 12px !important; }
-          .metric-grid p { font-size: 10px !important; }
-          .metric-grid h3 { font-size: 16px !important; margin-top: 4px !important; }
+          .metric-grid > div { padding: 10px !important; border-width: 1px !important; border-left-width: 3px !important; }
+          .metric-grid p { font-size: 9px !important; letter-spacing: -0.5px; }
+          .metric-grid h3 { font-size: 14px !important; margin-top: 4px !important; }
           
-          /* Stack split grids (Inventory & Low Stock) */
-          .split-grid { grid-template-columns: 1fr !important; gap: 15px !important; }
-          .split-grid > div { padding: 15px !important; }
+          /* 🚨 Shrink Chart Height on Mobile */
+          .modal-chart-wrapper { height: 180px !important; min-height: 180px !important; }
+          .profile-body > div > div:nth-child(2) { padding: 12px !important; }
+          .profile-body > div > div:nth-child(2) h3 { font-size: 13px !important; margin-bottom: 10px !important; }
           
-          /* Compact Table Elements */
-          .modern-table th, .modern-table td { padding: 8px 10px !important; font-size: 12px !important; }
+          /* Stack Split Grids */
+          .split-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+          .split-grid > div { padding: 12px !important; }
+          .split-grid h3 { font-size: 13px !important; margin-bottom: 10px !important; }
+          
+          /* Keep table scrollable but don't break page */
+          .modern-table { min-width: 400px; } 
+          .modern-table th, .modern-table td { padding: 8px !important; font-size: 11px !important; }
         }
       `}</style>
 
@@ -90,10 +107,18 @@ export default function BranchProfile({ branch, allStaff, onClose }) {
           </div>
 
           <div className="profile-tabs compact-scroll">
-            <button className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}><TrendingUp size={16}/> Analytics Chart</button>
-            <button className={`tab-btn ${activeTab === 'expenses' ? 'active' : ''}`} onClick={() => setActiveTab('expenses')}><Receipt size={16}/> Expenses Log</button>
-            <button className={`tab-btn ${activeTab === 'inventory' ? 'active' : ''}`} onClick={() => setActiveTab('inventory')}><Package size={16}/> Inventory Info</button>
-            <button className={`tab-btn ${activeTab === 'staff' ? 'active' : ''}`} onClick={() => setActiveTab('staff')}><Users size={16}/> Staff Directory</button>
+            <button className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
+              <TrendingUp size={16}/> <span className="tab-label">Analytics</span>
+            </button>
+            <button className={`tab-btn ${activeTab === 'expenses' ? 'active' : ''}`} onClick={() => setActiveTab('expenses')}>
+              <Receipt size={16}/> <span className="tab-label">Expenses</span>
+            </button>
+            <button className={`tab-btn ${activeTab === 'inventory' ? 'active' : ''}`} onClick={() => setActiveTab('inventory')}>
+              <Package size={16}/> <span className="tab-label">Inventory</span>
+            </button>
+            <button className={`tab-btn ${activeTab === 'staff' ? 'active' : ''}`} onClick={() => setActiveTab('staff')}>
+              <Users size={16}/> <span className="tab-label">Staff</span>
+            </button>
           </div>
 
           <div className="profile-body compact-scroll">
@@ -131,7 +156,7 @@ export default function BranchProfile({ branch, allStaff, onClose }) {
 
                     <div style={{ background: 'white', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                       <h3 style={{ margin: '0 0 20px 0', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><TrendingUp size={18} color="#3b82f6"/> Branch Revenue Timeline</h3>
-                      <div style={{ width: '100%', height: '300px', minHeight: '300px', position: 'relative' }}>
+                      <div className="modal-chart-wrapper">
                         <ResponsiveContainer width="100%" height="100%">
                           <AreaChart data={stats.trend_data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                             <defs>

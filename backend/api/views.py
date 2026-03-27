@@ -318,12 +318,17 @@ class ReportDashboardView(APIView):
         if is_admin:
             if branch_id and branch_id != 'null':
                 safe_orders = Order.objects.filter(branch_id=branch_id)
+                # 🚨 FIX: Filter expenses specifically for this branch in the popup!
+                branch_expenses = Expense.objects.filter(staff_member__profile__branch_id=branch_id)
             else:
                 safe_orders = Order.objects.all()
+                branch_expenses = Expense.objects.all()
         elif hasattr(user, 'profile') and user.profile.branch:
             safe_orders = Order.objects.filter(branch=user.profile.branch)
+            branch_expenses = Expense.objects.filter(staff_member__profile__branch=user.profile.branch)
         else:
             safe_orders = Order.objects.none()
+            branch_expenses = Expense.objects.none()
 
         orders = safe_orders.filter(status='Completed') 
         order_items = OrderItem.objects.filter(order__in=orders)
@@ -334,12 +339,12 @@ class ReportDashboardView(APIView):
         
         total_cogs = order_items.aggregate(Sum('cost_at_time'))['cost_at_time__sum'] or 0
         
-        # 🚨 FIX: Removed branch_expenses query so Django stops crashing!
-        total_expenses = 0
+        # 🚨 FIX: Re-enabled Branch Expenses!
+        total_expenses = branch_expenses.aggregate(Sum('amount'))['amount__sum'] or 0
         net_profit = total_income - total_cogs - total_expenses
         
-        # Send an empty list for recent expenses for now until your DB model is upgraded
-        recent_expenses = []
+        # 🚨 FIX: Fetch recent expenses for the Expense Log Tab!
+        recent_expenses = branch_expenses.order_by('-date')[:50].values('id', 'description', 'amount', 'date', 'category')
         
         # Dynamic Graph Data for INDIVIDUAL branches
         trend_data = []
@@ -372,7 +377,7 @@ class ReportDashboardView(APIView):
             'cash_income': cash_income,
             'online_income': online_income,
             'trend_data': trend_data,
-            'recent_expenses': recent_expenses,
+            'recent_expenses': list(recent_expenses),
             'top_items': list(top_items),
             'low_stock': low_stock
         })
@@ -812,8 +817,8 @@ class MasterReportView(APIView):
             cash_income = orders.filter(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             online_income = orders.exclude(payment_method='Cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             
-            # 🚨 FIX: Removed the staff_member query so Django stops crashing!
-            total_expenses = 0 
+            # 🚨 FIX: Corrected typo to 'staff_member__profile__branch' so it pulls expenses perfectly without crashing!
+            total_expenses = Expense.objects.filter(staff_member__profile__branch=branch).aggregate(Sum('amount'))['amount__sum'] or 0
             
             branch_reports.append({
                 'id': branch.id,
