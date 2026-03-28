@@ -621,7 +621,7 @@ const handleAddItem = (item) => {
               <h3 style={{ marginTop: 0, color: '#0f172a' }}>Select Target Branch</h3>
               <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '20px' }}>Where do you want to simulate the <b>{pendingSimRole}</b> role?</p>
               
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '85px', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '150px', overflowY: 'auto' }}>
                 {adminBranches.map(b => (
                   <button 
                     key={b.id}
