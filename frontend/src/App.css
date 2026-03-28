@@ -1976,52 +1976,109 @@
   color: #3b82f6;
 }
 @media (max-width: 768px) {
-  /* 1. Turn the main rail into a perfectly spaced horizontal bar */
+  /* 1. The Main Bottom Bar (RESTORED COLOR) */
   .nav-rail {
     display: flex !important;
     flex-direction: row !important;
-    justify-content: space-around !important; 
+    justify-content: space-between !important;
     align-items: center !important;
     width: 100% !important;
     height: 65px !important;
-    padding: 0 5px !important;
-    box-sizing: border-box;
-    overflow: visible !important; /* 🚨 FIX: Ensures the popup isn't cut off inside the bar! */
+    padding: 0 10px !important;
+    box-sizing: border-box !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    z-index: 1000 !important;
+    
+    /* 🚨 THE COLOR FIX: Restores the premium dark background */
+    background: #1e293b !important; 
+    border-top: 1px solid #0f172a !important;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.2) !important;
+    
+    overflow: visible !important;
   }
 
-  /* 2. Make the wrappers disappear so all icons share the row */
+  /* 2. Visual trick to make all icons direct children */
   .nav-rail-top, 
   .nav-rail-bottom {
     display: contents !important;
   }
 
-  /* 3. Hide the frying pan logo and the text of the role */
+  /* 3. Hide non-essential text/logos to save space */
   .rail-logo, 
   .role-text {
     display: none !important;
   }
 
-  /* 4. Fix button spacing */
-  .rail-btn {
+  /* 4. 🚨 Icon Default Styling (Light Gray so they show up on the dark background) */
+  .rail-btn, .settings-nav-btn {
     margin: 0 !important;
-    padding: 10px !important;
+    padding: 8px !important;
+    flex: 1 !important; 
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-width: 0 !important;
+    border-radius: 10px !important;
+    color: #94a3b8 !important; /* Light Gray for inactive icons */
+    background: transparent !important;
+    transition: all 0.2s ease !important;
   }
 
-  /* 5. Make sure the role badge fits cleanly in the row */
+  /* 4b. 🚨 ACTIVE COLOR: Bright Blue on dark background */
+  .rail-btn.active, .settings-nav-btn.active {
+    color: #60a5fa !important; /* Bright Blue Icon */
+    background: rgba(59, 130, 246, 0.15) !important; /* Subtle blue glow background */
+  }
+
+  /* 5. Scale down the SVG icons so they look clean and small */
+  .rail-btn svg, .settings-nav-btn svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* 6. Fix the hidden wrapper around your Role Badge */
+  .nav-rail-bottom > div[style*="position: relative"] {
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  /* 7. Force the avatar to be a perfect, un-squishable circle */
   .role-badge-container {
+    padding: 0 !important;
     margin: 0 !important;
-    padding: 5px !important;
-    min-width: auto !important;
+    min-width: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: transparent !important;
   }
 
-  /* 🚨 6. THE NEW FIX: Force the Admin dropdown menu to pop UPWARDS */
+  .role-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    margin: 0 !important;
+    font-size: 14px !important;
+    border: 2px solid #334155 !important; /* Adds a nice ring around the avatar */
+  }
+
+  /* 8. Make the popup menu appear ABOVE the bottom bar */
   .role-dropdown-menu {
-    position: absolute !important;
-    top: auto !important; /* Reset desktop top positioning */
-    bottom: calc(100% + 15px) !important; /* Pop up 15px above the navbar */
-    right: 10px !important; /* Keep it safely on the right side of the screen */
+    bottom: 75px !important;
+    top: auto !important;
+    right: 15px !important;
     left: auto !important;
-    z-index: 9999 !important; /* Force it above everything else on the page */
-    box-shadow: 0px -4px 12px rgba(0,0,0,0.15) !important; /* Nice shadow pointing up */
+    position: absolute !important;
+    color: #0f172a !important; /* Ensure dropdown text remains dark */
+  }
+
+  /* Prevent the main app from being hidden under the fixed navbar */
+  .app-container {
+    padding-bottom: 65px !important;
   }
 }
