@@ -5,3 +5,6 @@ djangorestframework-simplejwt
 Pillow
 gunicorn
 whitenoise
+google-generativeai
+requests
+python-dotenv
