@@ -1975,3 +1975,53 @@
   background: #f8fafc;
   color: #3b82f6;
 }
+@media (max-width: 768px) {
+  /* 1. Turn the main rail into a perfectly spaced horizontal bar */
+  .nav-rail {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-around !important; 
+    align-items: center !important;
+    width: 100% !important;
+    height: 65px !important;
+    padding: 0 5px !important;
+    box-sizing: border-box;
+    overflow: visible !important; /* 🚨 FIX: Ensures the popup isn't cut off inside the bar! */
+  }
+
+  /* 2. Make the wrappers disappear so all icons share the row */
+  .nav-rail-top, 
+  .nav-rail-bottom {
+    display: contents !important;
+  }
+
+  /* 3. Hide the frying pan logo and the text of the role */
+  .rail-logo, 
+  .role-text {
+    display: none !important;
+  }
+
+  /* 4. Fix button spacing */
+  .rail-btn {
+    margin: 0 !important;
+    padding: 10px !important;
+  }
+
+  /* 5. Make sure the role badge fits cleanly in the row */
+  .role-badge-container {
+    margin: 0 !important;
+    padding: 5px !important;
+    min-width: auto !important;
+  }
+
+  /* 🚨 6. THE NEW FIX: Force the Admin dropdown menu to pop UPWARDS */
+  .role-dropdown-menu {
+    position: absolute !important;
+    top: auto !important; /* Reset desktop top positioning */
+    bottom: calc(100% + 15px) !important; /* Pop up 15px above the navbar */
+    right: 10px !important; /* Keep it safely on the right side of the screen */
+    left: auto !important;
+    z-index: 9999 !important; /* Force it above everything else on the page */
+    box-shadow: 0px -4px 12px rgba(0,0,0,0.15) !important; /* Nice shadow pointing up */
+  }
+}

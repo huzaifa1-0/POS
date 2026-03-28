@@ -826,7 +826,7 @@ const handleAddItem = (item) => {
             <LogOut size={24} />
           </button>
           {/* 🚨 THE NEW CLICKABLE ROLE BADGE & DROPDOWN */}
-        <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ position: 'relative', width: "auto", display: 'flex', justifyContent: 'center' }}>
           <div 
             className="role-badge-container" 
             title={`Current Session: ${effectiveRole}`}
