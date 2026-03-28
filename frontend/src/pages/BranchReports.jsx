@@ -75,6 +75,13 @@ function BranchReports() {
           flex-direction: column;
           gap: 20px;
         }
+          .branch-search-container { width: 300px; max-width: 100%; }
+
+        @media (max-width: 768px) {
+          /* Add this inside the mobile media query */
+          .branch-search-container { width: 100% !important; margin-top: 10px; }
+          .branch-section-header { flex-direction: column !important; align-items: stretch !important; }
+        }
 
         .summary-card {
           border-radius: 12px; color: white; padding: 20px 25px;
@@ -191,7 +198,7 @@ function BranchReports() {
                 <div>
                   <h2 style={{ fontSize: '20px', margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '700' }}><Building size={20} color="#64748b"/> Branch Directory</h2>
                 </div>
-                <div style={{ position: 'relative', width: '300px', maxWidth: '100%' }}>
+                <div className="branch-search-container" style={{ position: 'relative' }}>
                   <Search size={18} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
                   <input type="text" placeholder="Search branches..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ width: '100%', padding: '11px 12px 11px 40px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
