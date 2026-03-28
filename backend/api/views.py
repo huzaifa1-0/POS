@@ -37,6 +37,9 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from .models import UserProfile
 import calendar
+from django.http import JsonResponse
+from django.core.management import call_command
+import os
 
 class ExpenseViewSet(viewsets.ModelViewSet):
     serializer_class = ExpenseSerializer
@@ -953,3 +956,20 @@ class UpdateStaffRoleView(APIView):
         except User.DoesNotExist:
             return Response({'error': 'Staff member not found'}, status=status.HTTP_404_NOT_FOUND)
 
+
+
+def trigger_daily_briefing(request):
+    # 1. Check for the secret password in the URL
+    secret_key = os.environ.get("CRON_SECRET_KEY")
+    provided_key = request.GET.get("key")
+
+    # 2. If the password is wrong, block them!
+    if not secret_key or provided_key != secret_key:
+        return JsonResponse({"error": "Unauthorized. Nice try bro!"}, status=403)
+
+    # 3. If the password is correct, run the AI script!
+    try:
+        call_command('send_daily_briefing')
+        return JsonResponse({"status": "Success! Daily briefing sent to WhatsApp."}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
