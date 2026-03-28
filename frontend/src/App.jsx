@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2, BookOpen, Settings, MapPin, PieChart, Building } from 'lucide-react';
+import { FileText, X, ChefHat, Receipt, Package, Plus, Printer, CreditCard, Banknote, LogOut, Home, BarChart2, BookOpen, Settings, MapPin, PieChart, Building, Coffee } from 'lucide-react';
 import {Navigate, Routes, Route, NavLink } from 'react-router-dom'; 
 import Inventory from './pages/Inventory'; 
 import Reports from './pages/Reports'; 
 import Expenses from './pages/Expenses'; 
 import ManageInventory from './pages/ManageInventory';
 import Vendors from './pages/Vendors';
+import MenuManager from './pages/MenuManager';
 import RecipeBuilder from './pages/RecipeBuilder';
 import BranchManagement from './pages/BranchManagement';
 import BranchReports from './pages/BranchReports';
@@ -787,6 +788,11 @@ const handleAddItem = (item) => {
                     <FileText size={24} />
                   </NavLink>
                 </Can>
+                <Can permission="manage:menu">
+                  <NavLink to="/menu" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Menu Manager">
+                    <Coffee size={24} />
+                   </NavLink>
+                </Can>
 
                 <Can permission="view:recipes">
                   <NavLink to="/recipes" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Recipe Builder">
@@ -1326,6 +1332,14 @@ const handleAddItem = (item) => {
           element={
             <ProtectedRoute permission="view:vendors">
               <Vendors />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/menu" 
+          element={
+            <ProtectedRoute permission="manage:menu">
+              <MenuManager />
             </ProtectedRoute>
           } 
         />
