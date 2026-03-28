@@ -94,6 +94,43 @@ function Settings() {
 
   return (
     <div className="settings-container" style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto', overflowX: 'hidden' }}>
+      
+      {/* 🚨 ADD THIS STYLE BLOCK HERE */}
+      <style>{`
+        @media (max-width: 768px) {
+          /* Force table into a card layout */
+          .staff-table, .staff-table thead, .staff-table tbody, .staff-table th, .staff-table td, .staff-table tr { display: block; }
+          .staff-table thead tr { display: none; }
+          
+          /* Style each row as a card */
+          .staff-table tr { 
+            border: 1px solid #cbd5e1; 
+            border-radius: 12px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+          }
+          
+          /* Align contents with labels */
+          .staff-table td { 
+            border: none !important;
+            padding: 8px 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }
+          
+          /* Add the labels back in via CSS */
+          .staff-table td:nth-of-type(1) { flex-direction: column; align-items: flex-start; border-bottom: 1px dashed #e2e8f0 !important; padding-bottom: 12px !important; margin-bottom: 8px; }
+          .staff-table td:nth-of-type(2):before { content: "Status:"; font-weight: bold; color: #64748b; font-size: 13px; }
+          .staff-table td:nth-of-type(3):before { content: "Role:"; font-weight: bold; color: #64748b; font-size: 13px; }
+          .staff-table td:nth-of-type(4):before { content: "Branch:"; font-weight: bold; color: #64748b; font-size: 13px; }
+          
+          .role-select { width: 60%; font-size: 13px !important; }
+        }
+      `}</style>
+      
       <h1 className="settings-header" style={{ fontSize: '28px', color: '#0f172a', marginBottom: '20px' }}>System Settings</h1>
       
       <div className="settings-tabs" style={{ display: 'flex', gap: '10px', borderBottom: '2px solid #e2e8f0', marginBottom: '20px' }}>
@@ -135,14 +172,14 @@ function Settings() {
 
         <div className="settings-card approvals-card" style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
            <div className="settings-card-header"><h2 style={{ fontSize: '18px', margin: '0 0 15px 0' }}>Staff Approvals & Routing</h2></div>
-           <div className="table-responsive-wrapper scrollable-table" style={{ overflowX: 'auto' }}>
-            <table className="settings-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
+           <div className="table-responsive-wrapper scrollable-table">
+            <table className="settings-table" style={{ width: '100%', borderCollapse: 'collapse'}}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                  <th style={{ padding: '12px', textAlign: 'left', color: '#475569' }}>Staff Member</th>
+                  <th style={{ padding: '12px', textAlign: 'left', color: '#475569' }}>Members</th>
                   <th style={{ padding: '12px', textAlign: 'left', color: '#475569' }}>Status</th>
-                  <th style={{ padding: '12px', textAlign: 'left', color: '#475569' }}>Role Assignment</th>
-                  <th style={{ padding: '12px', textAlign: 'left', color: '#475569' }}>Branch Transfer</th>
+                  <th style={{ padding: '12px', textAlign: 'left', color: '#475569' }}>Role</th>
+                  <th style={{ padding: '12px', textAlign: 'left', color: '#475569' }}>Branch</th>
                 </tr>
               </thead>
               <tbody>

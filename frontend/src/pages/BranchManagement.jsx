@@ -335,10 +335,10 @@ function BranchManagement() {
                                 <BarChart2 size={14}/><span className="action-text">Report</span>
                               </button>
                               <button onClick={(e) => { e.stopPropagation(); startEditingBranch(b); }} style={{ background: 'none', color: '#64748b', border: '1px solid #cbd5e1', padding: '6px', borderRadius: '6px' }}>
-                                <Edit size={14}/><span className="action-text">Edit</span>
+                                <Edit size={14}/><span className="action-text"></span>
                               </button>
                               <button onClick={(e) => { e.stopPropagation(); handleDeleteBranch(b.id); }} style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '6px', borderRadius: '6px' }}>
-                                <Trash2 size={14}/><span className="action-text">Del</span>
+                                <Trash2 size={14}/><span className="action-text"></span>
                               </button>
                             </div>
                           )}
