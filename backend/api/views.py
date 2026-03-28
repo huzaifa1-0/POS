@@ -506,6 +506,7 @@ def manage_role_permissions(request):
         {'key': 'view:inventory', 'label': 'Inventory'},
         {'key': 'edit:inventory', 'label': 'Manage Stock'},
         {'key': 'view:expenses', 'label': 'Expenses'},
+        {'key': 'manage:menu', 'label': 'Menu Manager'},
         {'key': 'view:recipes', 'label': 'Recipe Builder'},
         {'key': 'view:vendors', 'label': 'Vendors'},
         {'key': 'view:settings', 'label': 'Settings Dashboard'},
