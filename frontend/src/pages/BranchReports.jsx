@@ -49,7 +49,7 @@ function BranchReports() {
           width: 100%; 
           box-sizing: border-box; 
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-          height: calc(100vh - 60px); /* Adjusts for your top navbar */
+          height: calc(100vh); /* Adjusts for your top navbar */
           display: flex;
           flex-direction: column;
           overflow: hidden; /* Prevents the whole page from scrolling */
@@ -99,9 +99,10 @@ function BranchReports() {
         /* 🚨 INDEPENDENT SCROLL AREA FOR BRANCHES */
         .branch-scroll-area {
           flex: 1; /* Takes up all remaining screen height */
+          min-height: 0; /* Important for flexbox to allow shrinking */
           overflow-y: auto; /* ONLY this area scrolls */
           padding-right: 10px; /* Room for the scrollbar */
-          padding-bottom: 20px;
+          padding-bottom: 10px;
         }
 
         /* Custom scrollbar for branch list */
